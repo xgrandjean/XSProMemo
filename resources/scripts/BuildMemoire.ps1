@@ -92,34 +92,17 @@ try {
         $selection.EndKey(6) | Out-Null   # wdStory
     }
 
-    # Un fichier de contenu se termine souvent par un saut de page et des paragraphes
-    # vides, restes d'un montage precedent. Laisses en place ils fabriquent des pages
-    # blanches, alors que c'est l'application qui decide ou commence une page. Seule la
-    # queue du bloc insere est retiree, jamais en deca de ce qui existait avant lui.
-    function Trim-InsertedTail([int]$floor) {
-        $guard = 0
-        while ($doc.Paragraphs.Count -gt $floor -and $guard -lt 500) {
-            $guard++
-            $last = $doc.Paragraphs.Item($doc.Paragraphs.Count)
-
-            if (($last.Range.Text -replace "[\s]", "") -ne "") { break }
-            if ($last.Range.InlineShapes.Count -gt 0) { break }
-            if ($last.Range.Tables.Count -gt 0) { break }
-            # Une image flottante est ancree a un paragraphe : le supprimer l'emporte.
-            $anchored = $false
-            try { $anchored = ($last.Range.ShapeRange.Count -gt 0) } catch { $anchored = $false }
-            if ($anchored) { break }
-
-            $last.Range.Delete() | Out-Null
-        }
+    # Le point d'insertion doit etre un paragraphe a lui : sans cela le titre suivant
+    # se colle a la derniere ligne du contenu precedent et lui impose son style, ce qui
+    # fait remonter des phrases entieres dans le sommaire.
+    function Ensure-OwnParagraph {
         Go-ToEnd
-    }
-
-    # Un bloc insere, debarrasse de sa queue vide.
-    function Insert-Content([string]$file) {
-        $floor = $doc.Paragraphs.Count
-        $selection.InsertFile($file, "", $false, $false, $false)
-        Trim-InsertedTail $floor
+        $last = $doc.Paragraphs.Item($doc.Paragraphs.Count)
+        $texte = $last.Range.Text -replace "[`r`n`a`f ]", ""
+        if ($texte -ne "") {
+            $selection.TypeParagraph()
+            Go-ToEnd
+        }
     }
 
     # --- Pages de garde : contenu tel quel, sans titre ni numero ---
@@ -128,7 +111,7 @@ try {
         Write-ProgressJson "Page de garde $($i + 1)/$($coverPages.Count)..."
         Go-ToEnd
         if ($i -gt 0) { $selection.InsertBreak(7) }   # wdPageBreak
-        Insert-Content ([string]$coverPages[$i])
+        $selection.InsertFile([string]$coverPages[$i], "", $false, $false, $false)
     }
 
     # The body starts its own section so page numbering can restart after the cover.
@@ -140,7 +123,7 @@ try {
 
     # --- Sommaire : table des matieres native, remplie une fois tout en place ---
     Write-ProgressJson "Sommaire..."
-    Go-ToEnd
+    Ensure-OwnParagraph
     $selection.Style = -1   # wdStyleNormal : le titre ne doit pas se lister lui-meme
     $selection.ParagraphFormat.Alignment = 0
     $selection.Font.Bold = $true
@@ -177,6 +160,7 @@ try {
         }
 
         $level = [Math]::Min([Math]::Max([int]$chapter.level, 1), 9)
+        Ensure-OwnParagraph
         $selection.Style = (-1 * ($level + 1))   # wdStyleHeading1 = -2 .. Heading9 = -10
 
         # L'attribut "saut de page avant" de Word plutot qu'un saut insere en dur : il
@@ -193,7 +177,7 @@ try {
 
         if ($chapter.contentPath) {
             Go-ToEnd
-            Insert-Content ([string]$chapter.contentPath)
+            $selection.InsertFile([string]$chapter.contentPath, "", $false, $false, $false)
         }
     }
 
