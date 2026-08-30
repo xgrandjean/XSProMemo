@@ -9,6 +9,7 @@ import { dataRoot, templatePath } from '../store/paths'
 import { getScriptPath } from '../render/wordRunner'
 import { requireLibraryPath } from './context'
 import { readHeaderImage } from '../render/templateInspector'
+import { findLogoFiles, keepLogoCopy, removeLogoCopies } from '../store/logoCopy'
 import type { ModelStatus } from '../../shared/types'
 
 const execFileAsync = promisify(execFile)
@@ -37,14 +38,6 @@ async function runLogoScript(template: string, logoPath: string | null): Promise
   }
 }
 
-/** The chosen image is kept in the folder too, so it can be found and swapped by hand. */
-async function findLogoFile(root: string): Promise<string | null> {
-  for (const entry of await fs.readdir(root).catch(() => [] as string[])) {
-    if (/^Logo\.(png|jpe?g|gif|bmp|tiff?)$/i.test(entry)) return path.join(root, entry)
-  }
-  return null
-}
-
 async function buildStatus(root: string): Promise<ModelStatus> {
   const template = templatePath(root)
   let templateExists = true
@@ -59,7 +52,7 @@ async function buildStatus(root: string): Promise<ModelStatus> {
     templatePath: template,
     templateExists,
     logoPreview: templateExists ? await readHeaderImage(template) : null,
-    logoFile: await findLogoFile(root)
+    logoFile: (await findLogoFiles(root))[0] ?? null
   }
 }
 
@@ -69,22 +62,17 @@ export function registerModelIpc(): void {
   ipcMain.handle('model:setLogo', async (_event, imageAbsPath: string) => {
     const root = await requireLibraryPath()
 
-    // Keep a copy next to the template: the image is then part of the folder the user
-    // can browse, rather than buried inside the Word header.
-    const previous = await findLogoFile(root)
-    if (previous) await fs.rm(previous, { force: true })
-    const kept = path.join(root, `Logo${path.extname(imageAbsPath).toLowerCase()}`)
-    await fs.copyFile(imageAbsPath, kept)
-
-    await runLogoScript(templatePath(root), kept)
+    // The template is written from the image the user pointed at, before anything on
+    // disk moves: a failure here leaves the folder untouched.
+    await runLogoScript(templatePath(root), path.resolve(imageAbsPath))
+    await keepLogoCopy(root, imageAbsPath)
     return buildStatus(root)
   })
 
   ipcMain.handle('model:clearLogo', async () => {
     const root = await requireLibraryPath()
     await runLogoScript(templatePath(root), null)
-    const previous = await findLogoFile(root)
-    if (previous) await fs.rm(previous, { force: true })
+    await removeLogoCopies(root)
     return buildStatus(root)
   })
 
