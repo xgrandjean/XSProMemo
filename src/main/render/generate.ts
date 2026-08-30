@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { promises as fs } from 'node:fs'
-import { outputDir, resolveLibraryFile } from '../store/paths'
+import { documentsDir, resolveContentFile, templatePath } from '../store/paths'
 import { readModelConfig } from '../store/modelStore'
 import { getMemoire, saveMemoire } from '../store/memoireStore'
 import { flattenChapters } from './plan'
@@ -16,23 +16,26 @@ export async function generateMemoire(
   const memoire = await getMemoire(libraryPath, memoireId)
   const warnings: string[] = []
 
-  if (!config.templatePath) {
+  const shellPath = templatePath(libraryPath)
+  try {
+    await fs.access(shellPath)
+  } catch {
     throw new GenerationError(
-      "Aucun gabarit n'est configuré. Ouvrez la Configuration pour en choisir un."
+      "Le gabarit est introuvable. Ouvrez la Configuration pour le rétablir."
     )
   }
-  try {
-    await fs.access(config.templatePath)
-  } catch {
-    throw new GenerationError(`Le gabarit est introuvable : ${config.templatePath}`)
-  }
+
+  let expectedContents = 0
+  let resolvedContents = 0
 
   /** Resolves an attached file, skipping (with a warning) anything gone missing. */
   async function resolveContent(content: ContentRef | null, label: string): Promise<string | null> {
     if (!content) return null
-    const absPath = resolveLibraryFile(libraryPath, content.file)
+    expectedContents += 1
+    const absPath = resolveContentFile(libraryPath, content.file)
     try {
       await fs.access(absPath)
+      resolvedContents += 1
       return absPath
     } catch {
       warnings.push(`Fichier introuvable pour « ${label} » : ce contenu a été ignoré.`)
@@ -68,14 +71,26 @@ export async function generateMemoire(
     throw new GenerationError("Ce mémoire n'a aucun chapitre.")
   }
 
-  const memoireOutputDir = path.join(outputDir(libraryPath), memoire.id)
+  // Producing a document of bare titles and calling it a success would be misleading:
+  // something has happened to the contents folder and the user needs to know.
+  if (expectedContents > 0 && resolvedContents === 0) {
+    throw new GenerationError(
+      expectedContents === 1
+        ? "Le fichier de contenu de ce mémoire est introuvable. Rattachez-le depuis le plan, ou relancez l'application : elle rétablira les fichiers de l'exemple."
+        : `Aucun des ${expectedContents} fichiers de contenu n'a été trouvé. Le dossier des contenus a sans doute été déplacé ou vidé — relancez l'application, elle rétablira les fichiers de l'exemple.`
+    )
+  }
+
+  // Generated documents sit together under a readable name, so they can be picked up
+  // from the folder without hunting through identifiers.
+  const memoireOutputDir = path.join(documentsDir(libraryPath), memoire.id)
   await fs.mkdir(memoireOutputDir, { recursive: true })
   const safeName = (memoire.name || 'memoire').replace(/[\\/:*?"<>|]/g, '_')
   const outputDocxPath = path.join(memoireOutputDir, `${safeName}.docx`)
   const outputPdfPath = path.join(memoireOutputDir, `${safeName}.pdf`)
 
   const manifest = {
-    shellPath: config.templatePath,
+    shellPath,
     outputDocxPath,
     outputPdfPath,
     sommaireTitle: config.sommaireTitle,

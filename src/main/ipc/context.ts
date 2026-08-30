@@ -1,9 +1,9 @@
-import { readAppConfig } from '../store/appConfig'
+import { dataRoot } from '../store/paths'
 
+/**
+ * The application stores everything in its own data folder, so there is nothing to
+ * configure before it can run.
+ */
 export async function requireLibraryPath(): Promise<string> {
-  const config = await readAppConfig()
-  if (!config.libraryPath) {
-    throw new Error('Aucun dossier de bibliothèque configuré. Choisissez-en un dans les réglages.')
-  }
-  return config.libraryPath
+  return dataRoot()
 }

@@ -2,9 +2,9 @@ import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'node:path'
 import { writeFileSync } from 'node:fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { readAppConfig } from './store/appConfig'
 import { generateMemoire } from './render/generate'
-import { registerConfigIpc } from './ipc/config'
+import { seedIfNeeded } from './store/seed'
+import { dataRoot } from './store/paths'
 import { registerDialogIpc } from './ipc/dialogs'
 import { registerModelIpc } from './ipc/model'
 import { registerMemoiresIpc } from './ipc/memoires'
@@ -56,13 +56,20 @@ async function runHeadlessGeneration(memoireId: string): Promise<void> {
   const lines: string[] = []
   const log = (line: string): void => {
     lines.push(line)
-    if (reportPath) writeFileSync(reportPath, lines.join('\n') + '\n', 'utf-8')
+    // An unwritable report path must not become the failure: it would mask the real one
+    // and, with no window to close, leave the process hanging.
+    if (reportPath) {
+      try {
+        writeFileSync(reportPath, lines.join('\n') + '\n', 'utf-8')
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   try {
-    const { libraryPath } = await readAppConfig()
-    if (!libraryPath) throw new Error('Aucun dossier de travail configuré.')
-    const result = await generateMemoire(libraryPath, memoireId, (message) => log(`… ${message}`))
+    await seedIfNeeded()
+    const result = await generateMemoire(dataRoot(), memoireId, (message) => log(`… ${message}`))
     log(`OK ${result.pageCount} pages -> ${result.pdfPath}`)
     result.warnings.forEach((warning) => log(`AVERTISSEMENT ${warning}`))
     app.exit(0)
@@ -72,8 +79,12 @@ async function runHeadlessGeneration(memoireId: string): Promise<void> {
   }
 }
 
-app.whenReady().then(() => {
+// Fixes the data folder to %APPDATA%\XSProMemo rather than the package name.
+app.setName('XSProMemo')
+
+app.whenReady().then(async () => {
   electronApp.setAppUserModelId('com.xspromemo.app')
+  await seedIfNeeded()
   app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
 
   const headlessTarget = headlessGenerationTarget()
@@ -82,7 +93,6 @@ app.whenReady().then(() => {
     return
   }
 
-  registerConfigIpc()
   registerDialogIpc()
   registerModelIpc()
   registerMemoiresIpc()

@@ -7,8 +7,8 @@ files:
 extraResources:
   - from: resources/scripts
     to: scripts
-  - from: resources/pdfjs
-    to: pdfjs
+  - from: resources/exemple
+    to: exemple
 win:
   target: nsis
   artifactName: ${productName}-${version}-setup.${ext}

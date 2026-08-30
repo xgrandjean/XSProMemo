@@ -172,11 +172,30 @@ try {
         }
     }
 
-    # Le gabarit peut demander une premiere page differente : la premiere page de
-    # chaque section perdrait alors en-tete et pied de page. Seule la page de garde a
-    # une raison de rester nue.
-    for ($i = 2; $i -le $doc.Sections.Count; $i++) {
+    # En-tete et pied de page : nus sur la page de garde, presents partout ailleurs.
+    # On ne s'en remet pas au reglage "premiere page differente" du gabarit, qui donne
+    # un resultat dependant du nombre de pages de la garde.
+    for ($i = 1; $i -le $doc.Sections.Count; $i++) {
         $doc.Sections.Item($i).PageSetup.DifferentFirstPageHeaderFooter = 0
+    }
+
+    if ($coverPages.Count -gt 0 -and $bodySectionIndex -gt 1) {
+        # L'ordre compte : desolidariser le corps d'abord y recopie l'en-tete du gabarit,
+        # logo compris. Vider la garde en premier le ferait disparaitre partout.
+        for ($i = $bodySectionIndex; $i -le $doc.Sections.Count; $i++) {
+            $doc.Sections.Item($i).Headers.Item(1).LinkToPrevious = $false
+            $doc.Sections.Item($i).Footers.Item(1).LinkToPrevious = $false
+        }
+        for ($i = 1; $i -lt $bodySectionIndex; $i++) {
+            $section = $doc.Sections.Item($i)
+            if ($i -gt 1) {
+                # Word refuse cette propriete sur la premiere section : pas de precedente.
+                $section.Headers.Item(1).LinkToPrevious = $false
+                $section.Footers.Item(1).LinkToPrevious = $false
+            }
+            $section.Headers.Item(1).Range.Delete()
+            $section.Footers.Item(1).Range.Delete()
+        }
     }
 
     # --- Numerotation : elle repart a 1 apres la page de garde ---

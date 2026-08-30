@@ -6,8 +6,8 @@ import {
   deleteMemoire,
   createMemoireFrom
 } from '../store/memoireStore'
-import { readModelConfig, importAsset } from '../store/modelStore'
-import { resolveLibraryFile } from '../store/paths'
+import { readModelConfig, importContent } from '../store/modelStore'
+import { resolveContentFile } from '../store/paths'
 import { requireLibraryPath } from './context'
 import type { Memoire } from '../../shared/types'
 
@@ -47,13 +47,13 @@ export function registerMemoiresIpc(): void {
   /** Copies a chosen file into the shared asset pool and returns a reference to it. */
   ipcMain.handle('memoires:importContent', async (_event, sourceAbsPath: string) => {
     const libraryPath = await requireLibraryPath()
-    return importAsset(libraryPath, sourceAbsPath)
+    return importContent(libraryPath, sourceAbsPath)
   })
 
   /** Opens a content file in whatever application handles it (Word, a PDF reader...). */
   ipcMain.handle('memoires:openContent', async (_event, relativePath: string) => {
     const libraryPath = await requireLibraryPath()
-    const error = await shell.openPath(resolveLibraryFile(libraryPath, relativePath))
+    const error = await shell.openPath(resolveContentFile(libraryPath, relativePath))
     if (error) throw new Error(error)
   })
 }

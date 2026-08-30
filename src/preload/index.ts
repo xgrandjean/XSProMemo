@@ -1,32 +1,30 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type {
-  AppConfig,
   ContentRef,
   GenerationProgressEvent,
   GenerationResult,
   Memoire,
   MemoireSummary,
-  ModelConfig
+  ModelStatus
 } from '../shared/types'
 
 const api = {
-  config: {
-    get: (): Promise<AppConfig> => ipcRenderer.invoke('config:get'),
-    chooseWorkspaceFolder: (): Promise<AppConfig | null> =>
-      ipcRenderer.invoke('config:chooseWorkspaceFolder')
-  },
   dialogs: {
-    pickDocx: (): Promise<string | null> => ipcRenderer.invoke('dialog:pickDocx')
+    pickDocx: (): Promise<string | null> => ipcRenderer.invoke('dialog:pickDocx'),
+    pickImage: (): Promise<string | null> => ipcRenderer.invoke('dialog:pickImage')
   },
   shell: {
     openPath: (absPath: string): Promise<void> => ipcRenderer.invoke('shell:openPath', absPath)
   },
   model: {
-    get: (): Promise<ModelConfig> => ipcRenderer.invoke('model:get'),
-    setTemplate: (templateAbsPath: string): Promise<ModelConfig> =>
-      ipcRenderer.invoke('model:setTemplate', templateAbsPath),
-    setSommaireTitle: (title: string): Promise<ModelConfig> =>
+    get: (): Promise<ModelStatus> => ipcRenderer.invoke('model:get'),
+    setLogo: (imageAbsPath: string): Promise<ModelStatus> =>
+      ipcRenderer.invoke('model:setLogo', imageAbsPath),
+    clearLogo: (): Promise<ModelStatus> => ipcRenderer.invoke('model:clearLogo'),
+    setSommaireTitle: (title: string): Promise<ModelStatus> =>
       ipcRenderer.invoke('model:setSommaireTitle', title),
+    openTemplate: (): Promise<void> => ipcRenderer.invoke('model:openTemplate'),
+    openDataFolder: (): Promise<void> => ipcRenderer.invoke('model:openDataFolder'),
     ensureExample: (): Promise<string> => ipcRenderer.invoke('model:ensureExample')
   },
   memoires: {

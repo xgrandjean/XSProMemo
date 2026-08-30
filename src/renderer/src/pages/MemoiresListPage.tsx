@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import Modal from '../components/Modal'
+import { HelpButton } from '../components/Help'
+import { MemoiresHelp } from '../components/HelpTexts'
 import type { MemoireSummary } from '../../../shared/types'
 
 function formatDate(iso: string): string {
@@ -78,7 +80,12 @@ export default function MemoiresListPage({
 
   return (
     <div>
-      <h1>Mes mémoires</h1>
+      <div className="panel-head" style={{ marginBottom: 18 }}>
+        <h1 style={{ margin: 0 }}>Mes mémoires</h1>
+        <HelpButton title="Mes mémoires">
+          <MemoiresHelp />
+        </HelpButton>
+      </div>
 
       <div className="panel">
         <div className="row">

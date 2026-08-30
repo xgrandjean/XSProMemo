@@ -10,10 +10,11 @@ export function AppHelp(): JSX.Element {
 
       <h3>Trois notions, et c&apos;est tout</h3>
       <dl>
-        <dt>Le gabarit</dt>
+        <dt>La présentation</dt>
         <dd>
-          Un document Word qui porte votre présentation : styles, logo en en-tête, pied de
-          page, marges. Aucun contenu. Chaque mémoire produit en est une copie.
+          Un document Word — le gabarit — qui porte styles, logo en en-tête, pied de page
+          et marges. Aucun contenu. Chaque mémoire produit en est une copie. Elle se règle
+          dans la Configuration, derrière l&apos;engrenage.
         </dd>
 
         <dt>Le mémoire exemple</dt>
@@ -63,6 +64,17 @@ export function AppHelp(): JSX.Element {
         </li>
       </ul>
 
+      <h3>Où sont vos fichiers</h3>
+      <p>
+        Dans <b>Documents\XSProMemo</b> : le gabarit, vos contenus Word et les documents
+        générés. La Configuration propose un raccourci pour y accéder.
+      </p>
+      <p className="muted">
+        Ce n&apos;est pas le dossier habituel des données d&apos;application : Word refuse
+        d&apos;ouvrir un document rangé sous AppData sur les postes durcis, et toute la
+        chaîne repose sur Word.
+      </p>
+
       <h3>Pendant la génération</h3>
       <p>
         Word doit être fermé : l&apos;application le pilote en arrière-plan et ne veut pas
@@ -77,8 +89,8 @@ export function GabaritHelp(): JSX.Element {
   return (
     <>
       <p>
-        Le gabarit est un document Word <b>vide de contenu</b>. Il ne porte que la
-        présentation :
+        La présentation est portée par un document Word <b>vide de contenu</b> — le
+        gabarit. Il ne contient que :
       </p>
       <ul>
         <li>les styles (à quoi ressemble un « Titre 1 », un « Titre 2 », le texte courant),</li>
@@ -91,9 +103,13 @@ export function GabaritHelp(): JSX.Element {
         les chapitres. C&apos;est donc lui qui donne son allure à tout le document.
       </p>
       <p>
-        <b>Quand y toucher ?</b> Rarement : changement de logo, de coordonnées, de charte.
-        Une modification profite à tous les mémoires suivants. Le bouton{' '}
-        <i>Ouvrir dans Word</i> vous y emmène directement.
+        <b>Le logo</b> se choisit depuis cet écran : désignez une image, l&apos;application
+        la place dans l&apos;en-tête à votre place. Elle apparaîtra en haut de chaque page
+        numérotée.
+      </p>
+      <p>
+        Pour le reste — coordonnées en pied de page, couleurs des titres, marges — ouvrez
+        le gabarit dans Word. Une modification profite à tous les mémoires suivants.
       </p>
       <p className="muted">
         Le titre du sommaire se règle ici aussi : c&apos;est le texte affiché au-dessus de
@@ -197,6 +213,52 @@ export function CoverHelp(): JSX.Element {
       <p className="muted">
         La numérotation des pages démarre après la page de garde : la première page du
         sommaire est la page 1.
+      </p>
+    </>
+  )
+}
+
+export function MemoiresHelp(): JSX.Element {
+  return (
+    <>
+      <p>
+        Un mémoire est une réponse à un appel d&apos;offres précis : son propre plan, ses
+        propres contenus. Les mémoires sont indépendants les uns des autres.
+      </p>
+
+      <h3>Les commandes</h3>
+      <ul>
+        <li>
+          <b>Nouveau mémoire</b> : part d&apos;une copie de l&apos;exemple. Vous retirez ce
+          qui ne s&apos;applique pas, vous ajoutez ce qui manque.
+        </li>
+        <li>
+          <b>Ouvrir</b> : le plan du mémoire, et le bouton pour le générer.
+        </li>
+        <li>
+          <b>Dupliquer</b> : la meilleure façon de repartir d&apos;un mémoire précédent
+          proche du nouveau. La copie est indépendante.
+        </li>
+        <li>
+          <b>Supprimer</b> : efface le plan. Les fichiers de contenu, eux, restent — ils
+          servent peut-être à un autre mémoire.
+        </li>
+      </ul>
+
+      <h3>Générer</h3>
+      <p>
+        Le bouton <b>Générer</b> se trouve en haut de l&apos;écran d&apos;un mémoire. Une
+        fenêtre affiche l&apos;avancement, puis propose d&apos;ouvrir le document Word ou
+        le PDF. Word doit être fermé pendant l&apos;opération.
+      </p>
+      <p>
+        Un mémoire déjà généré affiche <b>Ouvrir le dernier PDF</b> : inutile de
+        régénérer pour le relire ou le renvoyer.
+      </p>
+
+      <p className="muted">
+        Les documents produits sont rangés dans Documents\XSProMemo\documents. La
+        Configuration propose un raccourci vers ce dossier.
       </p>
     </>
   )

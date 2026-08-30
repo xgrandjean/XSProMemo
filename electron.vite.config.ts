@@ -4,7 +4,9 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
+    // jszip is bundled rather than externalised: the packaged application ships only
+    // `out`, so anything left in node_modules would be missing at runtime.
+    plugins: [externalizeDepsPlugin({ exclude: ['jszip'] })],
     resolve: {
       alias: {
         '@main': resolve('src/main')

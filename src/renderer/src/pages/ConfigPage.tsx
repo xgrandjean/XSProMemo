@@ -2,19 +2,23 @@ import { useEffect, useState } from 'react'
 import MemoirePlanEditor from '../components/MemoirePlanEditor'
 import { HelpButton } from '../components/Help'
 import { GabaritHelp, ExempleHelp } from '../components/HelpTexts'
-import type { Memoire, ModelConfig } from '../../../shared/types'
+import type { Memoire, ModelStatus } from '../../../shared/types'
+
+function basename(fullPath: string): string {
+  return fullPath.split(/[\/]/).pop() ?? fullPath
+}
 
 export default function ConfigPage({ onBack }: { onBack: () => void }): JSX.Element {
-  const [config, setConfig] = useState<ModelConfig | null>(null)
+  const [status, setStatus] = useState<ModelStatus | null>(null)
   const [sommaireTitle, setSommaireTitle] = useState('')
   const [example, setExample] = useState<Memoire | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    window.api.model.get().then((c) => {
-      setConfig(c)
-      setSommaireTitle(c.sommaireTitle)
+    window.api.model.get().then((s) => {
+      setStatus(s)
+      setSommaireTitle(s.config.sommaireTitle)
     })
     window.api.model
       .ensureExample()
@@ -23,13 +27,11 @@ export default function ConfigPage({ onBack }: { onBack: () => void }): JSX.Elem
       .catch((err) => setError(err instanceof Error ? err.message : String(err)))
   }, [])
 
-  async function chooseTemplate(): Promise<void> {
+  async function run(action: () => Promise<ModelStatus>): Promise<void> {
     setError(null)
-    const filePath = await window.api.dialogs.pickDocx()
-    if (!filePath) return
     setBusy(true)
     try {
-      setConfig(await window.api.model.setTemplate(filePath))
+      setStatus(await action())
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -37,12 +39,17 @@ export default function ConfigPage({ onBack }: { onBack: () => void }): JSX.Elem
     }
   }
 
-  async function saveSommaireTitle(): Promise<void> {
-    if (!config || sommaireTitle.trim() === config.sommaireTitle) return
-    setConfig(await window.api.model.setSommaireTitle(sommaireTitle))
+  async function chooseLogo(): Promise<void> {
+    const imagePath = await window.api.dialogs.pickImage()
+    if (imagePath) await run(() => window.api.model.setLogo(imagePath))
   }
 
-  if (!config) return <p className="muted">Chargement...</p>
+  async function saveSommaireTitle(): Promise<void> {
+    if (!status || sommaireTitle.trim() === status.config.sommaireTitle) return
+    await run(() => window.api.model.setSommaireTitle(sommaireTitle))
+  }
+
+  if (!status) return <p className="muted">Chargement...</p>
 
   return (
     <div>
@@ -55,35 +62,51 @@ export default function ConfigPage({ onBack }: { onBack: () => void }): JSX.Elem
 
       <div className="panel">
         <div className="panel-head">
-          <h2>Gabarit</h2>
-          <HelpButton title="Le gabarit">
+          <h2>Présentation</h2>
+          <HelpButton title="La présentation du document">
             <GabaritHelp />
           </HelpButton>
           <span className="muted">
-            Le document Word qui porte votre présentation : styles, logo en en-tête, pied de
-            page, marges. Aucun contenu.
+            Ce qui habille chaque page produite : le logo, les styles, le pied de page.
           </span>
         </div>
 
         <div className="field">
-          <label>Fichier Word</label>
-          <div>{config.templatePath ?? <span className="muted">Aucun gabarit choisi</span>}</div>
-        </div>
-        <div className="row">
-          <button className="primary" onClick={chooseTemplate} disabled={busy}>
-            Choisir un gabarit
-          </button>
-          {config.templatePath && (
-            <button
-              className="secondary"
-              onClick={() => window.api.shell.openPath(config.templatePath as string)}
-            >
-              Ouvrir dans Word
+          <label>Logo en en-tête</label>
+          <div className="row">
+            {/* The logo read back from the template, so what is shown is what will print. */}
+            <div className="logo-preview">
+              {status.logoPreview ? (
+                <img src={status.logoPreview} alt="Logo en en-tête" />
+              ) : (
+                <span className="muted">Aucun logo</span>
+              )}
+            </div>
+            <button className="primary" onClick={chooseLogo} disabled={busy}>
+              {status.logoPreview ? 'Remplacer le logo' : 'Choisir un logo'}
             </button>
-          )}
+            {status.logoPreview && (
+              <button
+                className="danger"
+                disabled={busy}
+                onClick={() => run(() => window.api.model.clearLogo())}
+              >
+                Retirer
+              </button>
+            )}
+          </div>
+          <p className="muted" style={{ marginTop: 6 }}>
+            L&apos;image est placée dans l&apos;en-tête du gabarit et apparaîtra en haut de
+            chaque page numérotée.
+            {status.logoFile && (
+              <>
+                {' '}Une copie est conservée dans le dossier sous <code>{basename(status.logoFile)}</code>.
+              </>
+            )}
+          </p>
         </div>
 
-        <div className="field" style={{ maxWidth: 320, marginTop: 16 }}>
+        <div className="field" style={{ maxWidth: 320 }}>
           <label>Titre de la page de sommaire</label>
           <input
             type="text"
@@ -94,6 +117,25 @@ export default function ConfigPage({ onBack }: { onBack: () => void }): JSX.Elem
           />
         </div>
 
+        <div className="row">
+          <button className="secondary" onClick={() => window.api.model.openTemplate()}>
+            Ouvrir le gabarit dans Word
+          </button>
+          <button className="secondary" onClick={() => window.api.model.openDataFolder()}>
+            Ouvrir le dossier de l&apos;application
+          </button>
+        </div>
+        <p className="muted" style={{ marginTop: 6 }}>
+          Le dossier contient le gabarit, vos fichiers de contenu et les documents générés :{' '}
+          <code>{status.dataFolder}</code>
+        </p>
+
+        {!status.templateExists && (
+          <p className="error-text">
+            Le gabarit est absent du dossier. Relancez l&apos;application pour qu&apos;elle le
+            rétablisse.
+          </p>
+        )}
         {error && <p className="error-text">{error}</p>}
       </div>
 

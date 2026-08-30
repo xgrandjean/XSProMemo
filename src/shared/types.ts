@@ -6,7 +6,8 @@ export type Orientation = 'portrait' | 'paysage'
  * The file holds content only — chapter titles are added by the application.
  */
 export interface ContentRef {
-  file: string // relative to libraryPath
+  /** File name inside the contents folder — readable, so it can be found and replaced. */
+  file: string
   originalName: string
 }
 
@@ -42,10 +43,21 @@ export interface MemoireSummary {
 
 /** The frozen part, edited behind the configuration screen. */
 export interface ModelConfig {
-  /** The Word template: styles, header with the logo, footer, margins. No content. */
-  templatePath: string | null
   sommaireTitle: string
   exampleId: string | null
+}
+
+/** What the configuration screen shows about the template and the data folder. */
+export interface ModelStatus {
+  config: ModelConfig
+  /** Absolute path of the folder holding everything the application owns. */
+  dataFolder: string
+  templatePath: string
+  templateExists: boolean
+  /** The logo currently in the template header, as a data URL, for the preview. */
+  logoPreview: string | null
+  /** Copy of the chosen image kept alongside, so it can be reused or replaced. */
+  logoFile: string | null
 }
 
 export interface GenerationProgressEvent {
@@ -60,6 +72,3 @@ export interface GenerationResult {
   warnings: string[]
 }
 
-export interface AppConfig {
-  libraryPath: string | null
-}
