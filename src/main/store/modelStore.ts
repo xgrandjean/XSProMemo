@@ -38,12 +38,17 @@ export async function importContent(root: string, srcAbsPath: string): Promise<C
   await fs.mkdir(directory, { recursive: true })
 
   const base = path.basename(srcAbsPath, '.docx').replace(/[\/:*?"<>|]/g, '-').trim() || 'contenu'
-  const existing = new Set((await fs.readdir(directory)).map((name) => name.toLowerCase()))
+  const fileName = `${base}.docx`
 
-  let fileName = `${base}.docx`
-  let counter = 2
-  while (existing.has(fileName.toLowerCase())) fileName = `${base} (${counter++}).docx`
-
-  await fs.copyFile(srcAbsPath, path.join(directory, fileName))
+  // The pool is keyed by file name: importing under a name already there updates that
+  // file rather than piling up "(2)", "(3)"... Designating the file already in the
+  // pool is a normal thing to do, and must not copy it onto itself.
+  const source = path.resolve(srcAbsPath)
+  const destination = path.join(directory, fileName)
+  if (path.resolve(destination).toLowerCase() !== source.toLowerCase()) {
+    const staged = `${destination}.nouveau`
+    await fs.copyFile(source, staged)
+    await fs.rename(staged, destination)
+  }
   return { file: fileName, originalName: fileName }
 }
