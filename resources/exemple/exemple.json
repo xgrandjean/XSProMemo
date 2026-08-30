@@ -60,7 +60,7 @@
     },
     {
       "title": "Nos Métiers",
-      "pageBreakBefore": true,
+      "pageBreakBefore": false,
       "orientation": "portrait",
       "content": null,
       "children": [
@@ -88,7 +88,7 @@
     },
     {
       "title": "Mémoire technique",
-      "pageBreakBefore": true,
+      "pageBreakBefore": false,
       "orientation": "portrait",
       "content": null,
       "children": [
