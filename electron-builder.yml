@@ -1,0 +1,17 @@
+appId: com.xspromemo.app
+productName: XSProMemo
+directories:
+  buildResources: build
+files:
+  - out/**/*
+extraResources:
+  - from: resources/scripts
+    to: scripts
+  - from: resources/pdfjs
+    to: pdfjs
+win:
+  target: nsis
+  artifactName: ${productName}-${version}-setup.${ext}
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
