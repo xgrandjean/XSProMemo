@@ -12,7 +12,8 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
-    "build:win": "electron-vite build && electron-builder --win"
+    "build:win": "electron-vite build && electron-builder --win",
+    "logo:gabarit": "powershell -NoProfile -ExecutionPolicy Bypass -File resources/scripts/SetLogo.ps1 -TemplatePath resources/exemple/Gabarit.docx -LogoPath build/logo.png"
   },
   "devDependencies": {
     "@electron-toolkit/preload": "^3.0.1",

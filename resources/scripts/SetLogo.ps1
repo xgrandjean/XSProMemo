@@ -44,6 +44,10 @@ try {
     if (-not (Test-Path -LiteralPath $TemplatePath)) { throw "Gabarit introuvable : $TemplatePath" }
     if ($LogoPath -and -not (Test-Path -LiteralPath $LogoPath)) { throw "Image introuvable : $LogoPath" }
 
+    # Word resolves a relative path against its own working directory, not ours.
+    $TemplatePath = (Resolve-Path -LiteralPath $TemplatePath).ProviderPath
+    if ($LogoPath) { $LogoPath = (Resolve-Path -LiteralPath $LogoPath).ProviderPath }
+
     if (-not (Resolve-WordConflict)) {
         [Console]::Error.WriteLine("WORD_ALREADY_RUNNING")
         exit 10
