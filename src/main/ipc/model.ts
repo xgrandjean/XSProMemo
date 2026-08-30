@@ -9,7 +9,6 @@ import { dataRoot, templatePath } from '../store/paths'
 import { getScriptPath } from '../render/wordRunner'
 import { requireLibraryPath } from './context'
 import { readHeaderImage } from '../render/templateInspector'
-import { keepLogoCopy, removeLogoCopies } from '../store/logoCopy'
 import type { ModelStatus } from '../../shared/types'
 
 const execFileAsync = promisify(execFile)
@@ -60,18 +59,15 @@ export function registerModelIpc(): void {
 
   ipcMain.handle('model:setLogo', async (_event, imageAbsPath: string) => {
     const root = await requireLibraryPath()
-
-    // The template is written from the image the user pointed at, before anything on
-    // disk moves: a failure here leaves the folder untouched.
+    // The chosen image is read, never moved or copied: the logo lives in the template
+    // header and nowhere else. Whatever else sits in the folder is none of our business.
     await runLogoScript(templatePath(root), path.resolve(imageAbsPath))
-    await keepLogoCopy(root, imageAbsPath)
     return buildStatus(root)
   })
 
   ipcMain.handle('model:clearLogo', async () => {
     const root = await requireLibraryPath()
     await runLogoScript(templatePath(root), null)
-    await removeLogoCopies(root)
     return buildStatus(root)
   })
 
