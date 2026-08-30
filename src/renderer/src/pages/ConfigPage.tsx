@@ -4,10 +4,6 @@ import { HelpButton } from '../components/Help'
 import { GabaritHelp, ExempleHelp } from '../components/HelpTexts'
 import type { Memoire, ModelStatus } from '../../../shared/types'
 
-function basename(fullPath: string): string {
-  return fullPath.split(/[\/]/).pop() ?? fullPath
-}
-
 export default function ConfigPage({ onBack }: { onBack: () => void }): JSX.Element {
   const [status, setStatus] = useState<ModelStatus | null>(null)
   const [sommaireTitle, setSommaireTitle] = useState('')
@@ -74,14 +70,17 @@ export default function ConfigPage({ onBack }: { onBack: () => void }): JSX.Elem
         <div className="field">
           <label>Logo en en-tête</label>
           <div className="row">
-            {/* The logo read back from the template, so what is shown is what will print. */}
+            {/* Read back from the template header: what is shown is what will print. */}
             <div className="logo-preview">
               {status.logoPreview ? (
-                <img src={status.logoPreview} alt="Logo en en-tête" />
+                <img src={status.logoPreview} alt="Logo présent dans l'en-tête du gabarit" />
               ) : (
                 <span className="muted">Aucun logo</span>
               )}
             </div>
+            <span className={`badge ${status.logoPreview ? 'ok' : ''}`}>
+              {status.logoPreview ? "En place dans l'en-tête" : "Absent de l'en-tête"}
+            </span>
             <button className="primary" onClick={chooseLogo} disabled={busy}>
               {status.logoPreview ? 'Remplacer le logo' : 'Choisir un logo'}
             </button>
@@ -97,12 +96,7 @@ export default function ConfigPage({ onBack }: { onBack: () => void }): JSX.Elem
           </div>
           <p className="muted" style={{ marginTop: 6 }}>
             L&apos;image est placée dans l&apos;en-tête du gabarit et apparaîtra en haut de
-            chaque page numérotée.
-            {status.logoFile && (
-              <>
-                {' '}Une copie est conservée dans le dossier sous <code>{basename(status.logoFile)}</code>.
-              </>
-            )}
+            chaque page numérotée. C&apos;est cet en-tête qui est affiché ici.
           </p>
         </div>
 

@@ -9,7 +9,7 @@ import { dataRoot, templatePath } from '../store/paths'
 import { getScriptPath } from '../render/wordRunner'
 import { requireLibraryPath } from './context'
 import { readHeaderImage } from '../render/templateInspector'
-import { findLogoFiles, keepLogoCopy, removeLogoCopies } from '../store/logoCopy'
+import { keepLogoCopy, removeLogoCopies } from '../store/logoCopy'
 import type { ModelStatus } from '../../shared/types'
 
 const execFileAsync = promisify(execFile)
@@ -51,8 +51,7 @@ async function buildStatus(root: string): Promise<ModelStatus> {
     dataFolder: root,
     templatePath: template,
     templateExists,
-    logoPreview: templateExists ? await readHeaderImage(template) : null,
-    logoFile: (await findLogoFiles(root))[0] ?? null
+    logoPreview: templateExists ? await readHeaderImage(template) : null
   }
 }
 

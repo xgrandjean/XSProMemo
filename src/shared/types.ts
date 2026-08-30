@@ -54,10 +54,11 @@ export interface ModelStatus {
   dataFolder: string
   templatePath: string
   templateExists: boolean
-  /** The logo currently in the template header, as a data URL, for the preview. */
+  /**
+   * The logo as it stands in the template header, as a data URL. This is the only
+   * thing the screen reports: a stray image file in the folder is not a logo.
+   */
   logoPreview: string | null
-  /** Copy of the chosen image kept alongside, so it can be reused or replaced. */
-  logoFile: string | null
 }
 
 export interface GenerationProgressEvent {
