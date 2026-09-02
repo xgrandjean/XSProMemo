@@ -57,38 +57,17 @@ try {
     $word.Visible = $false
     $word.DisplayAlerts = 0
 
-    $doc = $word.Documents.Open($TemplatePath, $false, $false)
+    . (Join-Path $PSScriptRoot "LogoHeader.ps1")
 
-    $pointsPerMm = 72.0 / 25.4
-    $placed = $false
+    $doc = $word.Documents.Open($TemplatePath, $false, $false)
 
     foreach ($section in $doc.Sections) {
         # Without this the template shows nothing when opened: it is a single page, so
         # Word displays the first-page header, which is not the one carrying the logo.
         $section.PageSetup.DifferentFirstPageHeaderFooter = 0
-
-        for ($i = 1; $i -le 3; $i++) {
-            $header = $section.Headers.Item($i)
-
-            # Clear whatever is there before placing the new logo, so repeated changes
-            # never stack images on top of each other.
-            while ($header.Range.InlineShapes.Count -gt 0) { $header.Range.InlineShapes.Item(1).Delete() }
-            while ($header.Shapes.Count -gt 0) { $header.Shapes.Item(1).Delete() }
-
-            if (-not $LogoPath) { continue }
-            # Only the primary header carries the logo; the others stay empty so a
-            # "different first page" template does not repeat it oddly.
-            if ($i -ne 1) { continue }
-
-            $range = $header.Range
-            $range.Text = ""
-            $shape = $doc.InlineShapes.AddPicture($LogoPath, $false, $true, $range)
-            $shape.LockAspectRatio = -1   # msoTrue
-            $shape.Height = $HeightMm * $pointsPerMm
-            $shape.Range.ParagraphFormat.Alignment = 2   # wdAlignParagraphRight
-            $placed = $true
-        }
     }
+
+    $placed = Set-HeaderLogo -TargetDoc $doc -Sections $doc.Sections -LogoPath $LogoPath -HeightMm $HeightMm
 
     $doc.Save()
     Write-Json (@{ type = "result"; status = "ok"; placed = $placed })

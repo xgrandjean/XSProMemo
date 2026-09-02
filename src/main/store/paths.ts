@@ -8,8 +8,9 @@ import { promises as fs } from 'node:fs'
  * files are meant to be edited and replaced by hand.
  *
  *   Documents/XSProMemo/
- *     Gabarit.docx      la présentation : styles, en-tête, pied de page
+ *     Gabarit.docx      la présentation : styles, logo par défaut, pied de page
  *     contenus/         les fichiers Word, nommés lisiblement
+ *     logos/            le logo propre à chaque mémoire (un par identifiant)
  *     memoires/         les plans (plomberie)
  *     documents/        les mémoires générés
  *     config.json
@@ -37,6 +38,11 @@ export function memoiresDir(root: string): string {
 
 export function documentsDir(root: string): string {
   return path.join(root, 'documents')
+}
+
+/** One image per mémoire — its own logo, independent of the shared template's. */
+export function logosDir(root: string): string {
+  return path.join(root, 'logos')
 }
 
 export function configJsonPath(root: string): string {

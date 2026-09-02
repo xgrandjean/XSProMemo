@@ -4,6 +4,7 @@ import { promises as fs } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { contentsDir, dataRoot, documentsDir, memoiresDir, templatePath, writeJsonAtomic } from './paths'
 import { readModelConfig, writeModelConfig } from './modelStore'
+import { snapshotLogoFromTemplate } from './logoStore'
 import type { ChapterNode, ContentRef, Memoire } from '../../shared/types'
 
 interface SeedNode {
@@ -98,13 +99,18 @@ export async function seedIfNeeded(): Promise<void> {
   }
 
   const now = new Date().toISOString()
+  const exampleId = randomUUID()
   const example: Memoire = {
-    id: randomUUID(),
+    id: exampleId,
     name: plan.name || 'Exemple',
     createdAt: now,
     updatedAt: now,
     coverPages: plan.coverPages,
     chapters: withIds(plan.chapters),
+    // Snapshotted from the shipped template, not the live one at templatePath(root):
+    // on a fresh install they are the same file, but this keeps the demo's own look
+    // fixed even if the default is changed before this first launch finishes.
+    logo: await snapshotLogoFromTemplate(root, exampleId, path.join(shipped, 'Gabarit.docx')),
     lastGeneratedAt: null,
     outputDocx: null,
     outputPdf: null

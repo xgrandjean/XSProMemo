@@ -1,12 +1,40 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
-import { memoiresDir, writeJsonAtomic } from './paths'
+import { memoiresDir, templatePath, writeJsonAtomic } from './paths'
 import { readModelConfig } from './modelStore'
+import { clearMemoireLogo, copyMemoireLogo, snapshotLogoFromTemplate } from './logoStore'
 import type { ChapterNode, Memoire, MemoireSummary } from '../../shared/types'
 
 function memoireFilePath(libraryPath: string, id: string): string {
   return path.join(memoiresDir(libraryPath), `${id}.json`)
+}
+
+async function exists(absPath: string): Promise<boolean> {
+  try {
+    await fs.access(absPath)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * A mémoire saved before it kept its own logo has none recorded (the field is simply
+ * absent from its JSON). Regenerating it today would otherwise silently swap in
+ * whatever the shared template currently carries. The best recoverable answer is what
+ * it was last generated with — it is baked into that document's own header — falling
+ * back to today's default only when there is nothing to recover.
+ */
+async function recoverLegacyLogo(
+  libraryPath: string,
+  memoire: Memoire
+): Promise<ReturnType<typeof snapshotLogoFromTemplate>> {
+  if (memoire.outputDocx && (await exists(memoire.outputDocx))) {
+    const fromOutput = await snapshotLogoFromTemplate(libraryPath, memoire.id, memoire.outputDocx)
+    if (fromOutput) return fromOutput
+  }
+  return snapshotLogoFromTemplate(libraryPath, memoire.id, templatePath(libraryPath))
 }
 
 export async function listMemoires(libraryPath: string): Promise<MemoireSummary[]> {
@@ -42,7 +70,12 @@ export async function listMemoires(libraryPath: string): Promise<MemoireSummary[
 
 export async function getMemoire(libraryPath: string, id: string): Promise<Memoire> {
   const raw = await fs.readFile(memoireFilePath(libraryPath, id), 'utf-8')
-  return JSON.parse(raw)
+  const memoire: Memoire = JSON.parse(raw)
+  if (memoire.logo !== undefined) return memoire
+
+  const migrated: Memoire = { ...memoire, logo: await recoverLegacyLogo(libraryPath, memoire) }
+  await writeJsonAtomic(memoireFilePath(libraryPath, id), migrated)
+  return migrated
 }
 
 export async function saveMemoire(libraryPath: string, memoire: Memoire): Promise<Memoire> {
@@ -52,6 +85,9 @@ export async function saveMemoire(libraryPath: string, memoire: Memoire): Promis
 }
 
 export async function deleteMemoire(libraryPath: string, id: string): Promise<void> {
+  // Unlike content files, a logo is never shared with another mémoire: nothing else
+  // could still be pointing at it.
+  await clearMemoireLogo(libraryPath, id)
   await fs.rm(memoireFilePath(libraryPath, id), { force: true })
 }
 
@@ -74,6 +110,7 @@ function blankMemoire(name: string): Memoire {
     updatedAt: now,
     coverPages: [],
     chapters: [],
+    logo: null,
     lastGeneratedAt: null,
     outputDocx: null,
     outputPdf: null
@@ -82,7 +119,9 @@ function blankMemoire(name: string): Memoire {
 
 /**
  * Creates a new mémoire as an independent copy of `sourceId` (normally the example).
- * Content files are shared by reference — only the plan is duplicated.
+ * Content files are shared by reference — only the plan is duplicated. The logo is a
+ * real copy, not a reference: it starts as the source's own, but changing either one
+ * afterward must not touch the other.
  */
 export async function createMemoireFrom(
   libraryPath: string,
@@ -90,16 +129,25 @@ export async function createMemoireFrom(
   sourceId: string | null
 ): Promise<Memoire> {
   const fresh = blankMemoire(name)
-  if (!sourceId) return saveMemoire(libraryPath, fresh)
 
-  let source: Memoire
-  try {
-    source = await getMemoire(libraryPath, sourceId)
-  } catch {
-    return saveMemoire(libraryPath, fresh)
+  let source: Memoire | null = null
+  if (sourceId) {
+    try {
+      source = await getMemoire(libraryPath, sourceId)
+    } catch {
+      source = null
+    }
   }
+
+  const logo = source
+    ? (await copyMemoireLogo(libraryPath, source.logo, fresh.id)) ??
+      (await snapshotLogoFromTemplate(libraryPath, fresh.id, templatePath(libraryPath)))
+    : await snapshotLogoFromTemplate(libraryPath, fresh.id, templatePath(libraryPath))
+
+  if (!source) return saveMemoire(libraryPath, { ...fresh, logo })
   return saveMemoire(libraryPath, {
     ...fresh,
+    logo,
     coverPages: source.coverPages.map((c) => ({ ...c })),
     chapters: cloneChapters(source.chapters)
   })

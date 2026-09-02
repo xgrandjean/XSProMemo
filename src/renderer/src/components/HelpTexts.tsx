@@ -94,7 +94,6 @@ export function GabaritHelp(): JSX.Element {
       </p>
       <ul>
         <li>les styles (à quoi ressemble un « Titre 1 », un « Titre 2 », le texte courant),</li>
-        <li>l&apos;en-tête, avec votre logo,</li>
         <li>le pied de page et le numéro de page,</li>
         <li>le format et les marges.</li>
       </ul>
@@ -103,9 +102,9 @@ export function GabaritHelp(): JSX.Element {
         les chapitres. C&apos;est donc lui qui donne son allure à tout le document.
       </p>
       <p>
-        <b>Le logo</b> se choisit depuis cet écran : désignez une image, l&apos;application
-        la place dans l&apos;en-tête à votre place. Elle apparaîtra en haut de chaque page
-        numérotée.
+        <b>Le logo choisi ici est celui des nouveaux mémoires</b>, pas de tous les
+        mémoires : chacun reçoit sa propre copie à sa création, modifiable ensuite depuis
+        son propre plan sans toucher ni ce réglage, ni les autres mémoires.
       </p>
       <p>
         Pour le reste — coordonnées en pied de page, couleurs des titres, marges — ouvrez
@@ -114,6 +113,27 @@ export function GabaritHelp(): JSX.Element {
       <p className="muted">
         Le titre du sommaire se règle ici aussi : c&apos;est le texte affiché au-dessus de
         la table des matières.
+      </p>
+    </>
+  )
+}
+
+export function LogoHelp(): JSX.Element {
+  return (
+    <>
+      <p>
+        Ce logo n&apos;appartient qu&apos;à ce mémoire. Il a été copié depuis le réglage
+        par défaut au moment de la création, mais dès cet instant les deux sont
+        indépendants : changer l&apos;un ne touche ni l&apos;autre, ni les mémoires
+        voisins.
+      </p>
+      <p>
+        Utile pour un groupement ou un partenaire dont le logo doit figurer sur ce dossier
+        précis, sans changer ce que produiront les autres.
+      </p>
+      <p className="muted">
+        Pour changer le logo par défaut proposé aux futurs mémoires, c&apos;est dans la
+        Configuration, derrière l&apos;engrenage.
       </p>
     </>
   )

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import ChapterRows, { type ChapterActions } from './ChapterRows'
 import ContentSlot from './ContentSlot'
 import { HelpButton } from './Help'
-import { CoverHelp, PlanHelp } from './HelpTexts'
+import { CoverHelp, LogoHelp, PlanHelp } from './HelpTexts'
 import { addChild, moveNode, newChapter, removeNode, updateNode } from '../lib/chapterTree'
 import type { ContentRef, Memoire } from '../../../shared/types'
 
@@ -22,6 +22,9 @@ export default function MemoirePlanEditor({
   const [draft, setDraft] = useState<Memoire>(memoire)
   const [status, setStatus] = useState<'saved' | 'saving' | 'dirty'>('saved')
   const [error, setError] = useState<string | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [logoBusy, setLogoBusy] = useState(false)
+  const [logoError, setLogoError] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const latest = useRef(draft)
 
@@ -30,6 +33,46 @@ export default function MemoirePlanEditor({
     latest.current = memoire
     setStatus('saved')
   }, [memoire.id])
+
+  // The logo is saved server-side the moment it changes, unlike the rest of the plan:
+  // it bypasses the autosave timer entirely, so its own preview is fetched separately.
+  useEffect(() => {
+    let cancelled = false
+    window.api.memoires.logoPreview(memoire.id).then((preview) => {
+      if (!cancelled) setLogoPreview(preview)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [memoire.id])
+
+  async function chooseLogo(): Promise<void> {
+    const imagePath = await window.api.dialogs.pickImage()
+    if (!imagePath) return
+    setLogoError(null)
+    setLogoBusy(true)
+    try {
+      await window.api.memoires.setLogo(memoire.id, imagePath)
+      setLogoPreview(await window.api.memoires.logoPreview(memoire.id))
+    } catch (err) {
+      setLogoError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLogoBusy(false)
+    }
+  }
+
+  async function clearLogo(): Promise<void> {
+    setLogoError(null)
+    setLogoBusy(true)
+    try {
+      await window.api.memoires.clearLogo(memoire.id)
+      setLogoPreview(null)
+    } catch (err) {
+      setLogoError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLogoBusy(false)
+    }
+  }
 
   function edit(mutate: (current: Memoire) => Memoire): void {
     setDraft((current) => {
@@ -99,6 +142,39 @@ export default function MemoirePlanEditor({
 
   return (
     <div>
+      <div className="panel">
+        <div className="panel-head">
+          <h2>Logo</h2>
+          <HelpButton title="Le logo de ce mémoire">
+            <LogoHelp />
+          </HelpButton>
+          <span className="muted">
+            Propre à ce mémoire : le changer ici n&apos;affecte ni le gabarit, ni les
+            autres mémoires.
+          </span>
+        </div>
+        <div className="field">
+          <div className="row">
+            <div className="logo-preview">
+              {logoPreview ? (
+                <img src={logoPreview} alt="Logo de ce mémoire" />
+              ) : (
+                <span className="muted">Aucun logo</span>
+              )}
+            </div>
+            <button className="primary" onClick={chooseLogo} disabled={logoBusy}>
+              {logoPreview ? 'Remplacer le logo' : 'Choisir un logo'}
+            </button>
+            {logoPreview && (
+              <button className="danger" onClick={clearLogo} disabled={logoBusy}>
+                Retirer
+              </button>
+            )}
+          </div>
+          {logoError && <p className="error-text">{logoError}</p>}
+        </div>
+      </div>
+
       <div className="panel">
         <div className="panel-head">
           <h2>Pages de garde</h2>

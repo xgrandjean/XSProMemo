@@ -28,6 +28,12 @@ export interface Memoire {
   updatedAt: string
   coverPages: ContentRef[] // first, unnumbered, absent from the table of contents
   chapters: ChapterNode[]
+  /**
+   * This mémoire's own logo, independent of the shared template's. Set from the
+   * default at creation time, then editable from the mémoire's own plan screen without
+   * affecting the default or any other mémoire.
+   */
+  logo: ContentRef | null
   lastGeneratedAt: string | null
   outputDocx: string | null
   outputPdf: string | null

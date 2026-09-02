@@ -38,7 +38,12 @@ const api = {
     importContent: (sourceAbsPath: string): Promise<ContentRef> =>
       ipcRenderer.invoke('memoires:importContent', sourceAbsPath),
     openContent: (relativePath: string): Promise<void> =>
-      ipcRenderer.invoke('memoires:openContent', relativePath)
+      ipcRenderer.invoke('memoires:openContent', relativePath),
+    setLogo: (id: string, imageAbsPath: string): Promise<Memoire> =>
+      ipcRenderer.invoke('memoires:setLogo', { id, imageAbsPath }),
+    clearLogo: (id: string): Promise<Memoire> => ipcRenderer.invoke('memoires:clearLogo', id),
+    logoPreview: (id: string): Promise<string | null> =>
+      ipcRenderer.invoke('memoires:logoPreview', id)
   },
   generation: {
     run: (memoireId: string): Promise<GenerationResult> =>

@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { promises as fs } from 'node:fs'
-import { documentsDir, resolveContentFile, templatePath } from '../store/paths'
+import { documentsDir, logosDir, resolveContentFile, templatePath } from '../store/paths'
 import { readModelConfig } from '../store/modelStore'
 import { getMemoire, saveMemoire } from '../store/memoireStore'
 import { flattenChapters } from './plan'
@@ -44,6 +44,20 @@ export async function generateMemoire(
   }
 
   onProgress('Préparation...')
+
+  // The mémoire's own logo, not whatever the shared template currently carries: two
+  // mémoires open at the same time must not affect each other's when one changes.
+  let logoPath: string | null = null
+  if (memoire.logo) {
+    const candidate = path.join(logosDir(libraryPath), memoire.logo.file)
+    try {
+      await fs.access(candidate)
+      logoPath = candidate
+    } catch {
+      warnings.push('Le logo de ce mémoire est introuvable ; le document a été généré sans logo.')
+    }
+  }
+
   const coverPages: string[] = []
   for (const cover of memoire.coverPages) {
     const resolved = await resolveContent(cover, cover.originalName)
@@ -94,6 +108,7 @@ export async function generateMemoire(
     outputDocxPath,
     outputPdfPath,
     sommaireTitle: config.sommaireTitle,
+    logoPath,
     coverPages,
     chapters
   }

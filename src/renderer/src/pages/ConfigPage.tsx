@@ -63,12 +63,13 @@ export default function ConfigPage({ onBack }: { onBack: () => void }): JSX.Elem
             <GabaritHelp />
           </HelpButton>
           <span className="muted">
-            Ce qui habille chaque page produite : le logo, les styles, le pied de page.
+            Ce qui habille chaque page produite : les styles, le pied de page, et le logo
+            proposé par défaut aux nouveaux mémoires.
           </span>
         </div>
 
         <div className="field">
-          <label>Logo en en-tête</label>
+          <label>Logo par défaut des nouveaux mémoires</label>
           <div className="row">
             {/* Read back from the template header: what is shown is what will print. */}
             <div className="logo-preview">
@@ -95,8 +96,10 @@ export default function ConfigPage({ onBack }: { onBack: () => void }): JSX.Elem
             )}
           </div>
           <p className="muted" style={{ marginTop: 6 }}>
-            L&apos;image est placée dans l&apos;en-tête du gabarit et apparaîtra en haut de
-            chaque page numérotée. C&apos;est cet en-tête qui est affiché ici.
+            Chaque mémoire reçoit sa propre copie de cette image au moment de sa création.
+            Un changement ici ne modifie ni les mémoires déjà créés, ni leurs futures
+            régénérations — chacun garde le logo qu&apos;il porte, modifiable depuis son
+            propre plan.
           </p>
         </div>
 

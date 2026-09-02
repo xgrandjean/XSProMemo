@@ -8,6 +8,7 @@ import {
 } from '../store/memoireStore'
 import { readModelConfig, importContent } from '../store/modelStore'
 import { resolveContentFile } from '../store/paths'
+import { setMemoireLogo, clearMemoireLogo, readMemoireLogoPreview } from '../store/logoStore'
 import { requireLibraryPath } from './context'
 import type { Memoire } from '../../shared/types'
 
@@ -55,5 +56,29 @@ export function registerMemoiresIpc(): void {
     const libraryPath = await requireLibraryPath()
     const error = await shell.openPath(resolveContentFile(libraryPath, relativePath))
     if (error) throw new Error(error)
+  })
+
+  /**
+   * This mémoire's own logo — independent of the shared template and of every other
+   * mémoire. Changing it here never reaches back into another one.
+   */
+  ipcMain.handle('memoires:setLogo', async (_event, input: { id: string; imageAbsPath: string }) => {
+    const libraryPath = await requireLibraryPath()
+    const memoire = await getMemoire(libraryPath, input.id)
+    const logo = await setMemoireLogo(libraryPath, memoire.id, input.imageAbsPath)
+    return saveMemoire(libraryPath, { ...memoire, logo })
+  })
+
+  ipcMain.handle('memoires:clearLogo', async (_event, id: string) => {
+    const libraryPath = await requireLibraryPath()
+    const memoire = await getMemoire(libraryPath, id)
+    await clearMemoireLogo(libraryPath, id)
+    return saveMemoire(libraryPath, { ...memoire, logo: null })
+  })
+
+  ipcMain.handle('memoires:logoPreview', async (_event, id: string) => {
+    const libraryPath = await requireLibraryPath()
+    const memoire = await getMemoire(libraryPath, id)
+    return readMemoireLogoPreview(libraryPath, memoire.logo)
   })
 }

@@ -2,7 +2,7 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import JSZip from 'jszip'
 
-const MIME_BY_EXTENSION: Record<string, string> = {
+export const MIME_BY_EXTENSION: Record<string, string> = {
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -12,12 +12,9 @@ const MIME_BY_EXTENSION: Record<string, string> = {
   '.tiff': 'image/tiff'
 }
 
-/**
- * The picture sitting in the template's header, as a data URL, so the configuration
- * screen can show the logo actually in use rather than merely claim there is one.
- * Read straight from the file: no Word involved.
- */
-export async function readHeaderImage(templateAbsPath: string): Promise<string | null> {
+async function findHeaderImage(
+  templateAbsPath: string
+): Promise<{ bytes: Buffer; ext: string } | null> {
   try {
     const zip = await JSZip.loadAsync(await fs.readFile(templateAbsPath))
 
@@ -40,12 +37,34 @@ export async function readHeaderImage(templateAbsPath: string): Promise<string |
       const media = zip.file(mediaPath)
       if (!media) continue
 
-      const mime = MIME_BY_EXTENSION[path.extname(mediaPath).toLowerCase()] ?? 'image/png'
       const bytes = await media.async('nodebuffer')
-      return `data:${mime};base64,${bytes.toString('base64')}`
+      return { bytes, ext: path.extname(mediaPath).toLowerCase() || '.png' }
     }
     return null
   } catch {
     return null
   }
+}
+
+/**
+ * The picture sitting in a template's header, as a data URL, so the configuration
+ * screen can show the logo actually in use rather than merely claim there is one.
+ * Read straight from the file: no Word involved.
+ */
+export async function readHeaderImage(templateAbsPath: string): Promise<string | null> {
+  const found = await findHeaderImage(templateAbsPath)
+  if (!found) return null
+  const mime = MIME_BY_EXTENSION[found.ext] ?? 'image/png'
+  return `data:${mime};base64,${found.bytes.toString('base64')}`
+}
+
+/**
+ * The raw bytes of the picture in a template's header, for snapshotting it as a
+ * mémoire's own logo — recovering one that was never stored on its own, either from a
+ * shipped template or from a document that document already carries it baked in.
+ */
+export async function extractHeaderImage(
+  templateAbsPath: string
+): Promise<{ bytes: Buffer; ext: string } | null> {
+  return findHeaderImage(templateAbsPath)
 }

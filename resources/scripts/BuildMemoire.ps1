@@ -9,7 +9,7 @@
 
 .PARAMETER ManifestPath
   JSON : {
-    shellPath, outputDocxPath, outputPdfPath, sommaireTitle,
+    shellPath, outputDocxPath, outputPdfPath, sommaireTitle, logoPath|null,
     coverPages: [ chemin .docx ],
     chapters: [ { title, level, orientation, pageBreakBefore, contentPath|null } ]
   }
@@ -79,6 +79,8 @@ try {
         $previousAllowReadingMode = $word.Options.AllowReadingMode
         $word.Options.AllowReadingMode = $false
     } catch {}
+
+    . (Join-Path $PSScriptRoot "LogoHeader.ps1")
 
     Copy-Item -Force -LiteralPath $manifest.shellPath -Destination $manifest.outputDocxPath
     $doc = $word.Documents.Open($manifest.outputDocxPath, $false, $false)
@@ -216,6 +218,13 @@ try {
             $section.Footers.Item(1).Range.Delete()
         }
     }
+
+    # Le logo du memoire, pas celui que porte le gabarit partage a l'instant present :
+    # deux memoires ouverts en parallele ne doivent pas se marcher dessus si l'un change
+    # de logo pendant que l'autre est en cours. Seul le corps le recoit, jamais la garde.
+    $bodySections = @()
+    for ($i = $bodySectionIndex; $i -le $doc.Sections.Count; $i++) { $bodySections += $doc.Sections.Item($i) }
+    Set-HeaderLogo -TargetDoc $doc -Sections $bodySections -LogoPath ([string]$manifest.logoPath) | Out-Null
 
     # --- Numerotation : elle repart a 1 apres la page de garde ---
     if ($bodySectionIndex -gt 1 -and $doc.Sections.Count -ge $bodySectionIndex) {
