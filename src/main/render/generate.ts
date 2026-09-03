@@ -45,18 +45,21 @@ export async function generateMemoire(
 
   onProgress('Préparation...')
 
-  // The mémoire's own logo, not whatever the shared template currently carries: two
+  // The mémoire's own logos, not whatever the shared template currently carries: two
   // mémoires open at the same time must not affect each other's when one changes.
-  let logoPath: string | null = null
-  if (memoire.logo) {
-    const candidate = path.join(logosDir(libraryPath), memoire.logo.file)
+  async function resolveLogo(logo: ContentRef | null, label: string): Promise<string | null> {
+    if (!logo) return null
+    const candidate = path.join(logosDir(libraryPath), logo.file)
     try {
       await fs.access(candidate)
-      logoPath = candidate
+      return candidate
     } catch {
-      warnings.push('Le logo de ce mémoire est introuvable ; le document a été généré sans logo.')
+      warnings.push(`${label} de ce mémoire est introuvable ; le document a été généré sans.`)
+      return null
     }
   }
+  const logoPath = await resolveLogo(memoire.logo, 'Le logo')
+  const secondLogoPath = await resolveLogo(memoire.secondLogo, 'Le second logo')
 
   const coverPages: string[] = []
   for (const cover of memoire.coverPages) {
@@ -109,6 +112,7 @@ export async function generateMemoire(
     outputPdfPath,
     sommaireTitle: config.sommaireTitle,
     logoPath,
+    secondLogoPath,
     coverPages,
     chapters
   }

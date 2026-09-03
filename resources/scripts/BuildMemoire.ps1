@@ -9,7 +9,7 @@
 
 .PARAMETER ManifestPath
   JSON : {
-    shellPath, outputDocxPath, outputPdfPath, sommaireTitle, logoPath|null,
+    shellPath, outputDocxPath, outputPdfPath, sommaireTitle, logoPath|null, secondLogoPath|null,
     coverPages: [ chemin .docx ],
     chapters: [ { title, level, orientation, pageBreakBefore, contentPath|null } ]
   }
@@ -224,7 +224,8 @@ try {
     # de logo pendant que l'autre est en cours. Seul le corps le recoit, jamais la garde.
     $bodySections = @()
     for ($i = $bodySectionIndex; $i -le $doc.Sections.Count; $i++) { $bodySections += $doc.Sections.Item($i) }
-    Set-HeaderLogo -TargetDoc $doc -Sections $bodySections -LogoPath ([string]$manifest.logoPath) | Out-Null
+    Set-HeaderLogo -TargetDoc $doc -Sections $bodySections `
+        -RightLogoPath ([string]$manifest.logoPath) -LeftLogoPath ([string]$manifest.secondLogoPath) | Out-Null
 
     # --- Numerotation : elle repart a 1 apres la page de garde ---
     if ($bodySectionIndex -gt 1 -and $doc.Sections.Count -ge $bodySectionIndex) {

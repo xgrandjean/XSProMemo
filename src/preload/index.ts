@@ -3,6 +3,7 @@ import type {
   ContentRef,
   GenerationProgressEvent,
   GenerationResult,
+  LogoField,
   Memoire,
   MemoireSummary,
   ModelStatus
@@ -36,11 +37,12 @@ const api = {
       ipcRenderer.invoke('memoires:importContent', sourceAbsPath),
     openContent: (relativePath: string): Promise<void> =>
       ipcRenderer.invoke('memoires:openContent', relativePath),
-    setLogo: (id: string, imageAbsPath: string): Promise<Memoire> =>
-      ipcRenderer.invoke('memoires:setLogo', { id, imageAbsPath }),
-    clearLogo: (id: string): Promise<Memoire> => ipcRenderer.invoke('memoires:clearLogo', id),
-    logoPreview: (id: string): Promise<string | null> =>
-      ipcRenderer.invoke('memoires:logoPreview', id)
+    setLogo: (id: string, field: LogoField, imageAbsPath: string): Promise<Memoire> =>
+      ipcRenderer.invoke('memoires:setLogo', { id, field, imageAbsPath }),
+    clearLogo: (id: string, field: LogoField): Promise<Memoire> =>
+      ipcRenderer.invoke('memoires:clearLogo', { id, field }),
+    logoPreview: (id: string, field: LogoField): Promise<string | null> =>
+      ipcRenderer.invoke('memoires:logoPreview', { id, field })
   },
   generation: {
     run: (memoireId: string): Promise<GenerationResult> =>

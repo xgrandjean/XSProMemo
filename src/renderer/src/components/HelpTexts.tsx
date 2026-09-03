@@ -122,17 +122,19 @@ export function LogoHelp(): JSX.Element {
   return (
     <>
       <p>
-        Ce logo n&apos;appartient qu&apos;à ce mémoire. Il a été copié depuis l&apos;exemple
-        au moment de la création, mais dès cet instant les deux sont indépendants :
-        changer l&apos;un ne touche ni l&apos;autre, ni les mémoires voisins.
+        Deux emplacements, indépendants l&apos;un de l&apos;autre : le logo en haut à
+        droite, et un second en haut à gauche — pour un groupement ou un client dont le
+        logo doit figurer sur ce dossier précis, à côté du vôtre.
       </p>
       <p>
-        Utile pour un groupement ou un partenaire dont le logo doit figurer sur ce dossier
-        précis, sans changer ce que produiront les autres.
+        Ni l&apos;un ni l&apos;autre n&apos;appartient qu&apos;à ce mémoire. Ils ont été
+        copiés depuis l&apos;exemple au moment de la création, mais dès cet instant tout
+        est indépendant : changer l&apos;un ne touche ni l&apos;autre emplacement, ni un
+        autre mémoire.
       </p>
       <p className="muted">
-        Pour changer celui proposé aux futurs mémoires, réglez-le sur l&apos;exemple, dans
-        la Configuration.
+        Pour changer ce que proposent les futurs mémoires, réglez-le sur l&apos;exemple,
+        dans la Configuration.
       </p>
     </>
   )

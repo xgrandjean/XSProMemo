@@ -108,7 +108,8 @@ export async function seedIfNeeded(): Promise<void> {
     updatedAt: now,
     coverPages: plan.coverPages,
     chapters: withIds(plan.chapters),
-    logo: (await exists(shippedLogo)) ? await setMemoireLogo(root, exampleId, shippedLogo) : null,
+    logo: (await exists(shippedLogo)) ? await setMemoireLogo(root, exampleId, 'logo', shippedLogo) : null,
+    secondLogo: null,
     lastGeneratedAt: null,
     outputDocx: null,
     outputPdf: null

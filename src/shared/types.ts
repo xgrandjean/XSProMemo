@@ -11,6 +11,9 @@ export interface ContentRef {
   originalName: string
 }
 
+/** 'logo' sits at the top right of every page, 'secondLogo' at the top left. */
+export type LogoField = 'logo' | 'secondLogo'
+
 export interface ChapterNode {
   id: string
   title: string
@@ -29,11 +32,13 @@ export interface Memoire {
   coverPages: ContentRef[] // first, unnumbered, absent from the table of contents
   chapters: ChapterNode[]
   /**
-   * This mémoire's own logo, independent of the shared template's. Set from the
-   * default at creation time, then editable from the mémoire's own plan screen without
-   * affecting the default or any other mémoire.
+   * This mémoire's own logo (top right), independent of the shared template's. Set from
+   * the example at creation time, then editable from the mémoire's own plan screen
+   * without affecting the example or any other mémoire.
    */
   logo: ContentRef | null
+  /** A second logo, top left — typically a partner's or a client's, for this one mémoire. */
+  secondLogo: ContentRef | null
   lastGeneratedAt: string | null
   outputDocx: string | null
   outputPdf: string | null

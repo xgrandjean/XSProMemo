@@ -2,19 +2,27 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { logosDir } from './paths'
 import { extractHeaderImage, MIME_BY_EXTENSION } from '../render/templateInspector'
-import type { ContentRef } from '../../shared/types'
+import type { ContentRef, LogoField } from '../../shared/types'
 
 /**
- * Each mémoire keeps its own logo file, so changing the default in Configuration — or
- * setting a different one for another mémoire — never reaches back into one already
- * created. This is the pool for those files, one per mémoire id.
+ * Each mémoire keeps its own logo files — up to two, `logo` (top right) and
+ * `secondLogo` (top left, typically a partner's or a client's) — so changing one
+ * mémoire's never reaches back into another's. This is the pool for those files, one
+ * per mémoire id and slot.
  */
 
-async function removeExisting(root: string, memoireId: string): Promise<void> {
+/** `logo` keeps the file name it always had (`<id>.<ext>`); `secondLogo` gets a suffix,
+ * so the two never collide and existing data needs no migration. */
+function prefixFor(memoireId: string, field: LogoField): string {
+  return field === 'secondLogo' ? `${memoireId}-2.` : `${memoireId}.`
+}
+
+async function removeExisting(root: string, memoireId: string, field: LogoField): Promise<void> {
   const dir = logosDir(root)
+  const prefix = prefixFor(memoireId, field)
   const entries = await fs.readdir(dir).catch(() => [] as string[])
   for (const entry of entries) {
-    if (entry.startsWith(`${memoireId}.`)) await fs.rm(path.join(dir, entry), { force: true })
+    if (entry.startsWith(prefix)) await fs.rm(path.join(dir, entry), { force: true })
   }
 }
 
@@ -22,24 +30,30 @@ async function removeExisting(root: string, memoireId: string): Promise<void> {
 export async function setMemoireLogo(
   root: string,
   memoireId: string,
+  field: LogoField,
   sourceAbsPath: string
 ): Promise<ContentRef> {
   await fs.mkdir(logosDir(root), { recursive: true })
-  await removeExisting(root, memoireId)
+  await removeExisting(root, memoireId, field)
   const ext = path.extname(sourceAbsPath).toLowerCase() || '.png'
-  const fileName = `${memoireId}${ext}`
+  const fileName = `${prefixFor(memoireId, field)}${ext.slice(1)}`
   await fs.copyFile(sourceAbsPath, path.join(logosDir(root), fileName))
   return { file: fileName, originalName: path.basename(sourceAbsPath) }
 }
 
-export async function clearMemoireLogo(root: string, memoireId: string): Promise<void> {
-  await removeExisting(root, memoireId)
+export async function clearMemoireLogo(
+  root: string,
+  memoireId: string,
+  field: LogoField
+): Promise<void> {
+  await removeExisting(root, memoireId, field)
 }
 
 /** Used when duplicating a mémoire, or creating one from the example: same picture. */
 export async function copyMemoireLogo(
   root: string,
   fromLogo: ContentRef | null,
+  field: LogoField,
   toMemoireId: string
 ): Promise<ContentRef | null> {
   if (!fromLogo) return null
@@ -51,15 +65,15 @@ export async function copyMemoireLogo(
   }
   await fs.mkdir(logosDir(root), { recursive: true })
   const ext = path.extname(fromLogo.file)
-  const fileName = `${toMemoireId}${ext}`
+  const fileName = `${prefixFor(toMemoireId, field)}${ext.slice(1)}`
   await fs.copyFile(source, path.join(logosDir(root), fileName))
   return { file: fileName, originalName: fromLogo.originalName }
 }
 
 /**
- * Snapshots the picture found in a template's header as this mémoire's own logo — used
- * for a brand-new mémoire (starting from the current default) and to recover one from
- * before each mémoire kept its own.
+ * Snapshots the picture found in a template's header as this mémoire's own (primary)
+ * logo — used to recover one from before each mémoire kept its own. There is nothing
+ * to recover a second logo from: that slot is new, no old document ever carried one.
  */
 export async function snapshotLogoFromTemplate(
   root: string,
@@ -69,12 +83,12 @@ export async function snapshotLogoFromTemplate(
   const found = await extractHeaderImage(templateAbsPath)
   if (!found) return null
   await fs.mkdir(logosDir(root), { recursive: true })
-  const fileName = `${memoireId}${found.ext}`
+  const fileName = `${prefixFor(memoireId, 'logo')}${found.ext.slice(1)}`
   await fs.writeFile(path.join(logosDir(root), fileName), found.bytes)
   return { file: fileName, originalName: `Logo${found.ext}` }
 }
 
-/** The mémoire's own logo, as a data URL, for its plan screen. */
+/** One of the mémoire's logos, as a data URL, for its plan screen. */
 export async function readMemoireLogoPreview(
   root: string,
   logo: ContentRef | null

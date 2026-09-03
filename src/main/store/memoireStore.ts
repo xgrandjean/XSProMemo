@@ -69,12 +69,21 @@ export async function listMemoires(libraryPath: string): Promise<MemoireSummary[
 
 export async function getMemoire(libraryPath: string, id: string): Promise<Memoire> {
   const raw = await fs.readFile(memoireFilePath(libraryPath, id), 'utf-8')
-  const memoire: Memoire = JSON.parse(raw)
-  if (memoire.logo !== undefined) return memoire
+  let memoire: Memoire = JSON.parse(raw)
+  let migrated = false
 
-  const migrated: Memoire = { ...memoire, logo: await recoverLegacyLogo(libraryPath, memoire) }
-  await writeJsonAtomic(memoireFilePath(libraryPath, id), migrated)
-  return migrated
+  if (memoire.logo === undefined) {
+    memoire = { ...memoire, logo: await recoverLegacyLogo(libraryPath, memoire) }
+    migrated = true
+  }
+  // The second logo is a newer slot still: nothing existed before it to recover.
+  if (memoire.secondLogo === undefined) {
+    memoire = { ...memoire, secondLogo: null }
+    migrated = true
+  }
+
+  if (migrated) await writeJsonAtomic(memoireFilePath(libraryPath, id), memoire)
+  return memoire
 }
 
 export async function saveMemoire(libraryPath: string, memoire: Memoire): Promise<Memoire> {
@@ -86,7 +95,8 @@ export async function saveMemoire(libraryPath: string, memoire: Memoire): Promis
 export async function deleteMemoire(libraryPath: string, id: string): Promise<void> {
   // Unlike content files, a logo is never shared with another mémoire: nothing else
   // could still be pointing at it.
-  await clearMemoireLogo(libraryPath, id)
+  await clearMemoireLogo(libraryPath, id, 'logo')
+  await clearMemoireLogo(libraryPath, id, 'secondLogo')
   await fs.rm(memoireFilePath(libraryPath, id), { force: true })
 }
 
@@ -110,6 +120,7 @@ function blankMemoire(name: string): Memoire {
     coverPages: [],
     chapters: [],
     logo: null,
+    secondLogo: null,
     lastGeneratedAt: null,
     outputDocx: null,
     outputPdf: null
@@ -140,12 +151,16 @@ export async function createMemoireFrom(
 
   // A brand-new mémoire with no source (or nothing to copy from) starts with no logo:
   // there is nothing to guess it from, and the user picks one from the plan if needed.
-  const logo = source ? await copyMemoireLogo(libraryPath, source.logo, fresh.id) : null
+  const logo = source ? await copyMemoireLogo(libraryPath, source.logo, 'logo', fresh.id) : null
+  const secondLogo = source
+    ? await copyMemoireLogo(libraryPath, source.secondLogo, 'secondLogo', fresh.id)
+    : null
 
-  if (!source) return saveMemoire(libraryPath, { ...fresh, logo })
+  if (!source) return saveMemoire(libraryPath, { ...fresh, logo, secondLogo })
   return saveMemoire(libraryPath, {
     ...fresh,
     logo,
+    secondLogo,
     coverPages: source.coverPages.map((c) => ({ ...c })),
     chapters: cloneChapters(source.chapters)
   })
