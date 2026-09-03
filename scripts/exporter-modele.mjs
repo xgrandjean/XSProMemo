@@ -142,28 +142,43 @@ async function principal() {
   }
 
   // --- Le gabarit ---
-  // Copié puis retatoué : le gabarit livré porte le logo XSPro, jamais celui du poste
-  // de développement.
+  // Presentation seule desormais : styles, marges, pied de page. Le logo n'y vit plus,
+  // mais le gabarit de travail peut encore en porter un, reste d'avant ce changement --
+  // on ne le recopie donc pas tel quel : son en-tete est videe apres coup, pour que le
+  // gabarit livre soit toujours nu, quel que soit l'etat du poste de developpement.
   if (!simuler) {
     await fs.copyFile(path.join(source, 'Gabarit.docx'), path.join(cible, 'Gabarit.docx'))
-    await execFileAsync(
-      'powershell.exe',
-      [
-        '-NoProfile',
-        '-NonInteractive',
-        '-ExecutionPolicy',
-        'Bypass',
-        '-File',
-        path.join(projet, 'resources', 'scripts', 'SetLogo.ps1'),
-        '-TemplatePath',
-        path.join(cible, 'Gabarit.docx'),
-        '-LogoPath',
-        logo
-      ],
-      { windowsHide: true, timeout: 3 * 60_000 }
-    )
+    try {
+      await execFileAsync(
+        'powershell.exe',
+        [
+          '-NoProfile',
+          '-NonInteractive',
+          '-ExecutionPolicy',
+          'Bypass',
+          '-Command',
+          `. '${path.join(projet, 'resources', 'scripts', 'LogoHeader.ps1')}'; ` +
+            `$w = New-Object -ComObject Word.Application; $w.Visible = $false; $w.DisplayAlerts = 0; ` +
+            `try { $d = $w.Documents.Open('${path.join(cible, 'Gabarit.docx')}', $false, $false); ` +
+            `Set-HeaderLogo -TargetDoc $d -Sections $d.Sections -LogoPath $null | Out-Null; ` +
+            `$d.Save(); $d.Close(0) } finally { $w.Quit() }`
+        ],
+        { windowsHide: true, timeout: 60_000 }
+      )
+    } catch (erreur) {
+      note(`  ATTENTION : l'en-tête du gabarit livré n'a pas pu être vidée (${erreur.message}).`)
+    }
   }
-  note('Gabarit : copié, puis logo XSPro réappliqué dans l\'en-tête')
+  note('Gabarit : copié (styles, marges, pied de page — en-tête vidée)')
+
+  // --- Le logo de l'exemple ---
+  // Toujours celui de XSPro a la livraison, jamais celui, personnalise, en cours de
+  // test sur ce poste : c'est desormais le seul point de depart du logo de chaque
+  // nouveau memoire.
+  if (!simuler) {
+    await fs.copyFile(logo, path.join(cible, 'Logo.png'))
+  }
+  note("Logo de l'exemple : toujours celui de XSPro (build/logo.png), jamais celui du poste")
 
   if (config.sommaireTitle && config.sommaireTitle !== 'Sommaire') {
     note(

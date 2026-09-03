@@ -102,9 +102,9 @@ export function GabaritHelp(): JSX.Element {
         les chapitres. C&apos;est donc lui qui donne son allure à tout le document.
       </p>
       <p>
-        <b>Le logo choisi ici est celui des nouveaux mémoires</b>, pas de tous les
-        mémoires : chacun reçoit sa propre copie à sa création, modifiable ensuite depuis
-        son propre plan sans toucher ni ce réglage, ni les autres mémoires.
+        Le logo n&apos;en fait pas partie : chaque mémoire porte le sien, réglé depuis son
+        propre plan. Celui du mémoire exemple, juste en dessous, est celui que reçoivent
+        les nouveaux mémoires.
       </p>
       <p>
         Pour le reste — coordonnées en pied de page, couleurs des titres, marges — ouvrez
@@ -122,18 +122,17 @@ export function LogoHelp(): JSX.Element {
   return (
     <>
       <p>
-        Ce logo n&apos;appartient qu&apos;à ce mémoire. Il a été copié depuis le réglage
-        par défaut au moment de la création, mais dès cet instant les deux sont
-        indépendants : changer l&apos;un ne touche ni l&apos;autre, ni les mémoires
-        voisins.
+        Ce logo n&apos;appartient qu&apos;à ce mémoire. Il a été copié depuis l&apos;exemple
+        au moment de la création, mais dès cet instant les deux sont indépendants :
+        changer l&apos;un ne touche ni l&apos;autre, ni les mémoires voisins.
       </p>
       <p>
         Utile pour un groupement ou un partenaire dont le logo doit figurer sur ce dossier
         précis, sans changer ce que produiront les autres.
       </p>
       <p className="muted">
-        Pour changer le logo par défaut proposé aux futurs mémoires, c&apos;est dans la
-        Configuration, derrière l&apos;engrenage.
+        Pour changer celui proposé aux futurs mémoires, réglez-le sur l&apos;exemple, dans
+        la Configuration.
       </p>
     </>
   )
@@ -144,11 +143,13 @@ export function ExempleHelp(): JSX.Element {
     <>
       <p>
         L&apos;exemple est le <b>point de départ de chaque nouveau mémoire</b>. Mettez-y le
-        plan que vous réutilisez le plus souvent, avec vos contenus habituels.
+        plan que vous réutilisez le plus souvent, avec vos contenus habituels — et son
+        logo, celui qui apparaît sur un mémoire tout juste créé.
       </p>
       <p>
         Quand vous créez un mémoire, l&apos;application en fait une copie complète et
-        indépendante. Modifier ce mémoire ne touche pas à l&apos;exemple, et inversement.
+        indépendante, logo compris. Modifier ce mémoire ne touche pas à l&apos;exemple, et
+        inversement.
       </p>
       <p>
         Mieux vaut un exemple <b>trop fourni que trop pauvre</b> : il est plus rapide de

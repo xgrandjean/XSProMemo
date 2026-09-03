@@ -13,7 +13,6 @@
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "build:win": "electron-vite build && electron-builder --win",
-    "logo:gabarit": "powershell -NoProfile -ExecutionPolicy Bypass -File resources/scripts/SetLogo.ps1 -TemplatePath resources/exemple/Gabarit.docx -LogoPath build/logo.png",
     "modele:figer": "node scripts/exporter-modele.mjs",
     "modele:verifier": "node scripts/exporter-modele.mjs --simuler",
     "prebuild:win": "npm run modele:verifier"

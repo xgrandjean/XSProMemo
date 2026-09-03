@@ -2,8 +2,7 @@
 .SYNOPSIS
   Place ou retire une image dans l'en-tete par defaut d'un document Word deja ouvert.
 
-  Partage entre SetLogo.ps1 (le gabarit) et BuildMemoire.ps1 (chaque memoire genere), pour
-  que le logo se comporte et se dimensionne de la meme facon aux deux endroits.
+  Utilise par BuildMemoire.ps1 pour placer le logo propre a chaque memoire genere.
 #>
 
 function Set-HeaderLogo {

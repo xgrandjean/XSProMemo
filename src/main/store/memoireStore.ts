@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
-import { memoiresDir, templatePath, writeJsonAtomic } from './paths'
+import { memoiresDir, writeJsonAtomic } from './paths'
 import { readModelConfig } from './modelStore'
 import { clearMemoireLogo, copyMemoireLogo, snapshotLogoFromTemplate } from './logoStore'
 import type { ChapterNode, Memoire, MemoireSummary } from '../../shared/types'
@@ -21,20 +21,19 @@ async function exists(absPath: string): Promise<boolean> {
 
 /**
  * A mémoire saved before it kept its own logo has none recorded (the field is simply
- * absent from its JSON). Regenerating it today would otherwise silently swap in
- * whatever the shared template currently carries. The best recoverable answer is what
- * it was last generated with — it is baked into that document's own header — falling
- * back to today's default only when there is nothing to recover.
+ * absent from its JSON). The only trustworthy source for what it actually used to look
+ * like is its own last generated document — the logo is baked into that document's
+ * header. When there is nothing to recover from, it starts with none rather than a
+ * guessed one: the user picks one explicitly from the mémoire's own plan if it matters.
  */
 async function recoverLegacyLogo(
   libraryPath: string,
   memoire: Memoire
 ): Promise<ReturnType<typeof snapshotLogoFromTemplate>> {
   if (memoire.outputDocx && (await exists(memoire.outputDocx))) {
-    const fromOutput = await snapshotLogoFromTemplate(libraryPath, memoire.id, memoire.outputDocx)
-    if (fromOutput) return fromOutput
+    return snapshotLogoFromTemplate(libraryPath, memoire.id, memoire.outputDocx)
   }
-  return snapshotLogoFromTemplate(libraryPath, memoire.id, templatePath(libraryPath))
+  return null
 }
 
 export async function listMemoires(libraryPath: string): Promise<MemoireSummary[]> {
@@ -139,10 +138,9 @@ export async function createMemoireFrom(
     }
   }
 
-  const logo = source
-    ? (await copyMemoireLogo(libraryPath, source.logo, fresh.id)) ??
-      (await snapshotLogoFromTemplate(libraryPath, fresh.id, templatePath(libraryPath)))
-    : await snapshotLogoFromTemplate(libraryPath, fresh.id, templatePath(libraryPath))
+  // A brand-new mémoire with no source (or nothing to copy from) starts with no logo:
+  // there is nothing to guess it from, and the user picks one from the plan if needed.
+  const logo = source ? await copyMemoireLogo(libraryPath, source.logo, fresh.id) : null
 
   if (!source) return saveMemoire(libraryPath, { ...fresh, logo })
   return saveMemoire(libraryPath, {

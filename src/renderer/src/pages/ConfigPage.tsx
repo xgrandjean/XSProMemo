@@ -8,7 +8,6 @@ export default function ConfigPage({ onBack }: { onBack: () => void }): JSX.Elem
   const [status, setStatus] = useState<ModelStatus | null>(null)
   const [sommaireTitle, setSommaireTitle] = useState('')
   const [example, setExample] = useState<Memoire | null>(null)
-  const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -25,19 +24,11 @@ export default function ConfigPage({ onBack }: { onBack: () => void }): JSX.Elem
 
   async function run(action: () => Promise<ModelStatus>): Promise<void> {
     setError(null)
-    setBusy(true)
     try {
       setStatus(await action())
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setBusy(false)
     }
-  }
-
-  async function chooseLogo(): Promise<void> {
-    const imagePath = await window.api.dialogs.pickImage()
-    if (imagePath) await run(() => window.api.model.setLogo(imagePath))
   }
 
   async function saveSommaireTitle(): Promise<void> {
@@ -63,44 +54,9 @@ export default function ConfigPage({ onBack }: { onBack: () => void }): JSX.Elem
             <GabaritHelp />
           </HelpButton>
           <span className="muted">
-            Ce qui habille chaque page produite : les styles, le pied de page, et le logo
-            proposé par défaut aux nouveaux mémoires.
+            Ce qui habille chaque page produite : les styles, le format et le pied de
+            page.
           </span>
-        </div>
-
-        <div className="field">
-          <label>Logo par défaut des nouveaux mémoires</label>
-          <div className="row">
-            {/* Read back from the template header: what is shown is what will print. */}
-            <div className="logo-preview">
-              {status.logoPreview ? (
-                <img src={status.logoPreview} alt="Logo présent dans l'en-tête du gabarit" />
-              ) : (
-                <span className="muted">Aucun logo</span>
-              )}
-            </div>
-            <span className={`badge ${status.logoPreview ? 'ok' : ''}`}>
-              {status.logoPreview ? "En place dans l'en-tête" : "Absent de l'en-tête"}
-            </span>
-            <button className="primary" onClick={chooseLogo} disabled={busy}>
-              {status.logoPreview ? 'Remplacer le logo' : 'Choisir un logo'}
-            </button>
-            {status.logoPreview && (
-              <button
-                className="danger"
-                disabled={busy}
-                onClick={() => run(() => window.api.model.clearLogo())}
-              >
-                Retirer
-              </button>
-            )}
-          </div>
-          <p className="muted" style={{ marginTop: 6 }}>
-            Chaque mémoire reçoit sa propre copie de cette image au moment de sa création.
-            Un changement ici ne modifie ni les mémoires déjà créés, ni leurs futures
-            régénérations — chacun garde le logo qu&apos;il porte, modifiable depuis son
-            propre plan.
-          </p>
         </div>
 
         <div className="field" style={{ maxWidth: 320 }}>
@@ -142,7 +98,8 @@ export default function ConfigPage({ onBack }: { onBack: () => void }): JSX.Elem
           <ExempleHelp />
         </HelpButton>
         <span className="muted">
-          Le point de départ de chaque nouveau mémoire. Mettez-y un plan représentatif.
+          Le point de départ de chaque nouveau mémoire, logo compris. Mettez-y un plan
+          représentatif.
         </span>
       </div>
 

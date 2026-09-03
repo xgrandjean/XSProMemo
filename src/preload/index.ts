@@ -18,9 +18,6 @@ const api = {
   },
   model: {
     get: (): Promise<ModelStatus> => ipcRenderer.invoke('model:get'),
-    setLogo: (imageAbsPath: string): Promise<ModelStatus> =>
-      ipcRenderer.invoke('model:setLogo', imageAbsPath),
-    clearLogo: (): Promise<ModelStatus> => ipcRenderer.invoke('model:clearLogo'),
     setSommaireTitle: (title: string): Promise<ModelStatus> =>
       ipcRenderer.invoke('model:setSommaireTitle', title),
     openTemplate: (): Promise<void> => ipcRenderer.invoke('model:openTemplate'),

@@ -47,21 +47,9 @@ async function findHeaderImage(
 }
 
 /**
- * The picture sitting in a template's header, as a data URL, so the configuration
- * screen can show the logo actually in use rather than merely claim there is one.
- * Read straight from the file: no Word involved.
- */
-export async function readHeaderImage(templateAbsPath: string): Promise<string | null> {
-  const found = await findHeaderImage(templateAbsPath)
-  if (!found) return null
-  const mime = MIME_BY_EXTENSION[found.ext] ?? 'image/png'
-  return `data:${mime};base64,${found.bytes.toString('base64')}`
-}
-
-/**
- * The raw bytes of the picture in a template's header, for snapshotting it as a
- * mémoire's own logo — recovering one that was never stored on its own, either from a
- * shipped template or from a document that document already carries it baked in.
+ * The raw bytes of the picture in a document's header — used to recover a mémoire's
+ * logo from a document it was already generated with, when it predates each mémoire
+ * keeping its own.
  */
 export async function extractHeaderImage(
   templateAbsPath: string
