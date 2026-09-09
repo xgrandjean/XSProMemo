@@ -53,6 +53,19 @@ export function addChild(nodes: ChapterNode[], parentId: string): ChapterNode[] 
   }))
 }
 
+/** Inserts a new sibling chapter right before the given one, at the same depth. */
+export function insertBefore(nodes: ChapterNode[], id: string): ChapterNode[] {
+  const index = nodes.findIndex((node) => node.id === id)
+  if (index !== -1) {
+    const next = [...nodes]
+    next.splice(index, 0, newChapter())
+    return next
+  }
+  return nodes.map((node) =>
+    node.children.length === 0 ? node : { ...node, children: insertBefore(node.children, id) }
+  )
+}
+
 /** Same numbering the generator bakes into the Word headings, shown live in the editor. */
 export function chapterNumber(prefix: number[]): string {
   return prefix.join('.')

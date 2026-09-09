@@ -9,6 +9,7 @@ export interface ChapterActions {
   onPageBreakChange: (id: string, value: boolean) => void
   onOrientationChange: (id: string, orientation: Orientation) => void
   onAddChild: (id: string) => void
+  onInsertBefore: (id: string) => void
   onRemove: (id: string) => void
   onMove: (id: string, delta: number) => void
 }
@@ -60,17 +61,17 @@ function ChapterRow({
   }
 
   const content = node.content
-  const items: ChapterMenuItem[] = content
-    ? [
-        { label: 'Ouvrir', onSelect: () => window.api.memoires.openContent(content.file) },
-        { label: 'Remplacer', onSelect: pick },
-        { label: 'Retirer', onSelect: () => actions.onContentChange(node.id, null), danger: true },
-        { label: addChildLabel, onSelect: () => actions.onAddChild(node.id), separatorBefore: true }
-      ]
-    : [
-        { label: 'Ajouter un contenu', onSelect: pick },
-        { label: addChildLabel, onSelect: () => actions.onAddChild(node.id), separatorBefore: true }
-      ]
+  const items: ChapterMenuItem[] = [
+    ...(content
+      ? [
+          { label: 'Ouvrir contenu', onSelect: () => window.api.memoires.openContent(content.file) },
+          { label: 'Remplacer contenu', onSelect: pick },
+          { label: 'Retirer contenu', onSelect: () => actions.onContentChange(node.id, null), danger: true }
+        ]
+      : [{ label: 'Ajouter contenu', onSelect: pick }]),
+    { label: addChildLabel, onSelect: () => actions.onAddChild(node.id), separatorBefore: true },
+    { label: 'Insérer chapitre avant', onSelect: () => actions.onInsertBefore(node.id) }
+  ]
 
   return (
     <div>
@@ -116,7 +117,12 @@ function ChapterRow({
               👁
             </button>
           ) : (
-            <button className="link" onClick={pick}>
+            <button
+              ref={triggerRef}
+              className="link"
+              title="Actions sur ce chapitre"
+              onClick={() => setMenu('trigger')}
+            >
               + contenu
             </button>
           )}

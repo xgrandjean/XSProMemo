@@ -217,14 +217,13 @@ export function PlanHelp(): JSX.Element {
           le document et dans le sommaire.
         </li>
         <li>
-          <b>Le contenu</b> : un fichier Word. Sans contenu, <i>+ contenu</i> l&apos;attache
-          directement. Une fois attaché, l&apos;icône <b>œil</b> ouvre un menu — Ouvrir,
-          Remplacer, Retirer, et Ajouter un sous-chapitre.
+          <b>Le contenu</b> : un fichier Word. <i>+ contenu</i> ou l&apos;icône <b>œil</b>
+          (une fois un contenu attaché) ouvrent le même menu — Ouvrir contenu, Remplacer
+          contenu, Retirer contenu, Ajouter un sous-chapitre, et Insérer chapitre avant.
         </li>
         <li>
-          <b>Clic droit</b> n&apos;importe où sur la ligne ouvre ce même menu, contenu ou
-          pas — c&apos;est le moyen le plus sûr d&apos;ajouter un sous-chapitre à un
-          chapitre qui n&apos;a pas encore de fichier.
+          <b>Clic droit</b> n&apos;importe où sur la ligne ouvre ce même menu, quel que
+          soit le niveau ou l&apos;état du chapitre.
         </li>
         <li>
           <b>Nouvelle page</b> force le chapitre à démarrer en haut d&apos;une page. Sans

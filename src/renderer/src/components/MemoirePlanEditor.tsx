@@ -4,7 +4,7 @@ import ContentSlot from './ContentSlot'
 import LogoPicker from './LogoPicker'
 import { HelpButton } from './Help'
 import { CoverHelp, LogoHelp, PlanHelp } from './HelpTexts'
-import { addChild, moveNode, newChapter, removeNode, updateNode } from '../lib/chapterTree'
+import { addChild, insertBefore, moveNode, newChapter, removeNode, updateNode } from '../lib/chapterTree'
 import type { ContentRef, Memoire } from '../../../shared/types'
 
 const AUTOSAVE_DELAY_MS = 700
@@ -91,6 +91,7 @@ export default function MemoirePlanEditor({
         chapters: updateNode(m.chapters, id, (n) => ({ ...n, orientation }))
       })),
     onAddChild: (id) => edit((m) => ({ ...m, chapters: addChild(m.chapters, id) })),
+    onInsertBefore: (id) => edit((m) => ({ ...m, chapters: insertBefore(m.chapters, id) })),
     onRemove: (id) => edit((m) => ({ ...m, chapters: removeNode(m.chapters, id) })),
     onMove: (id, delta) => edit((m) => ({ ...m, chapters: moveNode(m.chapters, id, delta) }))
   }
