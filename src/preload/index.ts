@@ -11,6 +11,9 @@ import type {
 } from '../shared/types'
 
 const api = {
+  app: {
+    setDirty: (dirty: boolean): Promise<void> => ipcRenderer.invoke('app:setDirty', dirty)
+  },
   dialogs: {
     pickDocx: (): Promise<string | null> => ipcRenderer.invoke('dialog:pickDocx'),
     pickImage: (): Promise<string | null> => ipcRenderer.invoke('dialog:pickImage'),

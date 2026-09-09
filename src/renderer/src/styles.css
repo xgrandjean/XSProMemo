@@ -215,6 +215,12 @@ h2 {
   align-items: center;
   gap: 12px;
   margin-bottom: 18px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--panel);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .memoire-name {
@@ -564,6 +570,13 @@ button.danger-link,
   text-align: right;
   padding: 0 4px 12px;
   min-height: 18px;
+}
+
+.save-status--inline {
+  text-align: left;
+  padding: 0;
+  min-height: auto;
+  white-space: nowrap;
 }
 .chapter-orientation {
   width: auto;

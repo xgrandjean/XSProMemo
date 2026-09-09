@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import ChapterRows, { type ChapterActions } from './ChapterRows'
 import ContentSlot from './ContentSlot'
 import LogoPicker from './LogoPicker'
@@ -7,26 +7,22 @@ import { CoverHelp, LogoHelp, PlanHelp } from './HelpTexts'
 import { addChild, insertBefore, moveNode, newChapter, removeNode, updateNode } from '../lib/chapterTree'
 import type { ContentRef, Memoire } from '../../../shared/types'
 
-const AUTOSAVE_DELAY_MS = 700
-
 /**
  * The plan of one mémoire, editable in place. Used both for real mémoires and for the
  * example behind the configuration screen — they are the same kind of object.
+ *
+ * Purely controlled: the draft itself and when it gets saved are owned by the caller
+ * (MemoireEditorPage), so the mémoire's name field and its plan share one save action.
  */
 export default function MemoirePlanEditor({
-  memoire,
-  onSaved
+  draft,
+  edit
 }: {
-  memoire: Memoire
-  onSaved?: (saved: Memoire) => void
+  draft: Memoire
+  edit: (mutate: (current: Memoire) => Memoire) => void
 }): JSX.Element {
-  const [draft, setDraft] = useState<Memoire>(memoire)
-  const [status, setStatus] = useState<'saved' | 'saving' | 'dirty'>('saved')
-  const [error, setError] = useState<string | null>(null)
   // Purely a display preference: not part of the plan, never saved with it.
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const latest = useRef(draft)
 
   function toggleCollapse(id: string): void {
     setCollapsedIds((current) => {
@@ -36,44 +32,6 @@ export default function MemoirePlanEditor({
       return next
     })
   }
-
-  useEffect(() => {
-    setDraft(memoire)
-    latest.current = memoire
-    setStatus('saved')
-  }, [memoire.id])
-
-  function edit(mutate: (current: Memoire) => Memoire): void {
-    setDraft((current) => {
-      const next = mutate(current)
-      latest.current = next
-      return next
-    })
-    setStatus('dirty')
-    if (timer.current) clearTimeout(timer.current)
-    timer.current = setTimeout(save, AUTOSAVE_DELAY_MS)
-  }
-
-  async function save(): Promise<void> {
-    setStatus('saving')
-    setError(null)
-    try {
-      const saved = await window.api.memoires.save(latest.current)
-      latest.current = saved
-      setDraft((current) => ({ ...current, updatedAt: saved.updatedAt }))
-      setStatus('saved')
-      onSaved?.(saved)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-      setStatus('dirty')
-    }
-  }
-
-  useEffect(() => {
-    return () => {
-      if (timer.current) clearTimeout(timer.current)
-    }
-  }, [])
 
   const actions: ChapterActions = {
     onTitleChange: (id, title) =>
@@ -124,13 +82,13 @@ export default function MemoirePlanEditor({
           </span>
         </div>
         <LogoPicker
-          memoireId={memoire.id}
+          memoireId={draft.id}
           field="logo"
           label="Logo (en haut à droite)"
           altText="Logo de ce mémoire"
         />
         <LogoPicker
-          memoireId={memoire.id}
+          memoireId={draft.id}
           field="secondLogo"
           label="Second logo (en haut à gauche)"
           altText="Second logo de ce mémoire"
@@ -194,13 +152,6 @@ export default function MemoirePlanEditor({
         >
           + Ajouter un chapitre
         </button>
-      </div>
-
-      <div className="save-status">
-        {status === 'saving' && <span className="muted">Enregistrement...</span>}
-        {status === 'saved' && <span className="muted">Enregistré</span>}
-        {status === 'dirty' && <span className="muted">Modifications en attente...</span>}
-        {error && <span className="error-text">{error}</span>}
       </div>
     </div>
   )

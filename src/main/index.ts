@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow } from 'electron'
+import { app, dialog, shell, BrowserWindow } from 'electron'
 import { join } from 'node:path'
 import { writeFileSync } from 'node:fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -9,6 +9,7 @@ import { registerDialogIpc } from './ipc/dialogs'
 import { registerModelIpc } from './ipc/model'
 import { registerMemoiresIpc } from './ipc/memoires'
 import { registerGenerationIpc } from './ipc/generation'
+import { registerWindowIpc, isDirty } from './ipc/window'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -23,6 +24,22 @@ function createWindow(): void {
   })
 
   mainWindow.on('ready-to-show', () => mainWindow.show())
+
+  // Autosave was removed in favor of an explicit "Enregistrer" button — closing the
+  // window can now discard real unsaved work, so it needs the same kind of guard.
+  mainWindow.on('close', (event) => {
+    if (!isDirty()) return
+    const choice = dialog.showMessageBoxSync(mainWindow, {
+      type: 'warning',
+      buttons: ['Quitter sans enregistrer', 'Annuler'],
+      defaultId: 1,
+      cancelId: 1,
+      title: 'Modifications non enregistrées',
+      message: 'Ce mémoire a des modifications non enregistrées.',
+      detail: 'Elles seront perdues si vous fermez maintenant.'
+    })
+    if (choice === 1) event.preventDefault()
+  })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
@@ -98,6 +115,7 @@ app.whenReady().then(async () => {
   registerModelIpc()
   registerMemoiresIpc()
   registerGenerationIpc()
+  registerWindowIpc()
 
   createWindow()
 
