@@ -23,8 +23,19 @@ export default function MemoirePlanEditor({
   const [draft, setDraft] = useState<Memoire>(memoire)
   const [status, setStatus] = useState<'saved' | 'saving' | 'dirty'>('saved')
   const [error, setError] = useState<string | null>(null)
+  // Purely a display preference: not part of the plan, never saved with it.
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const latest = useRef(draft)
+
+  function toggleCollapse(id: string): void {
+    setCollapsedIds((current) => {
+      const next = new Set(current)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   useEffect(() => {
     setDraft(memoire)
@@ -168,7 +179,12 @@ export default function MemoirePlanEditor({
 
         {draft.chapters.length === 0 && <p className="muted">Aucun chapitre.</p>}
 
-        <ChapterRows nodes={draft.chapters} actions={actions} />
+        <ChapterRows
+          nodes={draft.chapters}
+          actions={actions}
+          collapsedIds={collapsedIds}
+          onToggleCollapse={toggleCollapse}
+        />
 
         <button
           className="secondary"

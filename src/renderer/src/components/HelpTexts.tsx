@@ -208,15 +208,23 @@ export function PlanHelp(): JSX.Element {
       <ul>
         <li>
           <b>Le numéro</b> (1, 1.1, 2…) est calculé d&apos;après la position et la
-          profondeur. Il se met à jour tout seul si vous réordonnez.
+          profondeur. Il se met à jour tout seul si vous réordonnez. Sa taille et son
+          style suivent la profondeur — un chapitre principal ressort, un sous-chapitre
+          plus profond s&apos;efface — pour repérer la structure d&apos;un coup d&apos;œil.
         </li>
         <li>
           <b>Le titre</b> se modifie en cliquant dessus. C&apos;est lui qui apparaîtra dans
           le document et dans le sommaire.
         </li>
         <li>
-          <b>Le contenu</b> : un fichier Word. <i>Ouvrir</i> le lance dans Word pour le
-          retoucher, <i>Remplacer</i> en choisit un autre, <i>Retirer</i> le détache.
+          <b>Le contenu</b> : un fichier Word. Sans contenu, <i>+ contenu</i> l&apos;attache
+          directement. Une fois attaché, l&apos;icône <b>œil</b> ouvre un menu — Ouvrir,
+          Remplacer, Retirer, et Ajouter un sous-chapitre.
+        </li>
+        <li>
+          <b>Clic droit</b> n&apos;importe où sur la ligne ouvre ce même menu, contenu ou
+          pas — c&apos;est le moyen le plus sûr d&apos;ajouter un sous-chapitre à un
+          chapitre qui n&apos;a pas encore de fichier.
         </li>
         <li>
           <b>Nouvelle page</b> force le chapitre à démarrer en haut d&apos;une page. Sans
@@ -227,7 +235,8 @@ export function PlanHelp(): JSX.Element {
           même document — utile pour un plan ou un tableau large.
         </li>
         <li>
-          <b>+</b> ajoute un sous-chapitre, <b>↑ ↓</b> déplacent, <b>✕</b> supprime.
+          <b>▾ / ▸</b> replie ou déplie les sous-chapitres, pour les plans longs.
+          <b> ↑ ↓</b> déplacent la ligne, <b>✕</b> supprime.
         </li>
       </ul>
 

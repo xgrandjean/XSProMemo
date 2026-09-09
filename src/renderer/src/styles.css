@@ -449,6 +449,18 @@ button.danger-link,
   text-align: right;
 }
 
+/* Depth at a glance, without touching the title text itself: a top-level chapter
+   number stands out, a sub-chapter's is understated, deeper levels lean italic. */
+.chapter-number.level-0 {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.chapter-number.level-2 {
+  font-style: italic;
+}
+
 .chapter-title {
   flex: 1;
   min-width: 140px;
@@ -498,6 +510,47 @@ button.danger-link,
   display: inline-flex;
   gap: 2px;
   flex-shrink: 0;
+}
+
+/* --- Floating menu (chapter content actions, "ajouter sous-chapitre"...) --- */
+
+.dropdown-menu {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  min-width: 190px;
+  padding: 4px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
+}
+
+.dropdown-item {
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  text-align: left;
+  color: var(--text);
+  padding: 7px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: var(--border-soft);
+}
+
+.dropdown-item.danger-link:hover {
+  background: #fee2e2;
+}
+
+.dropdown-separator {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--border-soft);
 }
 
 .cover-row {

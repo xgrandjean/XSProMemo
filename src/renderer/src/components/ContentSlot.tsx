@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { pickAndImportContent } from '../lib/pickContent'
 import type { ContentRef } from '../../../shared/types'
 
 /**
@@ -21,11 +22,10 @@ export default function ContentSlot({
 
   async function pick(): Promise<void> {
     setError(null)
-    const sourcePath = await window.api.dialogs.pickDocx()
-    if (!sourcePath) return
     setBusy(true)
     try {
-      onChange(await window.api.memoires.importContent(sourcePath))
+      const picked = await pickAndImportContent()
+      if (picked) onChange(picked)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
