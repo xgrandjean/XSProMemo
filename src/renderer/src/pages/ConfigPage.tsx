@@ -207,8 +207,21 @@ export default function ConfigPage({
         </p>
 
         <div className="row">
-          <button className="secondary" onClick={chooseFolder} disabled={libraryBusy}>
-            Choisir un dossier...
+          <button
+            className="secondary"
+            onClick={chooseFolder}
+            disabled={libraryBusy}
+            title="Ouvrir un dossier — emplacement de la bibliothèque"
+          >
+            Ouvrir un dossier
+          </button>
+          <button
+            className="secondary"
+            onClick={chooseFolder}
+            disabled={libraryBusy}
+            title="Créer un dossier — emplacement de la bibliothèque (doit être vide)"
+          >
+            Créer un dossier
           </button>
           {!status.library.isDefault && (
             <button className="secondary" onClick={useDefaultLibrary} disabled={libraryBusy}>

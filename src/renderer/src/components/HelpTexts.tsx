@@ -177,10 +177,13 @@ export function BibliothequeHelp(): JSX.Element {
         défaut, c&apos;est <b>Documents\XSProMemo</b>, sur ce poste.
       </p>
       <p>
-        <b>Choisir un dossier</b> permet de pointer ailleurs — un autre disque, ou un
-        dossier réseau accessible depuis plusieurs postes de l&apos;entreprise. Un dossier
-        vide reçoit une copie complète de la bibliothèque actuelle ; un dossier qui en
-        contient déjà une est rejoint tel quel, sans rien recopier.
+        <b>Ouvrir un dossier</b> et <b>Créer un dossier</b> permettent de pointer ailleurs
+        — un autre disque, ou un dossier réseau accessible depuis plusieurs postes de
+        l&apos;entreprise. Les deux ouvrent le même sélecteur ; le résultat dépend
+        seulement du dossier choisi : s&apos;il n&apos;existe pas encore, il est créé après
+        confirmation ; s&apos;il est vide, il reçoit une copie complète de la bibliothèque
+        actuelle ; s&apos;il en contient déjà une, elle est rejointe telle quelle, sans
+        rien recopier.
       </p>
       <p>
         L&apos;application redémarre après un changement : trop d&apos;écrans dépendent de
