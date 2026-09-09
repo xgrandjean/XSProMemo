@@ -26,6 +26,13 @@ export function registerDialogIpc(): void {
     return result.canceled ? null : result.filePaths[0]
   })
 
+  ipcMain.handle('dialog:pickFolder', async (event) => {
+    const result = await openFileDialog(event, {
+      properties: ['openDirectory', 'createDirectory']
+    })
+    return result.canceled ? null : result.filePaths[0]
+  })
+
   ipcMain.handle('shell:openPath', async (_event, absPath: string) => {
     const error = await shell.openPath(absPath)
     if (error) throw new Error(error)

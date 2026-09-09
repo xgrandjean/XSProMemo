@@ -39,6 +39,12 @@ export interface Memoire {
   logo: ContentRef | null
   /** A second logo, top left — typically a partner's or a client's, for this one mémoire. */
   secondLogo: ContentRef | null
+  /**
+   * A modèle offered as a starting point for "Nouveau mémoire", rather than a working
+   * mémoire in progress. Just a flag — a modèle is a mémoire like any other, editable the
+   * same way, only reached from a different screen and excluded from the working list.
+   */
+  isTemplate: boolean
   lastGeneratedAt: string | null
   outputDocx: string | null
   outputPdf: string | null
@@ -55,7 +61,6 @@ export interface MemoireSummary {
 /** The frozen part, edited behind the configuration screen. */
 export interface ModelConfig {
   sommaireTitle: string
-  exampleId: string | null
 }
 
 /** What the configuration screen shows about the template and the data folder. */
@@ -65,7 +70,11 @@ export interface ModelStatus {
   dataFolder: string
   templatePath: string
   templateExists: boolean
+  /** Where the library actually lives, and whether that's the default location. */
+  library: { path: string; isDefault: boolean }
 }
+
+export type FolderProbeResult = 'empty' | 'existingLibrary' | 'nonEmptyOther'
 
 export interface GenerationProgressEvent {
   memoireId: string

@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type {
   ContentRef,
+  FolderProbeResult,
   GenerationProgressEvent,
   GenerationResult,
   LogoField,
@@ -12,7 +13,8 @@ import type {
 const api = {
   dialogs: {
     pickDocx: (): Promise<string | null> => ipcRenderer.invoke('dialog:pickDocx'),
-    pickImage: (): Promise<string | null> => ipcRenderer.invoke('dialog:pickImage')
+    pickImage: (): Promise<string | null> => ipcRenderer.invoke('dialog:pickImage'),
+    pickFolder: (): Promise<string | null> => ipcRenderer.invoke('dialog:pickFolder')
   },
   shell: {
     openPath: (absPath: string): Promise<void> => ipcRenderer.invoke('shell:openPath', absPath)
@@ -23,12 +25,18 @@ const api = {
       ipcRenderer.invoke('model:setSommaireTitle', title),
     openTemplate: (): Promise<void> => ipcRenderer.invoke('model:openTemplate'),
     openDataFolder: (): Promise<void> => ipcRenderer.invoke('model:openDataFolder'),
-    ensureExample: (): Promise<string> => ipcRenderer.invoke('model:ensureExample')
+    probeLibraryFolder: (target: string): Promise<FolderProbeResult> =>
+      ipcRenderer.invoke('model:probeLibraryFolder', target),
+    chooseLibraryFolder: (target: string): Promise<void> =>
+      ipcRenderer.invoke('model:chooseLibraryFolder', target),
+    useDefaultLibrary: (): Promise<void> => ipcRenderer.invoke('model:useDefaultLibrary')
   },
   memoires: {
     list: (): Promise<MemoireSummary[]> => ipcRenderer.invoke('memoires:list'),
+    listTemplates: (): Promise<MemoireSummary[]> => ipcRenderer.invoke('memoires:listTemplates'),
     get: (id: string): Promise<Memoire> => ipcRenderer.invoke('memoires:get', id),
-    create: (name: string): Promise<Memoire> => ipcRenderer.invoke('memoires:create', name),
+    create: (name: string, templateId: string): Promise<Memoire> =>
+      ipcRenderer.invoke('memoires:create', { name, templateId }),
     duplicate: (id: string, name: string): Promise<Memoire> =>
       ipcRenderer.invoke('memoires:duplicate', { id, name }),
     save: (memoire: Memoire): Promise<Memoire> => ipcRenderer.invoke('memoires:save', memoire),

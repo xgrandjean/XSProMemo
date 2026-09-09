@@ -1,12 +1,13 @@
 import { ipcMain, shell } from 'electron'
 import {
   listMemoires,
+  listTemplates,
   getMemoire,
   saveMemoire,
   deleteMemoire,
   createMemoireFrom
 } from '../store/memoireStore'
-import { readModelConfig, importContent } from '../store/modelStore'
+import { importContent } from '../store/modelStore'
 import { resolveContentFile } from '../store/paths'
 import { setMemoireLogo, clearMemoireLogo, readMemoireLogoPreview } from '../store/logoStore'
 import { requireLibraryPath } from './context'
@@ -23,11 +24,17 @@ export function registerMemoiresIpc(): void {
     return getMemoire(libraryPath, id)
   })
 
-  /** New mémoires always start as a copy of the example, never from a blank page. */
-  ipcMain.handle('memoires:create', async (_event, name: string) => {
+  ipcMain.handle('memoires:listTemplates', async () => {
     const libraryPath = await requireLibraryPath()
-    const config = await readModelConfig(libraryPath)
-    return createMemoireFrom(libraryPath, name, config.exampleId)
+    return listTemplates(libraryPath)
+  })
+
+  /** New mémoires always start as a copy of a chosen modèle, never from a blank page. */
+  ipcMain.handle('memoires:create', async (_event, input: { name: string; templateId: string }) => {
+    const libraryPath = await requireLibraryPath()
+    const created = await createMemoireFrom(libraryPath, input.name, input.templateId)
+    // The source is a modèle by construction; what it produces never is.
+    return saveMemoire(libraryPath, { ...created, isTemplate: false })
   })
 
   ipcMain.handle('memoires:duplicate', async (_event, input: { id: string; name: string }) => {

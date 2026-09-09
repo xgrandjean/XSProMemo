@@ -2,7 +2,6 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { memoiresDir, writeJsonAtomic } from './paths'
-import { readModelConfig } from './modelStore'
 import { clearMemoireLogo, copyMemoireLogo, snapshotLogoFromTemplate } from './logoStore'
 import type { ChapterNode, Memoire, MemoireSummary } from '../../shared/types'
 
@@ -36,33 +35,58 @@ async function recoverLegacyLogo(
   return null
 }
 
-export async function listMemoires(libraryPath: string): Promise<MemoireSummary[]> {
-  const config = await readModelConfig(libraryPath)
+function toSummary(memoire: Memoire): MemoireSummary {
+  return {
+    id: memoire.id,
+    name: memoire.name,
+    createdAt: memoire.createdAt,
+    updatedAt: memoire.updatedAt,
+    lastGeneratedAt: memoire.lastGeneratedAt
+  }
+}
+
+async function readAllMemoires(libraryPath: string): Promise<Memoire[]> {
   let files: string[] = []
   try {
     files = await fs.readdir(memoiresDir(libraryPath))
   } catch {
     return []
   }
-  const summaries: MemoireSummary[] = []
+  const memoires: Memoire[] = []
   for (const file of files) {
     if (!file.endsWith('.json')) continue
     try {
       const raw = await fs.readFile(path.join(memoiresDir(libraryPath), file), 'utf-8')
-      const memoire: Memoire = JSON.parse(raw)
-      // The example lives alongside real mémoires but is reached from the config screen.
-      if (memoire.id === config.exampleId) continue
-      summaries.push({
-        id: memoire.id,
-        name: memoire.name,
-        createdAt: memoire.createdAt,
-        updatedAt: memoire.updatedAt,
-        lastGeneratedAt: memoire.lastGeneratedAt
-      })
+      memoires.push(JSON.parse(raw))
     } catch {
       // skip unreadable/corrupt file rather than failing the whole listing
     }
   }
+  return memoires
+}
+
+/** Mémoires being worked on — a modèle lives alongside them but is reached separately. */
+export async function listMemoires(libraryPath: string): Promise<MemoireSummary[]> {
+  const summaries = (await readAllMemoires(libraryPath))
+    .filter((memoire) => !memoire.isTemplate)
+    .map(toSummary)
+  summaries.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+  return summaries
+}
+
+/**
+ * The plans-types offered as a starting point for "Nouveau mémoire". Self-heals if the
+ * last one was deleted mid-session — "Nouveau mémoire" must always have something to
+ * copy from, and a restart shouldn't be required to get one back.
+ */
+export async function listTemplates(libraryPath: string): Promise<MemoireSummary[]> {
+  const templates = (await readAllMemoires(libraryPath)).filter((memoire) => memoire.isTemplate)
+  if (templates.length === 0) {
+    const fallback = await createMemoireFrom(libraryPath, 'Modèle', null)
+    await saveMemoire(libraryPath, { ...fallback, isTemplate: true })
+    return listTemplates(libraryPath)
+  }
+  const summaries = templates.map(toSummary)
   summaries.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
   return summaries
 }
@@ -79,6 +103,10 @@ export async function getMemoire(libraryPath: string, id: string): Promise<Memoi
   // The second logo is a newer slot still: nothing existed before it to recover.
   if (memoire.secondLogo === undefined) {
     memoire = { ...memoire, secondLogo: null }
+    migrated = true
+  }
+  if (memoire.isTemplate === undefined) {
+    memoire = { ...memoire, isTemplate: false }
     migrated = true
   }
 
@@ -121,6 +149,7 @@ function blankMemoire(name: string): Memoire {
     chapters: [],
     logo: null,
     secondLogo: null,
+    isTemplate: false,
     lastGeneratedAt: null,
     outputDocx: null,
     outputPdf: null
@@ -128,10 +157,14 @@ function blankMemoire(name: string): Memoire {
 }
 
 /**
- * Creates a new mémoire as an independent copy of `sourceId` (normally the example).
- * Content files are shared by reference — only the plan is duplicated. The logo is a
- * real copy, not a reference: it starts as the source's own, but changing either one
- * afterward must not touch the other.
+ * Creates a new mémoire as an independent copy of `sourceId` (a modèle, for "Nouveau
+ * mémoire" — or any mémoire, for "Dupliquer"). Content files are shared by reference —
+ * only the plan is duplicated. The logo is a real copy, not a reference: it starts as
+ * the source's own, but changing either one afterward must not touch the other.
+ *
+ * The copy inherits the source's modèle status — duplicating a modèle gives another
+ * modèle, duplicating a working mémoire gives another working mémoire. Callers that need
+ * the opposite (a working mémoire started from a modèle) override it explicitly after.
  */
 export async function createMemoireFrom(
   libraryPath: string,
@@ -161,6 +194,7 @@ export async function createMemoireFrom(
     ...fresh,
     logo,
     secondLogo,
+    isTemplate: source.isTemplate,
     coverPages: source.coverPages.map((c) => ({ ...c })),
     chapters: cloneChapters(source.chapters)
   })

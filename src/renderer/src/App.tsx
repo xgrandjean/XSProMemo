@@ -36,7 +36,12 @@ export default function App(): JSX.Element {
         {view.name === 'editor' && (
           <MemoireEditorPage memoireId={view.memoireId} onBack={() => setView({ name: 'list' })} />
         )}
-        {view.name === 'config' && <ConfigPage onBack={() => setView({ name: 'list' })} />}
+        {view.name === 'config' && (
+          <ConfigPage
+            onBack={() => setView({ name: 'list' })}
+            onOpen={(id) => setView({ name: 'editor', memoireId: id })}
+          />
+        )}
       </main>
     </div>
   )

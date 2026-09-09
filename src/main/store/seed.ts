@@ -2,9 +2,17 @@ import { app } from 'electron'
 import path from 'node:path'
 import { promises as fs } from 'node:fs'
 import { randomUUID } from 'node:crypto'
-import { contentsDir, dataRoot, documentsDir, memoiresDir, templatePath, writeJsonAtomic } from './paths'
+import {
+  configJsonPath,
+  contentsDir,
+  documentsDir,
+  memoiresDir,
+  templatePath,
+  writeJsonAtomic
+} from './paths'
 import { readModelConfig, writeModelConfig } from './modelStore'
 import { setMemoireLogo } from './logoStore'
+import { getMemoire, saveMemoire } from './memoireStore'
 import type { ChapterNode, ContentRef, Memoire } from '../../shared/types'
 
 interface SeedNode {
@@ -61,18 +69,123 @@ function withIds(nodes: SeedNode[]): ChapterNode[] {
 }
 
 /**
- * On first launch the application installs itself: template, example content files and
- * a complete example mémoire. Someone who has just installed it can generate a document
- * straight away, without preparing anything.
+ * One-time migration from the days of a single "mémoire exemple" tracked by id in
+ * config.json, to any number of mémoires simply marked `isTemplate`. Reads the config
+ * file directly rather than through `readModelConfig` (which only keeps known keys, and
+ * would already have dropped `exampleId`) so this only ever runs once — after this
+ * mémoire is flagged and the config rewritten, the legacy key is gone for good.
  */
-export async function seedIfNeeded(): Promise<void> {
-  const root = dataRoot()
+async function migrateLegacyExample(root: string): Promise<void> {
+  let raw: { exampleId?: string }
+  try {
+    raw = JSON.parse(await fs.readFile(configJsonPath(root), 'utf-8'))
+  } catch {
+    return
+  }
+  if (!raw.exampleId) return
+
+  try {
+    const memoire = await getMemoire(root, raw.exampleId)
+    if (!memoire.isTemplate) await saveMemoire(root, { ...memoire, isTemplate: true })
+  } catch {
+    // Dangling reference to an already-deleted mémoire — nothing to migrate.
+  }
+  // Rewritten through the known-keys allowlist: `exampleId` does not survive.
+  await writeModelConfig(root, await readModelConfig(root))
+}
+
+async function hasAnyTemplate(root: string): Promise<boolean> {
+  let files: string[]
+  try {
+    files = await fs.readdir(memoiresDir(root))
+  } catch {
+    return false
+  }
+  for (const file of files) {
+    if (!file.endsWith('.json')) continue
+    try {
+      const raw = await fs.readFile(path.join(memoiresDir(root), file), 'utf-8')
+      const memoire: Memoire = JSON.parse(raw)
+      if (memoire.isTemplate) return true
+    } catch {
+      // skip unreadable/corrupt file
+    }
+  }
+  return false
+}
+
+/**
+ * Installs the shipped default template the first time none exists — someone who has
+ * just installed the application, or just pointed it at a brand new shared folder, can
+ * generate a document straight away without preparing anything.
+ *
+ * Guarded by an exclusive-create lock file: two machines launching against the same
+ * freshly shared, empty folder at nearly the same moment must not each create their own
+ * default template and race on which one "wins".
+ */
+async function createDefaultTemplateIfNeeded(root: string, shipped: string): Promise<void> {
+  if (await hasAnyTemplate(root)) return
+
+  const lockPath = path.join(memoiresDir(root), '.modele.lock')
+  let handle
+  try {
+    handle = await fs.open(lockPath, 'wx')
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'EEXIST') return
+    throw err
+  }
+
+  try {
+    // Another machine may have just finished while this one waited on the lock.
+    if (await hasAnyTemplate(root)) return
+
+    const planPath = path.join(shipped, 'exemple.json')
+    if (!(await exists(planPath))) return
+
+    const plan = JSON.parse(await fs.readFile(planPath, 'utf-8')) as {
+      name: string
+      coverPages: ContentRef[]
+      chapters: SeedNode[]
+    }
+
+    const now = new Date().toISOString()
+    const templateId = randomUUID()
+    const shippedLogo = path.join(shipped, 'Logo.png')
+    const template: Memoire = {
+      id: templateId,
+      name: plan.name || 'Exemple',
+      createdAt: now,
+      updatedAt: now,
+      coverPages: plan.coverPages,
+      chapters: withIds(plan.chapters),
+      logo: (await exists(shippedLogo))
+        ? await setMemoireLogo(root, templateId, 'logo', shippedLogo)
+        : null,
+      secondLogo: null,
+      isTemplate: true,
+      lastGeneratedAt: null,
+      outputDocx: null,
+      outputPdf: null
+    }
+
+    await writeJsonAtomic(path.join(memoiresDir(root), `${template.id}.json`), template)
+  } finally {
+    await handle.close()
+    await fs.rm(lockPath, { force: true })
+  }
+}
+
+/**
+ * On first launch — of the application, or of a machine freshly pointed at a shared
+ * folder — the library installs itself: template, example content files and a default
+ * template mémoire.
+ */
+export async function seedIfNeeded(root: string): Promise<void> {
   await fs.mkdir(contentsDir(root), { recursive: true })
   await fs.mkdir(memoiresDir(root), { recursive: true })
   await fs.mkdir(documentsDir(root), { recursive: true })
 
   const shipped = shippedDir()
-  const config = await readModelConfig(root)
 
   if (!(await exists(templatePath(root)))) {
     const source = path.join(shipped, 'Gabarit.docx')
@@ -81,40 +194,6 @@ export async function seedIfNeeded(): Promise<void> {
 
   await restoreMissingContents(path.join(shipped, 'contenus'), contentsDir(root))
 
-  // The example is installed once; later launches leave the user's edits alone. But a
-  // recorded example whose plan has been deleted is a dangling reference, and new
-  // mémoires copied from it would come out empty — so it is rebuilt.
-  if (config.exampleId) {
-    const recorded = path.join(memoiresDir(root), `${config.exampleId}.json`)
-    if (await exists(recorded)) return
-  }
-
-  const planPath = path.join(shipped, 'exemple.json')
-  if (!(await exists(planPath))) return
-
-  const plan = JSON.parse(await fs.readFile(planPath, 'utf-8')) as {
-    name: string
-    coverPages: ContentRef[]
-    chapters: SeedNode[]
-  }
-
-  const now = new Date().toISOString()
-  const exampleId = randomUUID()
-  const shippedLogo = path.join(shipped, 'Logo.png')
-  const example: Memoire = {
-    id: exampleId,
-    name: plan.name || 'Exemple',
-    createdAt: now,
-    updatedAt: now,
-    coverPages: plan.coverPages,
-    chapters: withIds(plan.chapters),
-    logo: (await exists(shippedLogo)) ? await setMemoireLogo(root, exampleId, 'logo', shippedLogo) : null,
-    secondLogo: null,
-    lastGeneratedAt: null,
-    outputDocx: null,
-    outputPdf: null
-  }
-
-  await writeJsonAtomic(path.join(memoiresDir(root), `${example.id}.json`), example)
-  await writeModelConfig(root, { ...config, exampleId: example.id })
+  await migrateLegacyExample(root)
+  await createDefaultTemplateIfNeeded(root, shipped)
 }

@@ -17,11 +17,11 @@ export function AppHelp(): JSX.Element {
           dans la Configuration, derrière l&apos;engrenage.
         </dd>
 
-        <dt>Le mémoire exemple</dt>
+        <dt>Les modèles</dt>
         <dd>
-          Un mémoire complet qui sert de point de départ. Chaque nouveau mémoire en est une
-          copie indépendante : vous supprimez ce qui ne s&apos;applique pas, ajoutez ce qui
-          manque.
+          Un ou plusieurs mémoires complets qui servent de point de départ. Chaque nouveau
+          mémoire en est une copie indépendante : vous supprimez ce qui ne s&apos;applique
+          pas, ajoutez ce qui manque.
         </dd>
 
         <dt>Les mémoires</dt>
@@ -34,7 +34,7 @@ export function AppHelp(): JSX.Element {
       <h3>Le déroulé</h3>
       <ol>
         <li>
-          <b>Nouveau mémoire</b> : vous partez de l&apos;exemple, vous le nommez.
+          <b>Nouveau mémoire</b> : vous partez d&apos;un modèle, vous le nommez.
         </li>
         <li>
           <b>Vous ajustez le plan</b> : retirer un chapitre, en ajouter, renommer,
@@ -66,11 +66,13 @@ export function AppHelp(): JSX.Element {
 
       <h3>Où sont vos fichiers</h3>
       <p>
-        Dans <b>Documents\XSProMemo</b> : le gabarit, vos contenus Word et les documents
-        générés. La Configuration propose un raccourci pour y accéder.
+        Par défaut dans <b>Documents\XSProMemo</b> : le gabarit, vos contenus Word et les
+        documents générés. La Configuration propose un raccourci pour y accéder, et un
+        moyen de choisir un autre dossier — par exemple un dossier réseau, pour que
+        plusieurs postes travaillent sur les mêmes mémoires.
       </p>
       <p className="muted">
-        Ce n&apos;est pas le dossier habituel des données d&apos;application : Word refuse
+        Jamais dans le dossier habituel des données d&apos;application : Word refuse
         d&apos;ouvrir un document rangé sous AppData sur les postes durcis, et toute la
         chaîne repose sur Word.
       </p>
@@ -103,8 +105,8 @@ export function GabaritHelp(): JSX.Element {
       </p>
       <p>
         Le logo n&apos;en fait pas partie : chaque mémoire porte le sien, réglé depuis son
-        propre plan. Celui du mémoire exemple, juste en dessous, est celui que reçoivent
-        les nouveaux mémoires.
+        propre plan. Celui d&apos;un modèle, plus bas dans cette page, est celui que reçoit
+        un nouveau mémoire parti de ce modèle.
       </p>
       <p>
         Pour le reste — coordonnées en pied de page, couleurs des titres, marges — ouvrez
@@ -133,29 +135,61 @@ export function LogoHelp(): JSX.Element {
         autre mémoire.
       </p>
       <p className="muted">
-        Pour changer ce que proposent les futurs mémoires, réglez-le sur l&apos;exemple,
-        dans la Configuration.
+        Pour changer ce que propose un modèle aux futurs mémoires, réglez-le sur ce
+        modèle, dans la Configuration.
       </p>
     </>
   )
 }
 
-export function ExempleHelp(): JSX.Element {
+export function ModelesHelp(): JSX.Element {
   return (
     <>
       <p>
-        L&apos;exemple est le <b>point de départ de chaque nouveau mémoire</b>. Mettez-y le
-        plan que vous réutilisez le plus souvent, avec vos contenus habituels — et son
-        logo, celui qui apparaît sur un mémoire tout juste créé.
+        Un modèle est le <b>point de départ d&apos;un nouveau mémoire</b>. Mettez-y le plan
+        que vous réutilisez le plus souvent, avec vos contenus habituels — et son logo,
+        celui qui apparaît sur un mémoire tout juste créé à partir de lui.
       </p>
       <p>
         Quand vous créez un mémoire, l&apos;application en fait une copie complète et
-        indépendante, logo compris. Modifier ce mémoire ne touche pas à l&apos;exemple, et
-        inversement.
+        indépendante du modèle choisi, logo compris. Modifier ce mémoire ne touche pas au
+        modèle, et inversement.
       </p>
       <p>
-        Mieux vaut un exemple <b>trop fourni que trop pauvre</b> : il est plus rapide de
+        Un seul modèle suffit dans la plupart des cas. Ajoutez-en un second — en
+        dupliquant un modèle existant, puis en l&apos;adaptant — quand différents types
+        d&apos;affaires méritent des plans de départ différents.
+      </p>
+      <p className="muted">
+        Mieux vaut un modèle <b>trop fourni que trop pauvre</b> : il est plus rapide de
         supprimer un chapitre inutile que d&apos;aller rechercher un fichier oublié.
+      </p>
+    </>
+  )
+}
+
+export function BibliothequeHelp(): JSX.Element {
+  return (
+    <>
+      <p>
+        La bibliothèque est le dossier où vit tout ce que l&apos;application possède : le
+        gabarit, les contenus, les modèles, les mémoires et les documents générés. Par
+        défaut, c&apos;est <b>Documents\XSProMemo</b>, sur ce poste.
+      </p>
+      <p>
+        <b>Choisir un dossier</b> permet de pointer ailleurs — un autre disque, ou un
+        dossier réseau accessible depuis plusieurs postes de l&apos;entreprise. Un dossier
+        vide reçoit une copie complète de la bibliothèque actuelle ; un dossier qui en
+        contient déjà une est rejoint tel quel, sans rien recopier.
+      </p>
+      <p>
+        L&apos;application redémarre après un changement : trop d&apos;écrans dépendent de
+        l&apos;ancien dossier pour continuer proprement sans repartir de zéro.
+      </p>
+      <p className="muted">
+        Si deux personnes modifient le même mémoire au même moment depuis deux postes
+        différents, le dernier enregistré l&apos;emporte — pas de fusion, pas de blocage.
+        Chaque poste doit avoir Word installé pour générer un document.
       </p>
     </>
   )
@@ -252,8 +286,9 @@ export function MemoiresHelp(): JSX.Element {
       <h3>Les commandes</h3>
       <ul>
         <li>
-          <b>Nouveau mémoire</b> : part d&apos;une copie de l&apos;exemple. Vous retirez ce
-          qui ne s&apos;applique pas, vous ajoutez ce qui manque.
+          <b>Nouveau mémoire</b> : part d&apos;une copie d&apos;un modèle (à choisir s&apos;il
+          y en a plusieurs). Vous retirez ce qui ne s&apos;applique pas, vous ajoutez ce qui
+          manque.
         </li>
         <li>
           <b>Ouvrir</b> : le plan du mémoire, et le bouton pour le générer.
@@ -280,8 +315,8 @@ export function MemoiresHelp(): JSX.Element {
       </p>
 
       <p className="muted">
-        Les documents produits sont rangés dans Documents\XSProMemo\documents. La
-        Configuration propose un raccourci vers ce dossier.
+        Les documents produits sont rangés dans le dossier « documents » de la
+        bibliothèque. La Configuration propose un raccourci vers ce dossier.
       </p>
     </>
   )

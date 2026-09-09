@@ -70,6 +70,23 @@ function fichiersUtilises(memoire) {
   return utilises
 }
 
+/** Les mémoires marqués comme modèle, du plus ancien au plus récent. */
+async function trouverModeles(source) {
+  const dossier = path.join(source, 'memoires')
+  const fichiers = (await fs.readdir(dossier).catch(() => [])).filter((f) => f.endsWith('.json'))
+  const modeles = []
+  for (const fichier of fichiers) {
+    try {
+      const memoire = await lire(path.join(dossier, fichier))
+      if (memoire.isTemplate) modeles.push(memoire)
+    } catch {
+      // fichier illisible : ignoré plutôt que de faire échouer tout l'export
+    }
+  }
+  modeles.sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+  return modeles
+}
+
 /** Rend le dossier destination identique au dossier source, ajouts et retraits compris. */
 async function synchroniser(depuis, vers) {
   const presents = (await fs.readdir(depuis).catch(() => [])).filter((f) => !f.startsWith('~$'))
@@ -99,10 +116,17 @@ async function principal() {
   if (!(await existe(source))) throw new Error(`Dossier de travail introuvable : ${source}`)
 
   const config = await lire(path.join(source, 'config.json'))
-  if (!config.exampleId) throw new Error("Ce dossier n'a pas de mémoire exemple enregistré.")
+  const modeles = await trouverModeles(source)
+  if (modeles.length === 0) throw new Error("Ce dossier n'a aucun mémoire marqué comme modèle.")
 
-  const memoire = await lire(path.join(source, 'memoires', `${config.exampleId}.json`))
-  note(`Mémoire exemple : « ${memoire.name} », ${memoire.chapters.length} chapitres racine`)
+  const memoire = modeles[0]
+  note(`Modèle exporté : « ${memoire.name} », ${memoire.chapters.length} chapitres racine`)
+  if (modeles.length > 1) {
+    note(
+      `  ATTENTION ${modeles.length - 1} autre(s) modèle(s) présent(s) sur ce poste, non livré(s) :`
+    )
+    for (const autre of modeles.slice(1)) note(`    ${autre.name}`)
+  }
 
   // --- Le plan ---
   const plan = {

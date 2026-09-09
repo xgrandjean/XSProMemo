@@ -14,6 +14,8 @@ export default function MemoiresListPage({
   onOpen: (id: string) => void
 }): JSX.Element {
   const [memoires, setMemoires] = useState<MemoireSummary[] | null>(null)
+  const [templates, setTemplates] = useState<MemoireSummary[]>([])
+  const [templateId, setTemplateId] = useState('')
   const [newName, setNewName] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -27,13 +29,22 @@ export default function MemoiresListPage({
 
   useEffect(refresh, [])
 
+  // Loaded once: which modèle a new mémoire starts from. With a single one (the common
+  // case) the picker stays hidden and that one is used directly — no added friction.
+  useEffect(() => {
+    window.api.memoires.listTemplates().then((list) => {
+      setTemplates(list)
+      setTemplateId((current) => current || list[0]?.id || '')
+    })
+  }, [])
+
   async function create(): Promise<void> {
     const name = newName.trim()
-    if (!name) return
+    if (!name || !templateId) return
     setBusy(true)
     setError(null)
     try {
-      const created = await window.api.memoires.create(name)
+      const created = await window.api.memoires.create(name, templateId)
       setNewName('')
       onOpen(created.id)
     } catch (err) {
@@ -96,13 +107,22 @@ export default function MemoiresListPage({
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && create()}
           />
-          <button className="primary" onClick={create} disabled={busy || !newName.trim()}>
+          {templates.length > 1 && (
+            <select value={templateId} onChange={(e) => setTemplateId(e.target.value)}>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          )}
+          <button className="primary" onClick={create} disabled={busy || !newName.trim() || !templateId}>
             Nouveau mémoire
           </button>
         </div>
         <p className="muted" style={{ marginBottom: 0 }}>
-          Un nouveau mémoire part de l&apos;exemple défini dans la configuration : vous n&apos;avez
-          plus qu&apos;à retirer, ajouter et renommer ce qu&apos;il faut.
+          Un nouveau mémoire part d&apos;un modèle défini dans la configuration : vous
+          n&apos;avez plus qu&apos;à retirer, ajouter et renommer ce qu&apos;il faut.
         </p>
         {error && <p className="error-text">{error}</p>}
       </div>

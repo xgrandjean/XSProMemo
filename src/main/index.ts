@@ -4,7 +4,7 @@ import { writeFileSync } from 'node:fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { generateMemoire } from './render/generate'
 import { seedIfNeeded } from './store/seed'
-import { dataRoot } from './store/paths'
+import { requireLibraryPath } from './ipc/context'
 import { registerDialogIpc } from './ipc/dialogs'
 import { registerModelIpc } from './ipc/model'
 import { registerMemoiresIpc } from './ipc/memoires'
@@ -68,8 +68,9 @@ async function runHeadlessGeneration(memoireId: string): Promise<void> {
   }
 
   try {
-    await seedIfNeeded()
-    const result = await generateMemoire(dataRoot(), memoireId, (message) => log(`… ${message}`))
+    const root = await requireLibraryPath()
+    await seedIfNeeded(root)
+    const result = await generateMemoire(root, memoireId, (message) => log(`… ${message}`))
     log(`OK ${result.pageCount} pages -> ${result.pdfPath}`)
     result.warnings.forEach((warning) => log(`AVERTISSEMENT ${warning}`))
     app.exit(0)
@@ -84,7 +85,7 @@ app.setName('XSProMemo')
 
 app.whenReady().then(async () => {
   electronApp.setAppUserModelId('com.xspromemo.app')
-  await seedIfNeeded()
+  await seedIfNeeded(await requireLibraryPath())
   app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
 
   const headlessTarget = headlessGenerationTarget()
