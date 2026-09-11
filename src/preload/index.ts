@@ -26,6 +26,8 @@ const api = {
     get: (): Promise<ModelStatus> => ipcRenderer.invoke('model:get'),
     setSommaireTitle: (title: string): Promise<ModelStatus> =>
       ipcRenderer.invoke('model:setSommaireTitle', title),
+    setAiInstructions: (aiInstructions: string): Promise<ModelStatus> =>
+      ipcRenderer.invoke('model:setAiInstructions', aiInstructions),
     openTemplate: (): Promise<void> => ipcRenderer.invoke('model:openTemplate'),
     openDataFolder: (): Promise<void> => ipcRenderer.invoke('model:openDataFolder'),
     probeLibraryFolder: (target: string): Promise<FolderProbeResult> =>

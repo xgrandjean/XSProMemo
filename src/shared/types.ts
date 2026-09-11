@@ -61,6 +61,8 @@ export interface MemoireSummary {
 /** The frozen part, edited behind the configuration screen. */
 export interface ModelConfig {
   sommaireTitle: string
+  /** Appended to every "Copier consigne pour IA" text — house tone/style, set once. */
+  aiInstructions: string
 }
 
 /** What the configuration screen shows about the template and the data folder. */

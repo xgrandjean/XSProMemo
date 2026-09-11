@@ -17,6 +17,7 @@ export default function ConfigPage({
 }): JSX.Element {
   const [status, setStatus] = useState<ModelStatus | null>(null)
   const [sommaireTitle, setSommaireTitle] = useState('')
+  const [aiInstructions, setAiInstructions] = useState('')
   const [templates, setTemplates] = useState<MemoireSummary[] | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -35,6 +36,7 @@ export default function ConfigPage({
     window.api.model.get().then((s) => {
       setStatus(s)
       setSommaireTitle(s.config.sommaireTitle)
+      setAiInstructions(s.config.aiInstructions)
     })
     refreshTemplates()
   }, [])
@@ -55,6 +57,11 @@ export default function ConfigPage({
   async function saveSommaireTitle(): Promise<void> {
     if (!status || sommaireTitle.trim() === status.config.sommaireTitle) return
     await run(() => window.api.model.setSommaireTitle(sommaireTitle))
+  }
+
+  async function saveAiInstructions(): Promise<void> {
+    if (!status || aiInstructions === status.config.aiInstructions) return
+    await run(() => window.api.model.setAiInstructions(aiInstructions))
   }
 
   async function chooseFolder(): Promise<void> {
@@ -166,6 +173,21 @@ export default function ConfigPage({
             onBlur={saveSommaireTitle}
             onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
           />
+        </div>
+
+        <div className="field" style={{ maxWidth: 480 }}>
+          <label>Consignes générales pour l&apos;IA</label>
+          <textarea
+            rows={3}
+            value={aiInstructions}
+            onChange={(e) => setAiInstructions(e.target.value)}
+            onBlur={saveAiInstructions}
+            placeholder="Ton, style, vocabulaire métier à respecter..."
+          />
+          <span className="muted">
+            Ajouté à la fin de chaque « Copier consigne pour IA », dans l&apos;éditeur
+            d&apos;un mémoire ou d&apos;un modèle.
+          </span>
         </div>
 
         <div className="row">

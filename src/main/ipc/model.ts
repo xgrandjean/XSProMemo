@@ -34,6 +34,14 @@ export function registerModelIpc(): void {
     return buildStatus(root)
   })
 
+  ipcMain.handle('model:setAiInstructions', async (_event, aiInstructions: string) => {
+    const root = await requireLibraryPath()
+    const config = await readModelConfig(root)
+    config.aiInstructions = aiInstructions
+    await writeModelConfig(root, config)
+    return buildStatus(root)
+  })
+
   ipcMain.handle('model:openTemplate', async () => {
     const error = await shell.openPath(templatePath(await requireLibraryPath()))
     if (error) throw new Error(error)

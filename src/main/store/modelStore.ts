@@ -4,7 +4,8 @@ import { configJsonPath, contentsDir, writeJsonAtomic } from './paths'
 import type { ContentRef, ModelConfig } from '../../shared/types'
 
 const defaultModelConfig: ModelConfig = {
-  sommaireTitle: 'Sommaire'
+  sommaireTitle: 'Sommaire',
+  aiInstructions: ''
 }
 
 export async function readModelConfig(root: string): Promise<ModelConfig> {
@@ -12,7 +13,8 @@ export async function readModelConfig(root: string): Promise<ModelConfig> {
     const stored = JSON.parse(await fs.readFile(configJsonPath(root), 'utf-8'))
     // Only known keys survive, so settings from earlier versions do not linger.
     return {
-      sommaireTitle: stored.sommaireTitle ?? defaultModelConfig.sommaireTitle
+      sommaireTitle: stored.sommaireTitle ?? defaultModelConfig.sommaireTitle,
+      aiInstructions: stored.aiInstructions ?? defaultModelConfig.aiInstructions
     }
   } catch {
     return { ...defaultModelConfig }

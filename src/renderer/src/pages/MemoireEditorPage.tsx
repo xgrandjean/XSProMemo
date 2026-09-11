@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import MemoirePlanEditor from '../components/MemoirePlanEditor'
 import GenerationDialog from '../components/GenerationDialog'
+import Modal from '../components/Modal'
+import { buildAiInstructions } from '../lib/aiInstructions'
 import type { GenerationProgressEvent, GenerationResult, Memoire } from '../../../shared/types'
 
 /**
@@ -26,6 +28,9 @@ export default function MemoireEditorPage({
   const [dialogOpen, setDialogOpen] = useState(false)
   const [steps, setSteps] = useState<string[]>([])
   const [result, setResult] = useState<GenerationResult | null>(null)
+  const [aiPromptCopied, setAiPromptCopied] = useState(false)
+  const [libraryPath, setLibraryPath] = useState('')
+  const [generalNotes, setGeneralNotes] = useState('')
   const latest = useRef<Memoire | null>(null)
 
   useEffect(() => {
@@ -35,6 +40,13 @@ export default function MemoireEditorPage({
       setStatus('saved')
     })
   }, [memoireId])
+
+  useEffect(() => {
+    window.api.model.get().then((s) => {
+      setLibraryPath(s.library.path)
+      setGeneralNotes(s.config.aiInstructions)
+    })
+  }, [])
 
   useEffect(() => {
     onDirtyChange?.(status !== 'saved')
@@ -94,6 +106,13 @@ export default function MemoireEditorPage({
     }
   }
 
+  async function copyAiPrompt(): Promise<void> {
+    if (!draft) return
+    const text = buildAiInstructions(draft, libraryPath, generalNotes)
+    await navigator.clipboard.writeText(text)
+    setAiPromptCopied(true)
+  }
+
   if (!draft) return <p className="muted">Chargement...</p>
 
   return (
@@ -129,6 +148,9 @@ export default function MemoireEditorPage({
         <button className="primary" onClick={generate} disabled={generating}>
           {generating ? 'Génération...' : 'Générer'}
         </button>
+        <button className="secondary" onClick={() => void copyAiPrompt()}>
+          Copier consigne pour IA
+        </button>
       </div>
 
       <MemoirePlanEditor draft={draft} edit={edit} />
@@ -141,6 +163,32 @@ export default function MemoireEditorPage({
           error={error}
           onClose={() => setDialogOpen(false)}
         />
+      )}
+
+      {aiPromptCopied && (
+        <Modal
+          title="Consigne copiée"
+          onClose={() => setAiPromptCopied(false)}
+          actions={
+            <button className="primary" onClick={() => setAiPromptCopied(false)}>
+              Compris
+            </button>
+          }
+        >
+          <p>
+            Le texte copié explique à l&apos;IA comment fonctionne XSProMemo, lui demande
+            de ne rédiger que ce {draft.isTemplate ? 'modèle' : 'mémoire'} précis, et de
+            toujours faire une copie de sauvegarde avant de remplacer un fichier existant.
+            Collez-le en premier message dans la session IA que vous pointez sur ce
+            dossier.
+          </p>
+          <p className="muted">
+            Le résultat dépend du LLM réellement utilisé : certains suivront ces
+            consignes à la lettre, d&apos;autres moins bien. Relisez toujours ce qu&apos;il
+            a produit, et vérifiez que les copies de sauvegarde attendues ont bien été
+            créées avant de faire confiance à ses modifications.
+          </p>
+        </Modal>
       )}
     </div>
   )

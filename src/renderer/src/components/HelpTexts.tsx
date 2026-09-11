@@ -116,6 +116,12 @@ export function GabaritHelp(): JSX.Element {
         Le titre du sommaire se règle ici aussi : c&apos;est le texte affiché au-dessus de
         la table des matières.
       </p>
+      <p className="muted">
+        Les « consignes générales pour l&apos;IA » sont ajoutées à la fin de chaque texte
+        copié par le bouton « Copier consigne pour IA », dans l&apos;éditeur d&apos;un
+        mémoire ou d&apos;un modèle — utile pour fixer une fois pour toute l&apos;équipe le
+        ton ou le vocabulaire attendu, plutôt que de le répéter à chaque fois.
+      </p>
     </>
   )
 }
