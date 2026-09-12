@@ -5,7 +5,8 @@ import type { ContentRef, ModelConfig } from '../../shared/types'
 
 const defaultModelConfig: ModelConfig = {
   sommaireTitle: 'Sommaire',
-  aiInstructions: ''
+  aiInstructions: '',
+  gabaritVersion: ''
 }
 
 export async function readModelConfig(root: string): Promise<ModelConfig> {
@@ -14,7 +15,8 @@ export async function readModelConfig(root: string): Promise<ModelConfig> {
     // Only known keys survive, so settings from earlier versions do not linger.
     return {
       sommaireTitle: stored.sommaireTitle ?? defaultModelConfig.sommaireTitle,
-      aiInstructions: stored.aiInstructions ?? defaultModelConfig.aiInstructions
+      aiInstructions: stored.aiInstructions ?? defaultModelConfig.aiInstructions,
+      gabaritVersion: stored.gabaritVersion ?? defaultModelConfig.gabaritVersion
     }
   } catch {
     return { ...defaultModelConfig }

@@ -3,6 +3,7 @@ import { promises as fs } from 'node:fs'
 import { readModelConfig, writeModelConfig } from '../store/modelStore'
 import { dataRoot, templatePath } from '../store/paths'
 import { chooseLibraryFolder, probeFolder, useDefaultLibrary } from '../store/library'
+import { dismissGabaritUpdate, restoreDefaultTemplate } from '../store/seed'
 import { previewStyles } from '../render/previewStyles'
 import { requireLibraryPath } from './context'
 import type { ModelStatus } from '../../shared/types'
@@ -15,12 +16,14 @@ async function buildStatus(root: string): Promise<ModelStatus> {
   } catch {
     templateExists = false
   }
+  const config = await readModelConfig(root)
   return {
-    config: await readModelConfig(root),
+    config,
     dataFolder: root,
     templatePath: template,
     templateExists,
-    library: { path: root, isDefault: root === dataRoot() }
+    library: { path: root, isDefault: root === dataRoot() },
+    gabaritUpdateAvailable: config.gabaritVersion !== app.getVersion()
   }
 }
 
@@ -52,6 +55,18 @@ export function registerModelIpc(): void {
     const outputPath = await previewStyles(await requireLibraryPath())
     const error = await shell.openPath(outputPath)
     if (error) throw new Error(error)
+  })
+
+  ipcMain.handle('model:applyGabaritUpdate', async () => {
+    const root = await requireLibraryPath()
+    await restoreDefaultTemplate(root)
+    return buildStatus(root)
+  })
+
+  ipcMain.handle('model:dismissGabaritUpdate', async () => {
+    const root = await requireLibraryPath()
+    await dismissGabaritUpdate(root)
+    return buildStatus(root)
   })
 
   /** Shortcut to the folder holding the template, the contents and the documents. */

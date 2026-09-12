@@ -189,11 +189,47 @@ export async function seedIfNeeded(root: string): Promise<void> {
 
   if (!(await exists(templatePath(root)))) {
     const source = path.join(shipped, 'Gabarit.docx')
-    if (await exists(source)) await fs.copyFile(source, templatePath(root))
+    if (await exists(source)) {
+      await fs.copyFile(source, templatePath(root))
+      // A brand new library already has the latest gabarit — never worth offering the
+      // update prompt for something it was just given.
+      const config = await readModelConfig(root)
+      await writeModelConfig(root, { ...config, gabaritVersion: app.getVersion() })
+    }
   }
 
   await restoreMissingContents(path.join(shipped, 'contenus'), contentsDir(root))
 
   await migrateLegacyExample(root)
   await createDefaultTemplateIfNeeded(root, shipped)
+}
+
+/**
+ * Replaces this library's gabarit with the one shipped in this version of the
+ * application — the only way its styles/margins/footer ever change after the library's
+ * first seed, since `seedIfNeeded` deliberately never overwrites an existing one. Keeps a
+ * timestamped copy of what was there, since this is a real, if easily undone, overwrite.
+ */
+export async function restoreDefaultTemplate(root: string): Promise<void> {
+  const shipped = shippedDir()
+  const source = path.join(shipped, 'Gabarit.docx')
+  if (!(await exists(source))) return
+
+  if (await exists(templatePath(root))) {
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+    const backupPath = path.join(path.dirname(templatePath(root)), `Gabarit.avant-restauration.${stamp}.bak.docx`)
+    await fs.copyFile(templatePath(root), backupPath)
+  }
+
+  await fs.copyFile(source, templatePath(root))
+
+  const config = await readModelConfig(root)
+  await writeModelConfig(root, { ...config, gabaritVersion: app.getVersion() })
+}
+
+/** Marks this library's gabarit as up to date without touching it — the update prompt
+ *  will not resurface until the app itself ships a newer version. */
+export async function dismissGabaritUpdate(root: string): Promise<void> {
+  const config = await readModelConfig(root)
+  await writeModelConfig(root, { ...config, gabaritVersion: app.getVersion() })
 }

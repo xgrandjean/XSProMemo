@@ -30,6 +30,9 @@ const api = {
       ipcRenderer.invoke('model:setAiInstructions', aiInstructions),
     openTemplate: (): Promise<void> => ipcRenderer.invoke('model:openTemplate'),
     previewStyles: (): Promise<void> => ipcRenderer.invoke('model:previewStyles'),
+    applyGabaritUpdate: (): Promise<ModelStatus> => ipcRenderer.invoke('model:applyGabaritUpdate'),
+    dismissGabaritUpdate: (): Promise<ModelStatus> =>
+      ipcRenderer.invoke('model:dismissGabaritUpdate'),
     openDataFolder: (): Promise<void> => ipcRenderer.invoke('model:openDataFolder'),
     probeLibraryFolder: (target: string): Promise<FolderProbeResult> =>
       ipcRenderer.invoke('model:probeLibraryFolder', target),

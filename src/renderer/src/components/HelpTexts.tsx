@@ -152,6 +152,14 @@ export function GabaritHelp(): JSX.Element {
         clic pour rester à jour.
       </p>
       <p>
+        Une mise à jour de l&apos;application n&apos;écrase jamais le gabarit d&apos;une
+        bibliothèque déjà en place, pour ne jamais perdre une personnalisation. Quand une
+        nouvelle version apporte des améliorations au gabarit livré (styles de titre,
+        mise en page), l&apos;application vous le propose une fois à l&apos;ouverture ;
+        <b> Restaurer le gabarit par défaut</b> permet de le faire à tout moment, avec une
+        copie de l&apos;ancien gabarit gardée à côté.
+      </p>
+      <p>
         Le logo n&apos;en fait pas partie : chaque mémoire porte le sien, réglé depuis son
         propre plan. Celui d&apos;un modèle, plus bas dans cette page, est celui que reçoit
         un nouveau mémoire parti de ce modèle.

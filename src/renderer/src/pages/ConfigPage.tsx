@@ -23,6 +23,8 @@ export default function ConfigPage({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [previewBusy, setPreviewBusy] = useState(false)
+  const [restoreBusy, setRestoreBusy] = useState(false)
+  const [confirmRestore, setConfirmRestore] = useState(false)
 
   const [libraryBusy, setLibraryBusy] = useState(false)
   const [libraryError, setLibraryError] = useState<string | null>(null)
@@ -75,6 +77,19 @@ export default function ConfigPage({
       setError(describeError(err))
     } finally {
       setPreviewBusy(false)
+    }
+  }
+
+  async function confirmRestoreDefaultTemplate(): Promise<void> {
+    setConfirmRestore(false)
+    setRestoreBusy(true)
+    setError(null)
+    try {
+      setStatus(await window.api.model.applyGabaritUpdate())
+    } catch (err) {
+      setError(describeError(err))
+    } finally {
+      setRestoreBusy(false)
     }
   }
 
@@ -211,10 +226,24 @@ export default function ConfigPage({
           <button className="secondary" onClick={() => void previewStyles()} disabled={previewBusy}>
             {previewBusy ? 'Génération...' : 'Aperçu du style'}
           </button>
+          <button
+            className="secondary"
+            onClick={() => setConfirmRestore(true)}
+            disabled={restoreBusy}
+          >
+            {restoreBusy ? 'Restauration...' : 'Restaurer le gabarit par défaut'}
+          </button>
           <button className="secondary" onClick={() => window.api.model.openDataFolder()}>
             Ouvrir le dossier de l&apos;application
           </button>
         </div>
+
+        {status.gabaritUpdateAvailable && (
+          <p className="muted">
+            Une version plus récente du gabarit par défaut est disponible (styles de
+            titre notamment). « Restaurer le gabarit par défaut » l&apos;applique.
+          </p>
+        )}
 
         {!status.templateExists && (
           <p className="error-text">
@@ -339,6 +368,35 @@ export default function ConfigPage({
           )}
           <p className="muted">
             <code>{confirmTarget.path}</code>
+          </p>
+        </Modal>
+      )}
+
+      {confirmRestore && (
+        <Modal
+          title="Restaurer le gabarit par défaut"
+          onClose={() => (restoreBusy ? undefined : setConfirmRestore(false))}
+          dismissable={!restoreBusy}
+          actions={
+            <>
+              <button
+                className="secondary"
+                onClick={() => setConfirmRestore(false)}
+                disabled={restoreBusy}
+              >
+                Annuler
+              </button>
+              <button className="primary" onClick={confirmRestoreDefaultTemplate} disabled={restoreBusy}>
+                {restoreBusy ? 'En cours...' : 'Restaurer'}
+              </button>
+            </>
+          }
+        >
+          <p>
+            Remplace le gabarit actuel (styles, marges, en-tête, pied de page, logo par
+            défaut) par celui livré avec l&apos;application. Une copie de l&apos;actuel est
+            gardée à côté au cas où, mais toute personnalisation manuelle du gabarit non
+            reportée dans celui livré sera remplacée.
           </p>
         </Modal>
       )}

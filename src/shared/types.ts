@@ -63,6 +63,12 @@ export interface ModelConfig {
   sommaireTitle: string
   /** Appended to every "Copier consigne pour IA" text — house tone/style, set once. */
   aiInstructions: string
+  /**
+   * App version that last touched this library's gabarit (created it, or the user
+   * applied/dismissed an update prompt for it). Compared against the running app's own
+   * version to decide whether a newer shipped gabarit should be offered.
+   */
+  gabaritVersion: string
 }
 
 /** What the configuration screen shows about the template and the data folder. */
@@ -74,6 +80,8 @@ export interface ModelStatus {
   templateExists: boolean
   /** Where the library actually lives, and whether that's the default location. */
   library: { path: string; isDefault: boolean }
+  /** True once the running app ships a gabarit newer than the one this library last saw. */
+  gabaritUpdateAvailable: boolean
 }
 
 export type FolderProbeResult = 'empty' | 'existingLibrary' | 'nonEmptyOther'
