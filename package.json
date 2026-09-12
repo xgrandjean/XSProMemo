@@ -1,9 +1,9 @@
 {
   "name": "xspromemo",
-  "version": "0.3.0",
+  "version": "0.5.0",
   "description": "Générateur de mémoires techniques pour appels d'offres",
   "main": "./out/main/index.js",
-  "author": "Xavier Grandjean",
+  "author": "scse972",
   "private": true,
   "scripts": {
     "dev": "electron-vite dev",
