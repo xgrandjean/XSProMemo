@@ -138,6 +138,15 @@ try {
     $toc = $doc.TablesOfContents.Add($selection.Range, $true, 1, 4)
     $tocStart = $toc.Range.Start
 
+    # UseHyperlinks de TablesOfContents.Add ne s'applique qu'a une publication web (doc
+    # Microsoft) : sans ceci, le champ TOC genere n'a pas le commutateur \h, donc ni le
+    # Ctrl+clic dans Word ni le sommaire du PDF exporte ne sont cliquables (seul le panneau
+    # de signets, une fonctionnalite PDF distincte basee sur les styles de titre, marche).
+    $tocField = $toc.Range.Fields | Where-Object { $_.Type -eq 13 } | Select-Object -First 1   # wdFieldTOC
+    if ($tocField -and $tocField.Code.Text -notmatch '\\h(\s|$)') {
+        $tocField.Code.Text = $tocField.Code.Text.TrimEnd() + ' \h '
+    }
+
     Go-ToEnd
     $selection.InsertBreak(7)   # wdPageBreak
 
