@@ -193,6 +193,7 @@ try {
         $level = [Math]::Min([Math]::Max([int]$chapter.level, 1), 9)
         Ensure-OwnParagraph
         $selection.Style = (-1 * ($level + 1))   # wdStyleHeading1 = -2 .. Heading9 = -10
+        Clear-AutoNumbering $selection
 
         # L'attribut "saut de page avant" de Word plutot qu'un saut insere en dur : il
         # ne saute que si le titre n'est pas deja en haut d'une page. Un contenu qui se

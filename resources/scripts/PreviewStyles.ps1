@@ -73,6 +73,7 @@ try {
     Write-ProgressJson "Generation de l'apercu..."
     for ($lvl = 1; $lvl -le 6; $lvl++) {
         $selection.Style = (-1 * ($lvl + 1))   # wdStyleHeading1 = -2 .. Heading6 = -7
+        Clear-AutoNumbering $selection
         $selection.TypeText("Titre de niveau $lvl")
         $selection.TypeParagraph()
         $selection.Style = -1                  # wdStyleNormal

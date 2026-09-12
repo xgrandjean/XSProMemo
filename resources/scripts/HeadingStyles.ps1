@@ -16,3 +16,15 @@ function Set-HeadingKeepTogether($TargetDoc) {
     }
     $TargetDoc.Styles.Item(-1).ParagraphFormat.WidowControl = $true   # wdStyleNormal
 }
+
+<#
+  L'application tape elle-meme la numerotation du chapitre (ex. "3.4.10.1") en texte
+  litteral avant son titre. Si le style de titre du gabarit est lie a une liste a
+  plusieurs niveaux (heritee d'un autre document, copiee-collee un jour), Word ajoute
+  EN PLUS sa propre numerotation automatique (ex. "A.1.1") juste devant : les deux se
+  cumulent. A appliquer juste apres avoir donne a $Selection le style du titre, avant
+  d'y taper le texte - un paragraphe sans liste associee n'est pas affecte.
+#>
+function Clear-AutoNumbering($Selection) {
+    $Selection.Range.ListFormat.RemoveNumbers()
+}
