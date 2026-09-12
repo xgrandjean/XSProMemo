@@ -41,6 +41,8 @@ export default function ConfigPage({
 
   const [toDuplicate, setToDuplicate] = useState<MemoireSummary | null>(null)
   const [duplicateName, setDuplicateName] = useState('')
+  const [exportingId, setExportingId] = useState<string | null>(null)
+  const [importingTemplate, setImportingTemplate] = useState(false)
 
   useEffect(() => {
     window.api.model.get().then((s) => {
@@ -180,6 +182,36 @@ export default function ConfigPage({
       setError(describeError(err))
     } finally {
       setBusy(false)
+    }
+  }
+
+  async function exportTemplate(template: MemoireSummary): Promise<void> {
+    const defaultName = `${template.name.replace(/[\\/:*?"<>|]/g, '_')}.xspromemo.zip`
+    const target = await window.api.dialogs.pickSaveZip(defaultName)
+    if (!target) return
+    setExportingId(template.id)
+    setError(null)
+    try {
+      await window.api.memoires.export(template.id, target)
+    } catch (err) {
+      setError(describeError(err))
+    } finally {
+      setExportingId(null)
+    }
+  }
+
+  async function importTemplate(): Promise<void> {
+    const source = await window.api.dialogs.pickZip()
+    if (!source) return
+    setImportingTemplate(true)
+    setError(null)
+    try {
+      const created = await window.api.memoires.import(source)
+      onOpen(created.id)
+    } catch (err) {
+      setError(describeError(err))
+    } finally {
+      setImportingTemplate(false)
     }
   }
 
@@ -337,6 +369,14 @@ export default function ConfigPage({
           <span className="muted">
             Le ou les points de départ proposés pour « Nouveau mémoire ».
           </span>
+          <button
+            className="icon-btn"
+            title="Importer un modèle (.zip)"
+            onClick={() => void importTemplate()}
+            disabled={importingTemplate}
+          >
+            📥
+          </button>
         </div>
 
         {templates === null && <p className="muted">Chargement...</p>}
@@ -353,8 +393,21 @@ export default function ConfigPage({
               <button className="secondary" onClick={() => askDuplicate(template)} disabled={busy}>
                 Dupliquer
               </button>
-              <button className="danger" onClick={() => deleteTemplate(template)} disabled={busy}>
-                Supprimer
+              <button
+                className="icon-btn danger-link"
+                title="Supprimer"
+                onClick={() => deleteTemplate(template)}
+                disabled={busy}
+              >
+                ✕
+              </button>
+              <button
+                className="icon-btn"
+                title="Exporter (.zip)"
+                onClick={() => void exportTemplate(template)}
+                disabled={exportingId === template.id}
+              >
+                📤
               </button>
             </div>
           </div>

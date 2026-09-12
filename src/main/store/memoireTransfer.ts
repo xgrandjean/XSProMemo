@@ -108,8 +108,10 @@ function remapContent(ref: ContentRef | null, renamed: Map<string, string>): Con
 /**
  * Recreates a mémoire exported with `exportMemoire` inside this library, under a fresh
  * id so it can never collide with one already here (even the same export imported
- * twice). Always comes back as an ordinary working mémoire, never a modèle, and never
- * carrying a previous machine's generation result.
+ * twice). Inherits the source's modèle status — same principle as `createMemoireFrom`
+ * duplicating one: importing a modèle's export gives another modèle, importing a working
+ * mémoire's export gives another working mémoire. Never carries a previous machine's
+ * generation result.
  */
 export async function importMemoire(root: string, zipPath: string): Promise<Memoire> {
   const zip = await JSZip.loadAsync(await fs.readFile(zipPath))
@@ -153,7 +155,7 @@ export async function importMemoire(root: string, zipPath: string): Promise<Memo
     id: newId,
     createdAt: now,
     updatedAt: now,
-    isTemplate: false,
+    isTemplate: source.isTemplate,
     lastGeneratedAt: null,
     outputDocx: null,
     outputPdf: null,
