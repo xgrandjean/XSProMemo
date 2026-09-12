@@ -3,6 +3,7 @@ import { promises as fs } from 'node:fs'
 import { readModelConfig, writeModelConfig } from '../store/modelStore'
 import { dataRoot, templatePath } from '../store/paths'
 import { chooseLibraryFolder, probeFolder, useDefaultLibrary } from '../store/library'
+import { previewStyles } from '../render/previewStyles'
 import { requireLibraryPath } from './context'
 import type { ModelStatus } from '../../shared/types'
 
@@ -44,6 +45,12 @@ export function registerModelIpc(): void {
 
   ipcMain.handle('model:openTemplate', async () => {
     const error = await shell.openPath(templatePath(await requireLibraryPath()))
+    if (error) throw new Error(error)
+  })
+
+  ipcMain.handle('model:previewStyles', async () => {
+    const outputPath = await previewStyles(await requireLibraryPath())
+    const error = await shell.openPath(outputPath)
     if (error) throw new Error(error)
   })
 

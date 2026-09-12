@@ -21,6 +21,7 @@ export default function ConfigPage({
   const [templates, setTemplates] = useState<MemoireSummary[] | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [previewBusy, setPreviewBusy] = useState(false)
 
   const [libraryBusy, setLibraryBusy] = useState(false)
   const [libraryError, setLibraryError] = useState<string | null>(null)
@@ -62,6 +63,18 @@ export default function ConfigPage({
   async function saveAiInstructions(): Promise<void> {
     if (!status || aiInstructions === status.config.aiInstructions) return
     await run(() => window.api.model.setAiInstructions(aiInstructions))
+  }
+
+  async function previewStyles(): Promise<void> {
+    setError(null)
+    setPreviewBusy(true)
+    try {
+      await window.api.model.previewStyles()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setPreviewBusy(false)
+    }
   }
 
   async function chooseFolder(): Promise<void> {
@@ -193,6 +206,9 @@ export default function ConfigPage({
         <div className="row">
           <button className="secondary" onClick={() => window.api.model.openTemplate()}>
             Ouvrir le gabarit dans Word
+          </button>
+          <button className="secondary" onClick={() => void previewStyles()} disabled={previewBusy}>
+            {previewBusy ? 'Génération...' : 'Aperçu du style'}
           </button>
           <button className="secondary" onClick={() => window.api.model.openDataFolder()}>
             Ouvrir le dossier de l&apos;application

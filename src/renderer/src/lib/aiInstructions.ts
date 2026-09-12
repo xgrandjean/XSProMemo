@@ -65,7 +65,15 @@ Le contenu d'un chapitre est un fichier .docx autonome, placé dans le dossier \
 contenus/ de cette bibliothèque. Il ne doit contenir que le corps du texte :
 - pas de titre de chapitre (l'application l'ajoute déjà — ce serait en double) ;
 - pas de sommaire ;
-- pas de numérotation manuelle des chapitres.
+- pas de numérotation manuelle des chapitres ;
+- pas besoin de ligne vide en tête ou en fin de fichier : l'application les retire \
+automatiquement si tu en laisses, inutile de t'en soucier.
+Si un paragraphe contient une image accompagnée de texte (légende, phrase \
+d'introduction juste avant ou après), pose sur les paragraphes concernés les \
+propriétés Word natives « Avec le suivant » (KeepWithNext) et/ou « Lignes solidaires » \
+(KeepTogether) — Paragraphe → Enchaînements dans Word — pour qu'un saut de page \
+automatique ne sépare jamais l'image de son texte. Ce réglage est conservé tel quel \
+lors de l'assemblage final.
 
 ## Plan actuel de ce ${kind}
 ${plan}

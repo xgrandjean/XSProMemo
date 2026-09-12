@@ -29,6 +29,7 @@ const api = {
     setAiInstructions: (aiInstructions: string): Promise<ModelStatus> =>
       ipcRenderer.invoke('model:setAiInstructions', aiInstructions),
     openTemplate: (): Promise<void> => ipcRenderer.invoke('model:openTemplate'),
+    previewStyles: (): Promise<void> => ipcRenderer.invoke('model:previewStyles'),
     openDataFolder: (): Promise<void> => ipcRenderer.invoke('model:openDataFolder'),
     probeLibraryFolder: (target: string): Promise<FolderProbeResult> =>
       ipcRenderer.invoke('model:probeLibraryFolder', target),

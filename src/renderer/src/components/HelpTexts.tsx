@@ -104,6 +104,12 @@ export function GabaritHelp(): JSX.Element {
         les chapitres. C&apos;est donc lui qui donne son allure à tout le document.
       </p>
       <p>
+        Ouvert dans Word, il ne montre presque rien : un titre de chapitre y apparaîtrait
+        dans chaque mémoire généré. Pour voir à quoi ressembleront les titres et le texte
+        courant sans toucher à vos données, utilisez <b>Aperçu du style</b> : un document
+        à part, jamais enregistré comme gabarit, régénéré à chaque clic pour rester à jour.
+      </p>
+      <p>
         Le logo n&apos;en fait pas partie : chaque mémoire porte le sien, réglé depuis son
         propre plan. Celui d&apos;un modèle, plus bas dans cette page, est celui que reçoit
         un nouveau mémoire parti de ce modèle.
@@ -257,6 +263,19 @@ export function PlanHelp(): JSX.Element {
         Un sous-chapitre est un fichier à part entière. Si un de vos documents contient
         plusieurs parties, découpez-le en autant de fichiers et créez les sous-chapitres
         correspondants.
+      </p>
+      <p className="muted">
+        Inutile de vous demander s&apos;il faut laisser une ligne vide en tête ou en fin de
+        fichier avant que le titre du chapitre ne soit ajouté : l&apos;application la
+        retire automatiquement si vous en laissez une, et ne change rien si vous n&apos;en
+        mettez pas. Le titre reste toujours collé à ce qui suit, il ne se retrouve jamais
+        seul en bas d&apos;une page.
+      </p>
+      <p className="muted">
+        Pour qu&apos;une image reste toujours avec le texte qui l&apos;accompagne (légende,
+        phrase d&apos;introduction), sélectionnez les paragraphes concernés dans Word et
+        cochez Paragraphe → Enchaînements → « Avec le suivant » et/ou « Lignes solidaires »
+        — l&apos;application respecte ce réglage lors de l&apos;assemblage.
       </p>
 
       <p className="muted">

@@ -81,10 +81,12 @@ try {
     } catch {}
 
     . (Join-Path $PSScriptRoot "LogoHeader.ps1")
+    . (Join-Path $PSScriptRoot "HeadingStyles.ps1")
 
     Copy-Item -Force -LiteralPath $manifest.shellPath -Destination $manifest.outputDocxPath
     $doc = $word.Documents.Open($manifest.outputDocxPath, $false, $false)
     $doc.Activate()
+    Set-HeadingKeepTogether $doc
 
     $selection = $word.Selection
 
@@ -92,6 +94,21 @@ try {
     # than a detached Range because it reliably follows the content it just inserted.
     function Go-ToEnd {
         $selection.EndKey(6) | Out-Null   # wdStory
+    }
+
+    # Une ligne vide en tete ou en fin d'un contenu est une incertitude d'auteur ("faut-il
+    # en laisser une avant mon premier paragraphe, sachant qu'un titre va etre ajoute avant
+    # ?"), jamais une intention de mise en page : on la retire silencieusement, sans toucher
+    # aux paragraphes internes ni au titre lui-meme.
+    function Trim-BlankEdges($range) {
+        if ($range.Paragraphs.Count -eq 0) { return }
+        $first = $range.Paragraphs.Item(1)
+        if (($first.Range.Text -replace "[\r\a\s]", "") -eq "") { $first.Range.Delete() }
+        $count = $range.Paragraphs.Count
+        if ($count -ge 1) {
+            $last = $range.Paragraphs.Item($count)
+            if (($last.Range.Text -replace "[\r\a\s]", "") -eq "") { $last.Range.Delete() }
+        }
     }
 
     # Le point d'insertion doit etre un paragraphe a lui : sans cela le titre suivant
@@ -113,7 +130,10 @@ try {
         Write-ProgressJson "Page de garde $($i + 1)/$($coverPages.Count)..."
         Go-ToEnd
         if ($i -gt 0) { $selection.InsertBreak(7) }   # wdPageBreak
+        $insertStart = $selection.Range.Start
         $selection.InsertFile([string]$coverPages[$i], "", $false, $false, $false)
+        Go-ToEnd
+        Trim-BlankEdges ($doc.Range($insertStart, $selection.Range.End))
     }
 
     # The body starts its own section so page numbering can restart after the cover.
@@ -188,7 +208,10 @@ try {
 
         if ($chapter.contentPath) {
             Go-ToEnd
+            $insertStart = $selection.Range.Start
             $selection.InsertFile([string]$chapter.contentPath, "", $false, $false, $false)
+            Go-ToEnd
+            Trim-BlankEdges ($doc.Range($insertStart, $selection.Range.End))
         }
     }
 
