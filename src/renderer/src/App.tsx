@@ -126,8 +126,8 @@ export default function App(): JSX.Element {
       {gabaritUpdatePrompt && (
         <Modal
           title="Mise à jour du gabarit disponible"
-          onClose={() => (gabaritUpdateBusy ? undefined : void dismissGabaritUpdate())}
-          dismissable={!gabaritUpdateBusy}
+          onClose={() => undefined}
+          dismissable={false}
           actions={
             <>
               <button className="secondary" onClick={() => void dismissGabaritUpdate()} disabled={gabaritUpdateBusy}>
