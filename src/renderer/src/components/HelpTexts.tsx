@@ -95,19 +95,61 @@ export function GabaritHelp(): JSX.Element {
         gabarit. Il ne contient que :
       </p>
       <ul>
-        <li>les styles (à quoi ressemble un « Titre 1 », un « Titre 2 », le texte courant),</li>
+        <li>
+          les styles : un style « Titre 1 » à « Titre 9 » par niveau de chapitre (gras,
+          couleur, taille...), et un style « Normal » pour tout le texte courant,
+        </li>
         <li>le pied de page et le numéro de page,</li>
         <li>le format et les marges.</li>
       </ul>
       <p>
-        À chaque génération, l&apos;application part d&apos;une copie du gabarit et y verse
-        les chapitres. C&apos;est donc lui qui donne son allure à tout le document.
+        À chaque génération, l&apos;application part d&apos;une copie du gabarit. Pour
+        chaque chapitre, elle tape elle-même son titre avec le style « Titre » du bon
+        niveau (1 pour un chapitre principal, 2 pour un sous-chapitre, etc.), puis verse à
+        la suite le contenu du fichier attaché, sans y toucher. C&apos;est donc le gabarit
+        qui donne son allure à tout le document — styles, marges, en-tête, pied de page.
       </p>
+
+      <h3>Rédiger un fichier de contenu</h3>
       <p>
-        Ouvert dans Word, il ne montre presque rien : un titre de chapitre y apparaîtrait
-        dans chaque mémoire généré. Pour voir à quoi ressembleront les titres et le texte
-        courant sans toucher à vos données, utilisez <b>Aperçu du style</b> : un document
-        à part, jamais enregistré comme gabarit, régénéré à chaque clic pour rester à jour.
+        Un fichier de contenu est un <b>.docx ordinaire</b>, écrit indépendamment du
+        gabarit et du mémoire — vous ne voyez jamais le titre du chapitre en l&apos;écrivant,
+        c&apos;est normal, l&apos;application l&apos;ajoute au moment de la génération.
+      </p>
+      <ol>
+        <li>Créez un nouveau document Word, vide.</li>
+        <li>
+          Écrivez votre texte normalement (style « Normal », celui par défaut). N&apos;
+          appliquez vous-même aucun style « Titre » : ces styles sont réservés au titre que
+          l&apos;application ajoute, un style de titre déjà présent dans votre fichier
+          ferait doublon dans le sommaire.
+        </li>
+        <li>
+          Pas de titre de chapitre, pas de sommaire, pas de numérotation manuelle — voir
+          plus haut, l&apos;application s&apos;en charge.
+        </li>
+        <li>
+          Ne vous demandez pas s&apos;il faut une ligne vide en tête ou en fin de fichier,
+          avant que le titre ne soit ajouté devant : l&apos;application la retire toute
+          seule si vous en laissez une, et ne change rien si vous n&apos;en mettez pas.
+        </li>
+        <li>
+          Pour une image qui doit toujours rester avec le texte qui l&apos;accompagne
+          (légende, phrase d&apos;introduction) : sélectionnez les paragraphes concernés,
+          puis Paragraphe → Enchaînements → cochez « Avec le suivant » et/ou « Lignes
+          solidaires ». Ce réglage est conservé tel quel lors de l&apos;assemblage.
+        </li>
+        <li>
+          Enregistrez le fichier, puis attachez-le au chapitre depuis le plan du mémoire
+          (« + contenu », ou l&apos;icône œil pour en remplacer un déjà attaché).
+        </li>
+      </ol>
+      <p>
+        Ouvert dans Word, le gabarit lui-même ne montre presque rien : un titre de chapitre
+        y apparaîtrait dans chaque mémoire généré. Pour voir à quoi ressembleront les
+        titres et le texte courant sans toucher à vos données, utilisez <b>Aperçu du
+        style</b> : un document à part, jamais enregistré comme gabarit, régénéré à chaque
+        clic pour rester à jour.
       </p>
       <p>
         Le logo n&apos;en fait pas partie : chaque mémoire porte le sien, réglé depuis son

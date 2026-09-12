@@ -145,7 +145,12 @@ export default function MemoireEditorPage({
           {status === 'dirty' && <span className="muted">Modifications non enregistrées</span>}
           {error && <span className="error-text">{error}</span>}
         </span>
-        <button className="primary" onClick={generate} disabled={generating}>
+        <button
+          className="primary"
+          onClick={generate}
+          disabled={generating || draft.chapters.length === 0}
+          title={draft.chapters.length === 0 ? 'Ajoutez au moins un chapitre avant de générer' : undefined}
+        >
           {generating ? 'Génération...' : 'Générer'}
         </button>
         <button className="secondary" onClick={() => void copyAiPrompt()}>
