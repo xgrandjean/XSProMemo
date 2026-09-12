@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Modal from '../components/Modal'
 import { HelpButton } from '../components/Help'
 import { GabaritHelp, BibliothequeHelp, ModelesHelp } from '../components/HelpTexts'
+import { describeError } from '../lib/describeError'
 import type { FolderProbeResult, MemoireSummary, ModelStatus } from '../../../shared/types'
 
 function formatDate(iso: string): string {
@@ -51,7 +52,7 @@ export default function ConfigPage({
     try {
       setStatus(await action())
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(describeError(err))
     }
   }
 
@@ -71,7 +72,7 @@ export default function ConfigPage({
     try {
       await window.api.model.previewStyles()
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(describeError(err))
     } finally {
       setPreviewBusy(false)
     }
@@ -91,7 +92,7 @@ export default function ConfigPage({
       }
       setConfirmTarget({ path: folder, probe })
     } catch (err) {
-      setLibraryError(err instanceof Error ? err.message : String(err))
+      setLibraryError(describeError(err))
     }
   }
 
@@ -103,7 +104,7 @@ export default function ConfigPage({
       await window.api.model.chooseLibraryFolder(confirmTarget.path)
       // The application relaunches itself on success — nothing left to do here.
     } catch (err) {
-      setLibraryError(err instanceof Error ? err.message : String(err))
+      setLibraryError(describeError(err))
       setLibraryBusy(false)
       setConfirmTarget(null)
     }
@@ -115,7 +116,7 @@ export default function ConfigPage({
     try {
       await window.api.model.useDefaultLibrary()
     } catch (err) {
-      setLibraryError(err instanceof Error ? err.message : String(err))
+      setLibraryError(describeError(err))
       setLibraryBusy(false)
     }
   }
@@ -135,7 +136,7 @@ export default function ConfigPage({
       await window.api.memoires.duplicate(source.id, duplicateName.trim())
       refreshTemplates()
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(describeError(err))
     } finally {
       setBusy(false)
     }
@@ -148,7 +149,7 @@ export default function ConfigPage({
       await window.api.memoires.delete(template.id)
       refreshTemplates()
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(describeError(err))
     } finally {
       setBusy(false)
     }

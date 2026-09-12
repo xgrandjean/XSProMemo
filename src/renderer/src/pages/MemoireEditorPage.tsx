@@ -3,6 +3,7 @@ import MemoirePlanEditor from '../components/MemoirePlanEditor'
 import GenerationDialog from '../components/GenerationDialog'
 import Modal from '../components/Modal'
 import { buildAiInstructions } from '../lib/aiInstructions'
+import { describeError } from '../lib/describeError'
 import type { GenerationProgressEvent, GenerationResult, Memoire } from '../../../shared/types'
 
 /**
@@ -81,7 +82,7 @@ export default function MemoireEditorPage({
       return saved
     } catch (err) {
       setStatus('dirty')
-      setError(err instanceof Error ? err.message : String(err))
+      setError(describeError(err))
       throw err
     }
   }
@@ -100,7 +101,7 @@ export default function MemoireEditorPage({
       setDraft(refreshed)
       setStatus('saved')
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(describeError(err))
     } finally {
       setGenerating(false)
     }

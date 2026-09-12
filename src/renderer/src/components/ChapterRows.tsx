@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import ChapterMenu, { type ChapterMenuItem } from './ChapterMenu'
 import { pickAndImportContent } from '../lib/pickContent'
+import { describeError } from '../lib/describeError'
 import type { ChapterNode, ContentRef, Orientation } from '../../../shared/types'
 
 export interface ChapterActions {
@@ -56,7 +57,7 @@ function ChapterRow({
       const picked = await pickAndImportContent()
       if (picked) actions.onContentChange(node.id, picked)
     } catch (err) {
-      setContentError(err instanceof Error ? err.message : String(err))
+      setContentError(describeError(err))
     }
   }
 

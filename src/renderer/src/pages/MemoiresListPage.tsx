@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Modal from '../components/Modal'
 import { HelpButton } from '../components/Help'
 import { MemoiresHelp } from '../components/HelpTexts'
+import { describeError } from '../lib/describeError'
 import type { MemoireSummary } from '../../../shared/types'
 
 function formatDate(iso: string): string {
@@ -48,7 +49,7 @@ export default function MemoiresListPage({
       setNewName('')
       onOpen(created.id)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(describeError(err))
     } finally {
       setBusy(false)
     }
@@ -68,7 +69,7 @@ export default function MemoiresListPage({
       const created = await window.api.memoires.duplicate(source.id, duplicateName.trim())
       onOpen(created.id)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(describeError(err))
     } finally {
       setBusy(false)
     }
@@ -83,7 +84,7 @@ export default function MemoiresListPage({
       await window.api.memoires.delete(target.id)
       refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(describeError(err))
     } finally {
       setBusy(false)
     }

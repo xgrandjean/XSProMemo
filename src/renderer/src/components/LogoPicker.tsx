@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { describeError } from '../lib/describeError'
 import type { LogoField } from '../../../shared/types'
 
 /**
@@ -40,7 +41,7 @@ export default function LogoPicker({
       await window.api.memoires.setLogo(memoireId, field, imagePath)
       setPreview(await window.api.memoires.logoPreview(memoireId, field))
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(describeError(err))
     } finally {
       setBusy(false)
     }
@@ -53,7 +54,7 @@ export default function LogoPicker({
       await window.api.memoires.clearLogo(memoireId, field)
       setPreview(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(describeError(err))
     } finally {
       setBusy(false)
     }

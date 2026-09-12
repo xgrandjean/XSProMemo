@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { pickAndImportContent } from '../lib/pickContent'
+import { describeError } from '../lib/describeError'
 import type { ContentRef } from '../../../shared/types'
 
 /**
@@ -27,7 +28,7 @@ export default function ContentSlot({
       const picked = await pickAndImportContent()
       if (picked) onChange(picked)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(describeError(err))
     } finally {
       setBusy(false)
     }
