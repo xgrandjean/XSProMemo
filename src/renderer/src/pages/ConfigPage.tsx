@@ -41,6 +41,7 @@ export default function ConfigPage({
 
   const [toDuplicate, setToDuplicate] = useState<MemoireSummary | null>(null)
   const [duplicateName, setDuplicateName] = useState('')
+  const [toDeleteTemplate, setToDeleteTemplate] = useState<MemoireSummary | null>(null)
   const [exportingId, setExportingId] = useState<string | null>(null)
   const [importingTemplate, setImportingTemplate] = useState(false)
 
@@ -172,11 +173,14 @@ export default function ConfigPage({
     }
   }
 
-  async function deleteTemplate(template: MemoireSummary): Promise<void> {
+  async function confirmDeleteTemplate(): Promise<void> {
+    if (!toDeleteTemplate) return
+    const target = toDeleteTemplate
+    setToDeleteTemplate(null)
     setBusy(true)
     setError(null)
     try {
-      await window.api.memoires.delete(template.id)
+      await window.api.memoires.delete(target.id)
       refreshTemplates()
     } catch (err) {
       setError(describeError(err))
@@ -396,7 +400,7 @@ export default function ConfigPage({
               <button
                 className="icon-btn danger-link"
                 title="Supprimer"
-                onClick={() => deleteTemplate(template)}
+                onClick={() => setToDeleteTemplate(template)}
                 disabled={busy}
               >
                 ✕
@@ -538,6 +542,32 @@ export default function ConfigPage({
           </div>
           <p className="muted">
             La copie est indépendante : la modifier ne touchera pas au modèle d&apos;origine.
+          </p>
+        </Modal>
+      )}
+
+      {toDeleteTemplate && (
+        <Modal
+          title="Supprimer le modèle"
+          onClose={() => setToDeleteTemplate(null)}
+          actions={
+            <>
+              <button className="secondary" onClick={() => setToDeleteTemplate(null)}>
+                Annuler
+              </button>
+              <button className="danger" onClick={confirmDeleteTemplate}>
+                Supprimer définitivement
+              </button>
+            </>
+          }
+        >
+          <p>
+            Supprimer « <b>{toDeleteTemplate.name}</b> » ?
+          </p>
+          <p className="muted">
+            Si c&apos;était le dernier modèle, un modèle par défaut sera recréé
+            automatiquement. Les fichiers de contenu, eux, restent disponibles pour vos
+            autres mémoires.
           </p>
         </Modal>
       )}
