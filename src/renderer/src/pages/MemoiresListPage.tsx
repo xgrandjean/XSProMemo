@@ -23,6 +23,8 @@ export default function MemoiresListPage({
   const [toDelete, setToDelete] = useState<MemoireSummary | null>(null)
   const [toDuplicate, setToDuplicate] = useState<MemoireSummary | null>(null)
   const [duplicateName, setDuplicateName] = useState('')
+  const [exportingId, setExportingId] = useState<string | null>(null)
+  const [importing, setImporting] = useState(false)
 
   function refresh(): void {
     window.api.memoires.list().then(setMemoires)
@@ -75,6 +77,36 @@ export default function MemoiresListPage({
     }
   }
 
+  async function exportMemoire(memoire: MemoireSummary): Promise<void> {
+    const defaultName = `${memoire.name.replace(/[\\/:*?"<>|]/g, '_')}.xspromemo.zip`
+    const target = await window.api.dialogs.pickSaveZip(defaultName)
+    if (!target) return
+    setExportingId(memoire.id)
+    setError(null)
+    try {
+      await window.api.memoires.export(memoire.id, target)
+    } catch (err) {
+      setError(describeError(err))
+    } finally {
+      setExportingId(null)
+    }
+  }
+
+  async function importMemoire(): Promise<void> {
+    const source = await window.api.dialogs.pickZip()
+    if (!source) return
+    setImporting(true)
+    setError(null)
+    try {
+      const created = await window.api.memoires.import(source)
+      onOpen(created.id)
+    } catch (err) {
+      setError(describeError(err))
+    } finally {
+      setImporting(false)
+    }
+  }
+
   async function confirmDelete(): Promise<void> {
     if (!toDelete) return
     const target = toDelete
@@ -120,6 +152,14 @@ export default function MemoiresListPage({
           <button className="primary" onClick={create} disabled={busy || !newName.trim() || !templateId}>
             Nouveau mémoire
           </button>
+          <button
+            className="icon-btn"
+            title="Importer un mémoire (.zip)"
+            onClick={() => void importMemoire()}
+            disabled={importing}
+          >
+            📥
+          </button>
         </div>
         <p className="muted" style={{ marginBottom: 0 }}>
           Un nouveau mémoire part d&apos;un modèle défini dans la configuration : vous
@@ -149,8 +189,16 @@ export default function MemoiresListPage({
               <button className="secondary" onClick={() => askDuplicate(memoire)}>
                 Dupliquer
               </button>
-              <button className="danger" onClick={() => setToDelete(memoire)}>
-                Supprimer
+              <button className="icon-btn danger-link" title="Supprimer" onClick={() => setToDelete(memoire)}>
+                ✕
+              </button>
+              <button
+                className="icon-btn"
+                title="Exporter (.zip)"
+                onClick={() => void exportMemoire(memoire)}
+                disabled={exportingId === memoire.id}
+              >
+                📤
               </button>
             </div>
           </div>

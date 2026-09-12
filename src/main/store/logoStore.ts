@@ -13,7 +13,7 @@ import type { ContentRef, LogoField } from '../../shared/types'
 
 /** `logo` keeps the file name it always had (`<id>.<ext>`); `secondLogo` gets a suffix,
  * so the two never collide and existing data needs no migration. */
-function prefixFor(memoireId: string, field: LogoField): string {
+export function prefixFor(memoireId: string, field: LogoField): string {
   return field === 'secondLogo' ? `${memoireId}-2.` : `${memoireId}.`
 }
 

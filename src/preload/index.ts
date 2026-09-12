@@ -17,7 +17,10 @@ const api = {
   dialogs: {
     pickDocx: (): Promise<string | null> => ipcRenderer.invoke('dialog:pickDocx'),
     pickImage: (): Promise<string | null> => ipcRenderer.invoke('dialog:pickImage'),
-    pickFolder: (): Promise<string | null> => ipcRenderer.invoke('dialog:pickFolder')
+    pickFolder: (): Promise<string | null> => ipcRenderer.invoke('dialog:pickFolder'),
+    pickZip: (): Promise<string | null> => ipcRenderer.invoke('dialog:pickZip'),
+    pickSaveZip: (defaultName: string): Promise<string | null> =>
+      ipcRenderer.invoke('dialog:pickSaveZip', defaultName)
   },
   shell: {
     openPath: (absPath: string): Promise<void> => ipcRenderer.invoke('shell:openPath', absPath)
@@ -50,6 +53,9 @@ const api = {
       ipcRenderer.invoke('memoires:duplicate', { id, name }),
     save: (memoire: Memoire): Promise<Memoire> => ipcRenderer.invoke('memoires:save', memoire),
     delete: (id: string): Promise<void> => ipcRenderer.invoke('memoires:delete', id),
+    export: (id: string, destPath: string): Promise<void> =>
+      ipcRenderer.invoke('memoires:export', { id, destPath }),
+    import: (zipPath: string): Promise<Memoire> => ipcRenderer.invoke('memoires:import', zipPath),
     importContent: (sourceAbsPath: string): Promise<ContentRef> =>
       ipcRenderer.invoke('memoires:importContent', sourceAbsPath),
     openContent: (relativePath: string): Promise<void> =>

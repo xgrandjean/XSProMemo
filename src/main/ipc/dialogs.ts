@@ -8,6 +8,14 @@ function openFileDialog(
   return win ? dialog.showOpenDialog(win, options) : dialog.showOpenDialog(options)
 }
 
+function saveFileDialog(
+  event: IpcMainInvokeEvent,
+  options: Electron.SaveDialogOptions
+): Promise<Electron.SaveDialogReturnValue> {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  return win ? dialog.showSaveDialog(win, options) : dialog.showSaveDialog(options)
+}
+
 export function registerDialogIpc(): void {
   // Content is Word only: the mémoire is assembled as a single Word document.
   ipcMain.handle('dialog:pickDocx', async (event) => {
@@ -31,6 +39,22 @@ export function registerDialogIpc(): void {
       properties: ['openDirectory', 'createDirectory']
     })
     return result.canceled ? null : result.filePaths[0]
+  })
+
+  ipcMain.handle('dialog:pickZip', async (event) => {
+    const result = await openFileDialog(event, {
+      properties: ['openFile'],
+      filters: [{ name: 'Mémoire XSProMemo', extensions: ['zip'] }]
+    })
+    return result.canceled ? null : result.filePaths[0]
+  })
+
+  ipcMain.handle('dialog:pickSaveZip', async (event, defaultName: string) => {
+    const result = await saveFileDialog(event, {
+      defaultPath: defaultName,
+      filters: [{ name: 'Mémoire XSProMemo', extensions: ['zip'] }]
+    })
+    return result.canceled ? null : (result.filePath ?? null)
   })
 
   ipcMain.handle('shell:openPath', async (_event, absPath: string) => {

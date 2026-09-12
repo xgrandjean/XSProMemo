@@ -8,6 +8,7 @@ import {
   createMemoireFrom
 } from '../store/memoireStore'
 import { importContent } from '../store/modelStore'
+import { exportMemoire, importMemoire } from '../store/memoireTransfer'
 import { resolveContentFile } from '../store/paths'
 import { setMemoireLogo, clearMemoireLogo, readMemoireLogoPreview } from '../store/logoStore'
 import { requireLibraryPath } from './context'
@@ -50,6 +51,16 @@ export function registerMemoiresIpc(): void {
   ipcMain.handle('memoires:delete', async (_event, id: string) => {
     const libraryPath = await requireLibraryPath()
     await deleteMemoire(libraryPath, id)
+  })
+
+  ipcMain.handle('memoires:export', async (_event, input: { id: string; destPath: string }) => {
+    const libraryPath = await requireLibraryPath()
+    await exportMemoire(libraryPath, input.id, input.destPath)
+  })
+
+  ipcMain.handle('memoires:import', async (_event, zipPath: string) => {
+    const libraryPath = await requireLibraryPath()
+    return importMemoire(libraryPath, zipPath)
   })
 
   /** Copies a chosen file into the shared asset pool and returns a reference to it. */
