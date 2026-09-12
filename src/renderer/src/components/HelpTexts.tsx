@@ -146,11 +146,23 @@ export function GabaritHelp(): JSX.Element {
       </ol>
       <p>
         Ouvert dans Word, le gabarit lui-même ne montre presque rien : un titre de chapitre
-        y apparaîtrait dans chaque mémoire généré. Pour voir à quoi ressembleront les
-        titres et le texte courant sans toucher à vos données, utilisez <b>Aperçu du
-        style</b> : un document à part, jamais enregistré comme gabarit, régénéré à chaque
-        clic pour rester à jour.
+        y apparaîtrait dans chaque mémoire généré — ce n&apos;est pas un fichier pensé pour
+        s&apos;éditer à l&apos;œil. Le bouton <b>Aperçu du style</b> ouvre un menu qui
+        regroupe tout ce qui s&apos;y rapporte :
       </p>
+      <ul>
+        <li>
+          <b>Aperçu</b> : un document à part, jamais enregistré comme gabarit, montrant
+          chaque niveau de titre — régénéré à chaque clic pour rester à jour.
+        </li>
+        <li><b>Ouvrir le gabarit dans Word</b> : pour les retouches simples (texte du pied de page, marges) qu&apos;un clic direct suffit à faire.</li>
+        <li>
+          <b>Copier consigne pour IA</b> : pour les retouches plus techniques (styles de
+          titre, polices, couleurs) — un texte à coller dans une session IA pointée sur ce
+          dossier, qui explique le format et rappelle de sauvegarder avant tout changement.
+        </li>
+        <li><b>Aide</b> : ce texte.</li>
+      </ul>
       <p>
         Une mise à jour de l&apos;application n&apos;écrase jamais le gabarit d&apos;une
         bibliothèque déjà en place, pour ne jamais perdre une personnalisation. Quand une

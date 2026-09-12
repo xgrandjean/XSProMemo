@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useRef, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 
-export interface ChapterMenuItem {
+export interface DropdownMenuItem {
   label: string
   onSelect: () => void
   danger?: boolean
@@ -14,7 +14,7 @@ export interface ChapterMenuItem {
  * a right-click). Rendered through a portal so it is never clipped by the scrolling
  * chapter list, and closes itself on an outside click or Escape.
  */
-export default function ChapterMenu({
+export default function DropdownMenu({
   anchor,
   triggerRef,
   items,
@@ -22,7 +22,7 @@ export default function ChapterMenu({
 }: {
   anchor: 'trigger' | { x: number; y: number }
   triggerRef?: RefObject<HTMLElement>
-  items: ChapterMenuItem[]
+  items: DropdownMenuItem[]
   onClose: () => void
 }): JSX.Element {
   const menuRef = useRef<HTMLDivElement>(null)

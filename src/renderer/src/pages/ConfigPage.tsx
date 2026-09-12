@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Modal from '../components/Modal'
 import { HelpButton } from '../components/Help'
+import DropdownMenu, { type DropdownMenuItem } from '../components/DropdownMenu'
 import { GabaritHelp, BibliothequeHelp, ModelesHelp } from '../components/HelpTexts'
 import { describeError } from '../lib/describeError'
+import { buildGabaritAiInstructions } from '../lib/aiInstructions'
 import type { FolderProbeResult, MemoireSummary, ModelStatus } from '../../../shared/types'
 
 function formatDate(iso: string): string {
@@ -25,6 +27,10 @@ export default function ConfigPage({
   const [previewBusy, setPreviewBusy] = useState(false)
   const [restoreBusy, setRestoreBusy] = useState(false)
   const [confirmRestore, setConfirmRestore] = useState(false)
+  const [gabaritMenuOpen, setGabaritMenuOpen] = useState(false)
+  const [gabaritPromptCopied, setGabaritPromptCopied] = useState(false)
+  const [showGabaritHelp, setShowGabaritHelp] = useState(false)
+  const gabaritTriggerRef = useRef<HTMLButtonElement>(null)
 
   const [libraryBusy, setLibraryBusy] = useState(false)
   const [libraryError, setLibraryError] = useState<string | null>(null)
@@ -78,6 +84,13 @@ export default function ConfigPage({
     } finally {
       setPreviewBusy(false)
     }
+  }
+
+  async function copyGabaritAiPrompt(): Promise<void> {
+    if (!status) return
+    const text = buildGabaritAiInstructions(status.library.path, aiInstructions)
+    await navigator.clipboard.writeText(text)
+    setGabaritPromptCopied(true)
   }
 
   async function confirmRestoreDefaultTemplate(): Promise<void> {
@@ -172,6 +185,13 @@ export default function ConfigPage({
 
   if (!status) return <p className="muted">Chargement...</p>
 
+  const gabaritMenuItems: DropdownMenuItem[] = [
+    { label: 'Aperçu', onSelect: () => void previewStyles() },
+    { label: 'Ouvrir le gabarit dans Word', onSelect: () => window.api.model.openTemplate() },
+    { label: 'Copier consigne pour IA', onSelect: () => void copyGabaritAiPrompt(), separatorBefore: true },
+    { label: 'Aide', onSelect: () => setShowGabaritHelp(true), separatorBefore: true }
+  ]
+
   return (
     <div>
       <div className="editor-head">
@@ -184,9 +204,6 @@ export default function ConfigPage({
       <div className="panel">
         <div className="panel-head">
           <h2>Présentation</h2>
-          <HelpButton title="La présentation du document">
-            <GabaritHelp />
-          </HelpButton>
           <span className="muted">
             Ce qui habille chaque page produite : les styles, le format et le pied de
             page.
@@ -220,12 +237,22 @@ export default function ConfigPage({
         </div>
 
         <div className="row">
-          <button className="secondary" onClick={() => window.api.model.openTemplate()}>
-            Ouvrir le gabarit dans Word
-          </button>
-          <button className="secondary" onClick={() => void previewStyles()} disabled={previewBusy}>
+          <button
+            ref={gabaritTriggerRef}
+            className="secondary"
+            onClick={() => setGabaritMenuOpen(true)}
+            disabled={previewBusy}
+          >
             {previewBusy ? 'Génération...' : 'Aperçu du style'}
           </button>
+          {gabaritMenuOpen && (
+            <DropdownMenu
+              anchor="trigger"
+              triggerRef={gabaritTriggerRef}
+              items={gabaritMenuItems}
+              onClose={() => setGabaritMenuOpen(false)}
+            />
+          )}
           <button
             className="secondary"
             onClick={() => setConfirmRestore(true)}
@@ -369,6 +396,36 @@ export default function ConfigPage({
           <p className="muted">
             <code>{confirmTarget.path}</code>
           </p>
+        </Modal>
+      )}
+
+      {gabaritPromptCopied && (
+        <Modal
+          title="Consigne copiée"
+          onClose={() => setGabaritPromptCopied(false)}
+          actions={
+            <button className="primary" onClick={() => setGabaritPromptCopied(false)}>
+              Compris
+            </button>
+          }
+        >
+          <p>
+            Le texte copié explique à l&apos;IA comment fonctionne XSProMemo et lui
+            demande de ne modifier que le gabarit, en faisant une copie de sauvegarde
+            avant tout changement. Collez-le en premier message dans la session IA que
+            vous pointez sur ce dossier.
+          </p>
+          <p className="muted">
+            Le résultat dépend du LLM réellement utilisé : relisez toujours ce qu&apos;il
+            a produit, et vérifiez le rendu avec « Aperçu » avant de faire confiance à ses
+            modifications — une erreur ici affecte tous les mémoires, pas un seul.
+          </p>
+        </Modal>
+      )}
+
+      {showGabaritHelp && (
+        <Modal title="La présentation du document" onClose={() => setShowGabaritHelp(false)}>
+          <GabaritHelp />
         </Modal>
       )}
 

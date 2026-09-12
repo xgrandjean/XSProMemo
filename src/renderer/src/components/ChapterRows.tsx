@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import ChapterMenu, { type ChapterMenuItem } from './ChapterMenu'
+import DropdownMenu, { type DropdownMenuItem } from './DropdownMenu'
 import { pickAndImportContent } from '../lib/pickContent'
 import { describeError } from '../lib/describeError'
 import type { ChapterNode, ContentRef, Orientation } from '../../../shared/types'
@@ -62,7 +62,7 @@ function ChapterRow({
   }
 
   const content = node.content
-  const items: ChapterMenuItem[] = [
+  const items: DropdownMenuItem[] = [
     ...(content
       ? [
           { label: 'Ouvrir contenu', onSelect: () => window.api.memoires.openContent(content.file) },
@@ -167,7 +167,7 @@ function ChapterRow({
         </span>
 
         {menu && (
-          <ChapterMenu anchor={menu} triggerRef={triggerRef} items={items} onClose={() => setMenu(null)} />
+          <DropdownMenu anchor={menu} triggerRef={triggerRef} items={items} onClose={() => setMenu(null)} />
         )}
       </div>
 
