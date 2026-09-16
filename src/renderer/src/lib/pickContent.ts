@@ -6,3 +6,8 @@ export async function pickAndImportContent(): Promise<ContentRef | null> {
   if (!sourcePath) return null
   return window.api.memoires.importContent(sourcePath)
 }
+
+/** Shared by every place that lets the user start a content from a blank page. */
+export async function createBlankContent(): Promise<ContentRef> {
+  return window.api.memoires.createBlankContent()
+}

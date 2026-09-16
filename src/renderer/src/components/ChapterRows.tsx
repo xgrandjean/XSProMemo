@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import DropdownMenu, { type DropdownMenuItem } from './DropdownMenu'
-import { pickAndImportContent } from '../lib/pickContent'
+import { createBlankContent, pickAndImportContent } from '../lib/pickContent'
 import { describeError } from '../lib/describeError'
 import type { ChapterNode, ContentRef, Orientation } from '../../../shared/types'
 
@@ -30,7 +30,9 @@ function ChapterRow({
   depth,
   actions,
   collapsedIds,
-  onToggleCollapse
+  onToggleCollapse,
+  activeId,
+  onActivate
 }: {
   node: ChapterNode
   index: number
@@ -40,6 +42,8 @@ function ChapterRow({
   actions: ChapterActions
   collapsedIds: Set<string>
   onToggleCollapse: (id: string) => void
+  activeId: string | null
+  onActivate: (id: string) => void
 }): JSX.Element {
   const hasChildren = node.children.length > 0
   const collapsed = collapsedIds.has(node.id)
@@ -53,9 +57,20 @@ function ChapterRow({
 
   async function pick(): Promise<void> {
     setContentError(null)
+    onActivate(node.id)
     try {
       const picked = await pickAndImportContent()
       if (picked) actions.onContentChange(node.id, picked)
+    } catch (err) {
+      setContentError(describeError(err))
+    }
+  }
+
+  async function createBlank(): Promise<void> {
+    setContentError(null)
+    onActivate(node.id)
+    try {
+      actions.onContentChange(node.id, await createBlankContent())
     } catch (err) {
       setContentError(describeError(err))
     }
@@ -69,15 +84,31 @@ function ChapterRow({
           { label: 'Remplacer contenu', onSelect: pick },
           { label: 'Retirer contenu', onSelect: () => actions.onContentChange(node.id, null), danger: true }
         ]
-      : [{ label: 'Ajouter contenu', onSelect: pick }]),
-    { label: addChildLabel, onSelect: () => actions.onAddChild(node.id), separatorBefore: true },
-    { label: 'Insérer chapitre avant', onSelect: () => actions.onInsertBefore(node.id) }
+      : [
+          { label: 'Ajouter contenu', onSelect: pick },
+          { label: 'Ajouter contenu vide', onSelect: createBlank }
+        ]),
+    {
+      label: addChildLabel,
+      onSelect: () => {
+        onActivate(node.id)
+        actions.onAddChild(node.id)
+      },
+      separatorBefore: true
+    },
+    {
+      label: 'Insérer chapitre avant',
+      onSelect: () => {
+        onActivate(node.id)
+        actions.onInsertBefore(node.id)
+      }
+    }
   ]
 
   return (
     <div>
       <div
-        className="chapter-row"
+        className={`chapter-row${activeId === node.id ? ' active-row' : ''}`}
         style={{ paddingLeft: 8 + depth * 22 }}
         // A right-click anywhere on the row always reaches every action (content and
         // "ajouter sous-chapitre" alike) — the trigger button only covers the common
@@ -85,6 +116,7 @@ function ChapterRow({
         onContextMenu={(e) => {
           if (hasNativeContextMenu(e.target)) return
           e.preventDefault()
+          onActivate(node.id)
           setMenu({ x: e.clientX, y: e.clientY })
         }}
       >
@@ -104,6 +136,7 @@ function ChapterRow({
           type="text"
           value={node.title}
           onChange={(e) => actions.onTitleChange(node.id, e.target.value)}
+          onFocus={() => onActivate(node.id)}
           placeholder="Titre du chapitre"
         />
 
@@ -113,7 +146,10 @@ function ChapterRow({
               ref={triggerRef}
               className="icon-btn"
               title="Actions sur ce contenu"
-              onClick={() => setMenu('trigger')}
+              onClick={() => {
+                onActivate(node.id)
+                setMenu('trigger')
+              }}
             >
               👁
             </button>
@@ -122,7 +158,10 @@ function ChapterRow({
               ref={triggerRef}
               className="link"
               title="Actions sur ce chapitre"
-              onClick={() => setMenu('trigger')}
+              onClick={() => {
+                onActivate(node.id)
+                setMenu('trigger')
+              }}
             >
               + contenu
             </button>
@@ -134,7 +173,10 @@ function ChapterRow({
           <input
             type="checkbox"
             checked={node.pageBreakBefore}
-            onChange={(e) => actions.onPageBreakChange(node.id, e.target.checked)}
+            onChange={(e) => {
+              onActivate(node.id)
+              actions.onPageBreakChange(node.id, e.target.checked)
+            }}
           />
           nouvelle page
         </label>
@@ -143,25 +185,43 @@ function ChapterRow({
           className="chapter-orientation"
           title="Orientation des pages de ce chapitre"
           value={node.orientation ?? 'portrait'}
-          onChange={(e) => actions.onOrientationChange(node.id, e.target.value as Orientation)}
+          onChange={(e) => {
+            onActivate(node.id)
+            actions.onOrientationChange(node.id, e.target.value as Orientation)
+          }}
         >
           <option value="portrait">Portrait</option>
           <option value="paysage">Paysage</option>
         </select>
 
         <span className="chapter-actions">
-          <button className="icon-btn" title="Monter" onClick={() => actions.onMove(node.id, -1)} disabled={index === 0}>
+          <button
+            className="icon-btn"
+            title="Monter"
+            onClick={() => {
+              onActivate(node.id)
+              actions.onMove(node.id, -1)
+            }}
+            disabled={index === 0}
+          >
             ↑
           </button>
           <button
             className="icon-btn"
             title="Descendre"
-            onClick={() => actions.onMove(node.id, 1)}
+            onClick={() => {
+              onActivate(node.id)
+              actions.onMove(node.id, 1)
+            }}
             disabled={index === siblingCount - 1}
           >
             ↓
           </button>
-          <button className="icon-btn danger-link" title="Supprimer" onClick={() => actions.onRemove(node.id)}>
+          <button
+            className="icon-btn danger-link"
+            title="Supprimer"
+            onClick={() => actions.onRemove(node.id)}
+          >
             ✕
           </button>
         </span>
@@ -179,6 +239,8 @@ function ChapterRow({
           depth={depth + 1}
           collapsedIds={collapsedIds}
           onToggleCollapse={onToggleCollapse}
+          activeId={activeId}
+          onActivate={onActivate}
         />
       )}
     </div>
@@ -195,7 +257,9 @@ export default function ChapterRows({
   prefix = [],
   depth = 0,
   collapsedIds,
-  onToggleCollapse
+  onToggleCollapse,
+  activeId,
+  onActivate
 }: {
   nodes: ChapterNode[]
   actions: ChapterActions
@@ -203,6 +267,8 @@ export default function ChapterRows({
   depth?: number
   collapsedIds: Set<string>
   onToggleCollapse: (id: string) => void
+  activeId: string | null
+  onActivate: (id: string) => void
 }): JSX.Element {
   return (
     <>
@@ -217,6 +283,8 @@ export default function ChapterRows({
           actions={actions}
           collapsedIds={collapsedIds}
           onToggleCollapse={onToggleCollapse}
+          activeId={activeId}
+          onActivate={onActivate}
         />
       ))}
     </>

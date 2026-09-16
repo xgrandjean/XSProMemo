@@ -1,8 +1,8 @@
 import type { ChapterNode } from '../../../shared/types'
 
-export function newChapter(title = 'Nouveau chapitre'): ChapterNode {
+export function newChapter(title = 'Nouveau chapitre', id: string = crypto.randomUUID()): ChapterNode {
   return {
-    id: crypto.randomUUID(),
+    id,
     title,
     pageBreakBefore: false,
     orientation: 'portrait',
@@ -46,23 +46,23 @@ export function moveNode(nodes: ChapterNode[], id: string, delta: number): Chapt
   )
 }
 
-export function addChild(nodes: ChapterNode[], parentId: string): ChapterNode[] {
+export function addChild(nodes: ChapterNode[], parentId: string, newId?: string): ChapterNode[] {
   return updateNode(nodes, parentId, (node) => ({
     ...node,
-    children: [...node.children, newChapter('Nouveau sous-chapitre')]
+    children: [...node.children, newChapter('Nouveau sous-chapitre', newId)]
   }))
 }
 
 /** Inserts a new sibling chapter right before the given one, at the same depth. */
-export function insertBefore(nodes: ChapterNode[], id: string): ChapterNode[] {
+export function insertBefore(nodes: ChapterNode[], id: string, newId?: string): ChapterNode[] {
   const index = nodes.findIndex((node) => node.id === id)
   if (index !== -1) {
     const next = [...nodes]
-    next.splice(index, 0, newChapter())
+    next.splice(index, 0, newChapter(undefined, newId))
     return next
   }
   return nodes.map((node) =>
-    node.children.length === 0 ? node : { ...node, children: insertBefore(node.children, id) }
+    node.children.length === 0 ? node : { ...node, children: insertBefore(node.children, id, newId) }
   )
 }
 

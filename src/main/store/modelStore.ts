@@ -1,6 +1,7 @@
+import { app } from 'electron'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import { configJsonPath, storeContentBytes, writeJsonAtomic } from './paths'
+import { configJsonPath, storeContentBytes, storeNewContentFile, writeJsonAtomic } from './paths'
 import type { ContentRef, ModelConfig } from '../../shared/types'
 
 const defaultModelConfig: ModelConfig = {
@@ -43,5 +44,24 @@ export async function importContent(root: string, srcAbsPath: string): Promise<C
   const originalName = `${base}.docx`
   const bytes = await fs.readFile(srcAbsPath)
   const fileName = await storeContentBytes(root, originalName, bytes)
+  return { file: fileName, originalName }
+}
+
+/** An empty Word document, shipped once and copied for every "contenu vide". */
+function blankContentSource(): string {
+  const root = app.isPackaged ? process.resourcesPath : path.join(app.getAppPath(), 'resources')
+  return path.join(root, 'ContenuVierge.docx')
+}
+
+/**
+ * Starts a new content from a blank page rather than an existing file — for a chapter or
+ * cover page the user wants to write directly in Word instead of attaching something
+ * already prepared. Always its own file (see `storeNewContentFile`): unlike importing an
+ * existing file, there is nothing here the user could sensibly mean to keep sharing.
+ */
+export async function createBlankContent(root: string): Promise<ContentRef> {
+  const bytes = await fs.readFile(blankContentSource())
+  const originalName = 'Nouveau contenu.docx'
+  const fileName = await storeNewContentFile(root, originalName, bytes)
   return { file: fileName, originalName }
 }

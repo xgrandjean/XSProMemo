@@ -7,7 +7,7 @@ import {
   deleteMemoire,
   createMemoireFrom
 } from '../store/memoireStore'
-import { importContent } from '../store/modelStore'
+import { createBlankContent, importContent } from '../store/modelStore'
 import { ensureDefaultTemplate } from '../store/seed'
 import { exportMemoire, importMemoire } from '../store/memoireTransfer'
 import { resolveContentFile } from '../store/paths'
@@ -72,6 +72,12 @@ export function registerMemoiresIpc(): void {
   ipcMain.handle('memoires:importContent', async (_event, sourceAbsPath: string) => {
     const libraryPath = await requireLibraryPath()
     return importContent(libraryPath, sourceAbsPath)
+  })
+
+  /** Starts a new content from a blank page instead of an existing file. */
+  ipcMain.handle('memoires:createBlankContent', async () => {
+    const libraryPath = await requireLibraryPath()
+    return createBlankContent(libraryPath)
   })
 
   /** Opens a content file in whatever application handles it (Word, a PDF reader...). */

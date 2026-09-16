@@ -89,6 +89,34 @@ export async function storeContentBytes(
   return candidate
 }
 
+/**
+ * Copies bytes into the contents pool under a name that is always fresh — unlike
+ * `storeContentBytes`, an existing file with the same name is never reused even if its
+ * bytes currently match. Every new blank content must be its own file from the start: it
+ * is a starting point the user is about to fill in, not something meant to stay linked to
+ * whatever else happened to start out blank too.
+ */
+export async function storeNewContentFile(
+  root: string,
+  fileName: string,
+  bytes: Buffer
+): Promise<string> {
+  const dir = contentsDir(root)
+  await fs.mkdir(dir, { recursive: true })
+
+  const ext = path.extname(fileName)
+  const base = path.basename(fileName, ext)
+  let candidate = fileName
+  let suffix = 1
+  while (await fs.access(path.join(dir, candidate)).then(() => true, () => false)) {
+    suffix += 1
+    candidate = `${base} (${suffix})${ext}`
+  }
+
+  await fs.writeFile(path.join(dir, candidate), bytes)
+  return candidate
+}
+
 /** Writes JSON through a temp file so a crash mid-write cannot corrupt the original. */
 export async function writeJsonAtomic(targetPath: string, value: unknown): Promise<void> {
   await fs.mkdir(path.dirname(targetPath), { recursive: true })

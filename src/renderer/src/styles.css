@@ -448,6 +448,19 @@ button.danger-link,
   background: #fafbfc;
 }
 
+/* The row last acted on — added content to, edited, moved — so it stays easy to find
+   again in a long plan after the action shifts focus away from it (a new row appearing
+   below it, a dialog closing, ...). */
+.chapter-row.active-row,
+.cover-row.active-row {
+  background: #eaf1fd;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.chapter-row.active-row:hover {
+  background: #dfeafd;
+}
+
 .chapter-number {
   min-width: 42px;
   font-variant-numeric: tabular-nums;

@@ -9,6 +9,8 @@ extraResources:
     to: scripts
   - from: resources/exemple
     to: exemple
+  - from: resources/ContenuVierge.docx
+    to: ContenuVierge.docx
 win:
   target: nsis
   artifactName: ${productName}-${version}-setup.${ext}

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { pickAndImportContent } from '../lib/pickContent'
+import { createBlankContent, pickAndImportContent } from '../lib/pickContent'
 import { describeError } from '../lib/describeError'
 import type { ContentRef } from '../../../shared/types'
 
@@ -34,11 +34,26 @@ export default function ContentSlot({
     }
   }
 
+  async function createBlank(): Promise<void> {
+    setError(null)
+    setBusy(true)
+    try {
+      onChange(await createBlankContent())
+    } catch (err) {
+      setError(describeError(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   if (!content) {
     return (
       <span className="content-slot">
         <button className="link" onClick={pick} disabled={busy}>
           {busy ? 'Import...' : addLabel}
+        </button>
+        <button className="link" onClick={createBlank} disabled={busy} title="Partir d'une page vierge, à rédiger dans Word">
+          {busy ? 'Création...' : '+ contenu vide'}
         </button>
         {error && <span className="error-text">{error}</span>}
       </span>

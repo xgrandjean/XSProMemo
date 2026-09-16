@@ -23,6 +23,9 @@ export default function MemoirePlanEditor({
 }): JSX.Element {
   // Purely a display preference: not part of the plan, never saved with it.
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
+  // The row last acted on (chapter id, or `cover-<index>`) — kept highlighted so it stays
+  // easy to find again after an action that adds a row below it or opens Word elsewhere.
+  const [activeId, setActiveId] = useState<string | null>(null)
 
   function toggleCollapse(id: string): void {
     setCollapsedIds((current) => {
@@ -48,13 +51,25 @@ export default function MemoirePlanEditor({
         ...m,
         chapters: updateNode(m.chapters, id, (n) => ({ ...n, orientation }))
       })),
-    onAddChild: (id) => edit((m) => ({ ...m, chapters: addChild(m.chapters, id) })),
-    onInsertBefore: (id) => edit((m) => ({ ...m, chapters: insertBefore(m.chapters, id) })),
-    onRemove: (id) => edit((m) => ({ ...m, chapters: removeNode(m.chapters, id) })),
+    onAddChild: (id) => {
+      const newId = crypto.randomUUID()
+      setActiveId(newId)
+      edit((m) => ({ ...m, chapters: addChild(m.chapters, id, newId) }))
+    },
+    onInsertBefore: (id) => {
+      const newId = crypto.randomUUID()
+      setActiveId(newId)
+      edit((m) => ({ ...m, chapters: insertBefore(m.chapters, id, newId) }))
+    },
+    onRemove: (id) => {
+      setActiveId((current) => (current === id ? null : current))
+      edit((m) => ({ ...m, chapters: removeNode(m.chapters, id) }))
+    },
     onMove: (id, delta) => edit((m) => ({ ...m, chapters: moveNode(m.chapters, id, delta) }))
   }
 
   function setCoverPage(index: number, content: ContentRef | null): void {
+    setActiveId(`cover-${index}`)
     edit((m) => {
       const coverPages = [...m.coverPages]
       if (content) coverPages[index] = content
@@ -65,6 +80,7 @@ export default function MemoirePlanEditor({
 
   function addCoverPage(content: ContentRef | null): void {
     if (!content) return
+    setActiveId(`cover-${draft.coverPages.length}`)
     edit((m) => ({ ...m, coverPages: [...m.coverPages, content] }))
   }
 
@@ -107,7 +123,10 @@ export default function MemoirePlanEditor({
           </span>
         </div>
         {draft.coverPages.map((cover, index) => (
-          <div className="cover-row" key={`${cover.file}-${index}`}>
+          <div
+            className={`cover-row${activeId === `cover-${index}` ? ' active-row' : ''}`}
+            key={`${cover.file}-${index}`}
+          >
             <span className="muted">Page {index + 1}</span>
             <ContentSlot content={cover} onChange={(c) => setCoverPage(index, c)} />
           </div>
@@ -143,12 +162,18 @@ export default function MemoirePlanEditor({
           actions={actions}
           collapsedIds={collapsedIds}
           onToggleCollapse={toggleCollapse}
+          activeId={activeId}
+          onActivate={setActiveId}
         />
 
         <button
           className="secondary"
           style={{ marginTop: 12 }}
-          onClick={() => edit((m) => ({ ...m, chapters: [...m.chapters, newChapter()] }))}
+          onClick={() => {
+            const chapter = newChapter()
+            setActiveId(chapter.id)
+            edit((m) => ({ ...m, chapters: [...m.chapters, chapter] }))
+          }}
         >
           + Ajouter un chapitre
         </button>
