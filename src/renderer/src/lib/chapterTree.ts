@@ -7,7 +7,8 @@ export function newChapter(title = 'Nouveau chapitre', id: string = crypto.rando
     pageBreakBefore: false,
     orientation: 'portrait',
     content: null,
-    children: []
+    children: [],
+    validated: false
   }
 }
 
@@ -64,6 +65,51 @@ export function insertBefore(nodes: ChapterNode[], id: string, newId?: string): 
   return nodes.map((node) =>
     node.children.length === 0 ? node : { ...node, children: insertBefore(node.children, id, newId) }
   )
+}
+
+/** Deep-copies a node's subtree with fresh ids, stripping every attached content file:
+ *  a duplicate is a starting point for its own writing, not a second door onto the
+ *  original's Word file. */
+function cloneWithoutContent(node: ChapterNode): ChapterNode {
+  return {
+    ...node,
+    id: crypto.randomUUID(),
+    content: null,
+    children: node.children.map(cloneWithoutContent)
+  }
+}
+
+/** Duplicates a chapter and its whole subtree, without its content files, right after
+ *  the original among its siblings. `newId` (when given) becomes the copy's own id, so
+ *  the caller can know it ahead of time — e.g. to highlight the new row. */
+export function duplicateChapter(nodes: ChapterNode[], id: string, newId?: string): ChapterNode[] {
+  const index = nodes.findIndex((node) => node.id === id)
+  if (index !== -1) {
+    const copy = {
+      ...cloneWithoutContent(nodes[index]),
+      id: newId ?? crypto.randomUUID(),
+      title: `${nodes[index].title} (copie)`
+    }
+    const next = [...nodes]
+    next.splice(index + 1, 0, copy)
+    return next
+  }
+  return nodes.map((node) =>
+    node.children.length === 0 ? node : { ...node, children: duplicateChapter(node.children, id, newId) }
+  )
+}
+
+/** Sets `validated` on a chapter and every one of its descendants at once — the "mark the
+ *  whole section done" bulk action, as opposed to toggling a single chapter. */
+export function setValidatedDeep(nodes: ChapterNode[], id: string, value: boolean): ChapterNode[] {
+  function markAll(node: ChapterNode): ChapterNode {
+    return { ...node, validated: value, children: node.children.map(markAll) }
+  }
+  return nodes.map((node) => {
+    if (node.id === id) return markAll(node)
+    if (node.children.length === 0) return node
+    return { ...node, children: setValidatedDeep(node.children, id, value) }
+  })
 }
 
 /** Same numbering the generator bakes into the Word headings, shown live in the editor. */

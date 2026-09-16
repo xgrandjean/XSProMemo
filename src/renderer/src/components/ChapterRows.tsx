@@ -13,6 +13,9 @@ export interface ChapterActions {
   onInsertBefore: (id: string) => void
   onRemove: (id: string) => void
   onMove: (id: string, delta: number) => void
+  onValidatedChange: (id: string, value: boolean) => void
+  onValidatedChangeDeep: (id: string, value: boolean) => void
+  onDuplicate: (id: string) => void
 }
 
 type MenuAnchor = 'trigger' | { x: number; y: number }
@@ -77,6 +80,8 @@ function ChapterRow({
   }
 
   const content = node.content
+  const pageBreakBefore = node.pageBreakBefore
+  const validated = node.validated ?? false
   const items: DropdownMenuItem[] = [
     ...(content
       ? [
@@ -88,6 +93,41 @@ function ChapterRow({
           { label: 'Ajouter contenu', onSelect: pick },
           { label: 'Ajouter contenu vide', onSelect: createBlank }
         ]),
+    {
+      label: pageBreakBefore ? 'Ne plus commencer sur une nouvelle page' : 'Commencer sur une nouvelle page',
+      onSelect: () => {
+        onActivate(node.id)
+        actions.onPageBreakChange(node.id, !pageBreakBefore)
+      },
+      separatorBefore: true
+    },
+    {
+      label: validated ? 'Marquer non validé' : 'Marquer validé',
+      onSelect: () => {
+        onActivate(node.id)
+        actions.onValidatedChange(node.id, !validated)
+      }
+    },
+    ...(hasChildren
+      ? [
+          {
+            label: validated
+              ? 'Démarquer le chapitre et ses sous-chapitres'
+              : 'Marquer le chapitre et ses sous-chapitres',
+            onSelect: () => {
+              onActivate(node.id)
+              actions.onValidatedChangeDeep(node.id, !validated)
+            }
+          }
+        ]
+      : []),
+    {
+      label: 'Dupliquer ce chapitre',
+      onSelect: () => {
+        onActivate(node.id)
+        actions.onDuplicate(node.id)
+      }
+    },
     {
       label: addChildLabel,
       onSelect: () => {
@@ -166,20 +206,18 @@ function ChapterRow({
               + contenu
             </button>
           )}
+          {pageBreakBefore && (
+            <span className="row-badge" title="Commence sur une nouvelle page">
+              📄
+            </span>
+          )}
+          {validated && (
+            <span className="row-badge row-badge-ok" title="Marqué validé">
+              ✓
+            </span>
+          )}
           {contentError && <span className="error-text">{contentError}</span>}
         </span>
-
-        <label className="chapter-flag" title="Commencer ce chapitre sur une nouvelle page">
-          <input
-            type="checkbox"
-            checked={node.pageBreakBefore}
-            onChange={(e) => {
-              onActivate(node.id)
-              actions.onPageBreakChange(node.id, e.target.checked)
-            }}
-          />
-          nouvelle page
-        </label>
 
         <select
           className="chapter-orientation"

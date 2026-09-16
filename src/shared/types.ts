@@ -21,6 +21,9 @@ export interface ChapterNode {
   orientation: Orientation
   content: ContentRef | null // null = heading only, no content of its own
   children: ChapterNode[]
+  /** Purely a visual marker in the editor — never read by the generator. Absent on a
+   *  plan saved before this field existed, which must read the same as false. */
+  validated?: boolean
 }
 
 /** One mémoire = one document being built. It owns its whole plan directly. */

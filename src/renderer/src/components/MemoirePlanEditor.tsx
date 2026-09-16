@@ -4,7 +4,16 @@ import ContentSlot from './ContentSlot'
 import LogoPicker from './LogoPicker'
 import { HelpButton } from './Help'
 import { CoverHelp, LogoHelp, PlanHelp } from './HelpTexts'
-import { addChild, insertBefore, moveNode, newChapter, removeNode, updateNode } from '../lib/chapterTree'
+import {
+  addChild,
+  duplicateChapter,
+  insertBefore,
+  moveNode,
+  newChapter,
+  removeNode,
+  setValidatedDeep,
+  updateNode
+} from '../lib/chapterTree'
 import type { ContentRef, Memoire } from '../../../shared/types'
 
 /**
@@ -65,7 +74,16 @@ export default function MemoirePlanEditor({
       setActiveId((current) => (current === id ? null : current))
       edit((m) => ({ ...m, chapters: removeNode(m.chapters, id) }))
     },
-    onMove: (id, delta) => edit((m) => ({ ...m, chapters: moveNode(m.chapters, id, delta) }))
+    onMove: (id, delta) => edit((m) => ({ ...m, chapters: moveNode(m.chapters, id, delta) })),
+    onValidatedChange: (id, validated) =>
+      edit((m) => ({ ...m, chapters: updateNode(m.chapters, id, (n) => ({ ...n, validated })) })),
+    onValidatedChangeDeep: (id, validated) =>
+      edit((m) => ({ ...m, chapters: setValidatedDeep(m.chapters, id, validated) })),
+    onDuplicate: (id) => {
+      const newId = crypto.randomUUID()
+      setActiveId(newId)
+      edit((m) => ({ ...m, chapters: duplicateChapter(m.chapters, id, newId) }))
+    }
   }
 
   function setCoverPage(index: number, content: ContentRef | null): void {
