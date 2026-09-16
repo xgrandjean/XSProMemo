@@ -57,7 +57,14 @@ async function readAllMemoires(libraryPath: string): Promise<Memoire[]> {
     if (!file.endsWith('.json')) continue
     try {
       const raw = await fs.readFile(path.join(memoiresDir(libraryPath), file), 'utf-8')
-      memoires.push(JSON.parse(raw))
+      const memoire: Memoire = JSON.parse(raw)
+      // A mémoire is only ever written to `<its id>.json` (memoireFilePath). Anything
+      // else — a hand-made backup, a cloud-sync conflicted copy — is not a mémoire the
+      // application recognizes, even if it happens to carry a valid mémoire's id inside:
+      // reading it here would surface a ghost entry, and deleting the real one by id
+      // would leave this file behind to resurrect it on the next listing.
+      if (file !== `${memoire.id}.json`) continue
+      memoires.push(memoire)
     } catch {
       // skip unreadable/corrupt file rather than failing the whole listing
     }
@@ -75,17 +82,14 @@ export async function listMemoires(libraryPath: string): Promise<MemoireSummary[
 }
 
 /**
- * The plans-types offered as a starting point for "Nouveau mémoire". Self-heals if the
- * last one was deleted mid-session — "Nouveau mémoire" must always have something to
- * copy from, and a restart shouldn't be required to get one back.
+ * The plans-types offered as a starting point for "Nouveau mémoire". Does not self-heal
+ * when empty — the caller (the `memoires:listTemplates` IPC handler) is responsible for
+ * calling `ensureDefaultTemplate` first, so recreating the default always produces the
+ * full shipped "Exemple" rather than a blank stand-in, whether triggered by a restart or
+ * by deleting the last modèle mid-session.
  */
 export async function listTemplates(libraryPath: string): Promise<MemoireSummary[]> {
   const templates = (await readAllMemoires(libraryPath)).filter((memoire) => memoire.isTemplate)
-  if (templates.length === 0) {
-    const fallback = await createMemoireFrom(libraryPath, 'Modèle', null)
-    await saveMemoire(libraryPath, { ...fallback, isTemplate: true })
-    return listTemplates(libraryPath)
-  }
   const summaries = templates.map(toSummary)
   summaries.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
   return summaries

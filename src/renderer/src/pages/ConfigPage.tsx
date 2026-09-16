@@ -296,8 +296,12 @@ export default function ConfigPage({
           >
             {restoreBusy ? 'Restauration...' : 'Restaurer le gabarit par défaut'}
           </button>
-          <button className="secondary" onClick={() => window.api.model.openDataFolder()}>
-            Ouvrir le dossier de l&apos;application
+          <button
+            className="icon-btn"
+            title="Aller dans le dossier de l&apos;application"
+            onClick={() => window.api.model.openDataFolder()}
+          >
+            👁
           </button>
         </div>
 

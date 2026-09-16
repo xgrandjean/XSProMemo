@@ -8,6 +8,7 @@ import {
   createMemoireFrom
 } from '../store/memoireStore'
 import { importContent } from '../store/modelStore'
+import { ensureDefaultTemplate } from '../store/seed'
 import { exportMemoire, importMemoire } from '../store/memoireTransfer'
 import { resolveContentFile } from '../store/paths'
 import { setMemoireLogo, clearMemoireLogo, readMemoireLogoPreview } from '../store/logoStore'
@@ -27,6 +28,10 @@ export function registerMemoiresIpc(): void {
 
   ipcMain.handle('memoires:listTemplates', async () => {
     const libraryPath = await requireLibraryPath()
+    // Recreates the default "Exemple" (with its content) if the last modèle was just
+    // deleted mid-session — the same repair `seedIfNeeded` does at startup, so the two
+    // never disagree and leave a blank "Modèle" behind instead.
+    await ensureDefaultTemplate(libraryPath)
     return listTemplates(libraryPath)
   })
 

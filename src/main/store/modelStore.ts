@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import { configJsonPath, contentsDir, writeJsonAtomic } from './paths'
+import { configJsonPath, storeContentBytes, writeJsonAtomic } from './paths'
 import type { ContentRef, ModelConfig } from '../../shared/types'
 
 const defaultModelConfig: ModelConfig = {
@@ -29,28 +29,19 @@ export async function writeModelConfig(root: string, config: ModelConfig): Promi
 
 /**
  * Copies a content file into the contents folder, keeping a readable name so the folder
- * can be browsed and its files replaced by hand. A clashing name gets a numeric suffix
- * rather than overwriting someone else's content.
+ * can be browsed and its files replaced by hand. A name already in the pool is reused
+ * as-is only if its bytes match (picking the file already there is a normal thing to do);
+ * otherwise a numbered suffix is used, since two chapters (in the same mémoire or in two
+ * different ones) can share a title without their content being the same file.
  */
 export async function importContent(root: string, srcAbsPath: string): Promise<ContentRef> {
   if (path.extname(srcAbsPath).toLowerCase() !== '.docx') {
     throw new Error('Seuls les fichiers Word (.docx) peuvent servir de contenu.')
   }
-  const directory = contentsDir(root)
-  await fs.mkdir(directory, { recursive: true })
 
   const base = path.basename(srcAbsPath, '.docx').replace(/[\/:*?"<>|]/g, '-').trim() || 'contenu'
-  const fileName = `${base}.docx`
-
-  // The pool is keyed by file name: importing under a name already there updates that
-  // file rather than piling up "(2)", "(3)"... Designating the file already in the
-  // pool is a normal thing to do, and must not copy it onto itself.
-  const source = path.resolve(srcAbsPath)
-  const destination = path.join(directory, fileName)
-  if (path.resolve(destination).toLowerCase() !== source.toLowerCase()) {
-    const staged = `${destination}.nouveau`
-    await fs.copyFile(source, staged)
-    await fs.rename(staged, destination)
-  }
-  return { file: fileName, originalName: fileName }
+  const originalName = `${base}.docx`
+  const bytes = await fs.readFile(srcAbsPath)
+  const fileName = await storeContentBytes(root, originalName, bytes)
+  return { file: fileName, originalName }
 }

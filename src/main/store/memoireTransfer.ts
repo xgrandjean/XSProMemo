@@ -2,7 +2,7 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import JSZip from 'jszip'
-import { contentsDir, logosDir, resolveContentFile } from './paths'
+import { logosDir, resolveContentFile, storeContentBytes } from './paths'
 import { getMemoire, saveMemoire } from './memoireStore'
 import { prefixFor } from './logoStore'
 import type { ChapterNode, ContentRef, LogoField, Memoire } from '../../shared/types'
@@ -62,35 +62,6 @@ export async function exportMemoire(root: string, id: string, destZipPath: strin
   await fs.writeFile(destZipPath, buffer)
 }
 
-/**
- * Copies bytes into the contents pool under a name that never collides with something
- * unrelated: an existing file with the same name is reused as-is if its bytes match
- * (no pointless duplicate), otherwise a numbered suffix is used instead of overwriting it.
- */
-async function importContentBytes(root: string, fileName: string, bytes: Buffer): Promise<string> {
-  const dir = contentsDir(root)
-  await fs.mkdir(dir, { recursive: true })
-
-  const ext = path.extname(fileName)
-  const base = path.basename(fileName, ext)
-  let candidate = fileName
-  let suffix = 1
-  for (;;) {
-    const candidatePath = path.join(dir, candidate)
-    try {
-      const existing = await fs.readFile(candidatePath)
-      if (existing.equals(bytes)) return candidate
-    } catch {
-      break // nothing at that name — free to use
-    }
-    suffix += 1
-    candidate = `${base} (${suffix})${ext}`
-  }
-
-  await fs.writeFile(path.join(dir, candidate), bytes)
-  return candidate
-}
-
 /** Deep-copies a chapter tree, remapping each content file to its final imported name. */
 function remapChapters(nodes: ChapterNode[], renamed: Map<string, string>): ChapterNode[] {
   return nodes.map((node) => ({
@@ -132,7 +103,7 @@ export async function importMemoire(root: string, zipPath: string): Promise<Memo
     if (entry.dir || !entry.name.startsWith('contenus/')) continue
     const originalName = entry.name.slice('contenus/'.length)
     const bytes = await entry.async('nodebuffer')
-    renamed.set(originalName, await importContentBytes(root, originalName, bytes))
+    renamed.set(originalName, await storeContentBytes(root, originalName, bytes))
   }
 
   const newId = randomUUID()

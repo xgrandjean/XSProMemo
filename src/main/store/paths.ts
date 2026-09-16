@@ -54,6 +54,41 @@ export function resolveContentFile(root: string, fileName: string): string {
   return path.join(contentsDir(root), fileName)
 }
 
+/**
+ * Copies bytes into the contents pool under a name that never collides with something
+ * unrelated: an existing file with the same name is reused as-is if its bytes match
+ * (no pointless duplicate), otherwise a numbered suffix is used instead of overwriting it.
+ * Shared by every path that adds a content file to the pool (manual import, zip import),
+ * so two mémoires with a same-titled chapter can never silently clobber each other's file.
+ */
+export async function storeContentBytes(
+  root: string,
+  fileName: string,
+  bytes: Buffer
+): Promise<string> {
+  const dir = contentsDir(root)
+  await fs.mkdir(dir, { recursive: true })
+
+  const ext = path.extname(fileName)
+  const base = path.basename(fileName, ext)
+  let candidate = fileName
+  let suffix = 1
+  for (;;) {
+    const candidatePath = path.join(dir, candidate)
+    try {
+      const existing = await fs.readFile(candidatePath)
+      if (existing.equals(bytes)) return candidate
+    } catch {
+      break // nothing at that name — free to use
+    }
+    suffix += 1
+    candidate = `${base} (${suffix})${ext}`
+  }
+
+  await fs.writeFile(path.join(dir, candidate), bytes)
+  return candidate
+}
+
 /** Writes JSON through a temp file so a crash mid-write cannot corrupt the original. */
 export async function writeJsonAtomic(targetPath: string, value: unknown): Promise<void> {
   await fs.mkdir(path.dirname(targetPath), { recursive: true })

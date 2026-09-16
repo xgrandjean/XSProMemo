@@ -106,6 +106,9 @@ async function hasAnyTemplate(root: string): Promise<boolean> {
     try {
       const raw = await fs.readFile(path.join(memoiresDir(root), file), 'utf-8')
       const memoire: Memoire = JSON.parse(raw)
+      // Same rule as memoireStore's readAllMemoires: a stray .json not named after its
+      // own id (a backup, a conflicted sync copy...) is not a mémoire the app recognizes.
+      if (file !== `${memoire.id}.json`) continue
       if (memoire.isTemplate) return true
     } catch {
       // skip unreadable/corrupt file
@@ -176,6 +179,19 @@ async function createDefaultTemplateIfNeeded(root: string, shipped: string): Pro
 }
 
 /**
+ * Restores the shipped example's content files if any are missing, then recreates the
+ * default "Exemple" template if no modèle exists at all. The one place both the resource
+ * pool and the modèle itself get put back — used at startup, and on demand whenever the
+ * templates screen finds itself empty (e.g. the last modèle was just deleted), so the two
+ * situations never disagree on what "the default template" is.
+ */
+export async function ensureDefaultTemplate(root: string): Promise<void> {
+  const shipped = shippedDir()
+  await restoreMissingContents(path.join(shipped, 'contenus'), contentsDir(root))
+  await createDefaultTemplateIfNeeded(root, shipped)
+}
+
+/**
  * On first launch — of the application, or of a machine freshly pointed at a shared
  * folder — the library installs itself: template, example content files and a default
  * template mémoire.
@@ -198,10 +214,8 @@ export async function seedIfNeeded(root: string): Promise<void> {
     }
   }
 
-  await restoreMissingContents(path.join(shipped, 'contenus'), contentsDir(root))
-
   await migrateLegacyExample(root)
-  await createDefaultTemplateIfNeeded(root, shipped)
+  await ensureDefaultTemplate(root)
 }
 
 /**

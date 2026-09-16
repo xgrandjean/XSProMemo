@@ -96,6 +96,27 @@ try {
         $selection.EndKey(6) | Out-Null   # wdStory
     }
 
+    <#
+      Selection.InsertFile silently drops some floating shapes on the way in — notably a
+      text box saved with a VML fallback (mc:AlternateContent), the kind Word itself still
+      produces for many "Insert > Text Box" objects. The paragraph survives, empty; the
+      shape (e.g. a page de garde's printed company footer) does not, with no warning.
+      Opening the source as its own document and transplanting its content through
+      Range.FormattedText goes through Word's native copy/paste formatting engine instead
+      of InsertFile's merge, which carries every shape across intact. Deliberately not
+      clipboard-based (Selection.Paste after Content.Copy): that would depend on whatever
+      paste format the user's own Word is configured to default to, and would touch their
+      real clipboard during a background export.
+    #>
+    function Insert-DocumentContent($path) {
+        $srcDoc = $word.Documents.Open([string]$path, $false, $true, $false)
+        try {
+            $selection.Range.FormattedText = $srcDoc.Content.FormattedText
+        } finally {
+            $srcDoc.Close($false)   # wdDoNotSaveChanges
+        }
+    }
+
     # Une ligne vide en tete ou en fin d'un contenu est une incertitude d'auteur ("faut-il
     # en laisser une avant mon premier paragraphe, sachant qu'un titre va etre ajoute avant
     # ?"), jamais une intention de mise en page : on la retire silencieusement, sans toucher
@@ -131,7 +152,7 @@ try {
         Go-ToEnd
         if ($i -gt 0) { $selection.InsertBreak(7) }   # wdPageBreak
         $insertStart = $selection.Range.Start
-        $selection.InsertFile([string]$coverPages[$i], "", $false, $false, $false)
+        Insert-DocumentContent $coverPages[$i]
         Go-ToEnd
         Trim-BlankEdges ($doc.Range($insertStart, $selection.Range.End))
     }
@@ -210,7 +231,7 @@ try {
         if ($chapter.contentPath) {
             Go-ToEnd
             $insertStart = $selection.Range.Start
-            $selection.InsertFile([string]$chapter.contentPath, "", $false, $false, $false)
+            Insert-DocumentContent $chapter.contentPath
             Go-ToEnd
             Trim-BlankEdges ($doc.Range($insertStart, $selection.Range.End))
         }
