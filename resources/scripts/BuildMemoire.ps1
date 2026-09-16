@@ -132,6 +132,21 @@ try {
         }
     }
 
+    # Un sous-chapitre imbrique n'est visuellement distinct de son parent que par la
+    # taille de son titre ; sans decalage, son contenu se retrouve au meme alignement
+    # que celui d'un chapitre de premier niveau, et la hierarchie du plan disparait a la
+    # lecture. Chaque niveau sous le premier ajoute donc un retrait supplementaire au
+    # contenu inséré (jamais au titre lui-meme, qui reste sous son style de titre).
+    function Set-ContentIndent($range, $level) {
+        $additionalPerLevel = 17   # points (~0.6 cm) par niveau ; LeftIndent s'exprime en
+                                    # points, contrairement au w:ind du .docx brut (en twips)
+        $additional = ($level - 1) * $additionalPerLevel
+        if ($additional -le 0 -or $range.Paragraphs.Count -eq 0) { return }
+        foreach ($paragraph in $range.Paragraphs) {
+            $paragraph.Range.ParagraphFormat.LeftIndent += $additional
+        }
+    }
+
     # Le point d'insertion doit etre un paragraphe a lui : sans cela le titre suivant
     # se colle a la derniere ligne du contenu precedent et lui impose son style, ce qui
     # fait remonter des phrases entieres dans le sommaire.
@@ -233,7 +248,9 @@ try {
             $insertStart = $selection.Range.Start
             Insert-DocumentContent $chapter.contentPath
             Go-ToEnd
-            Trim-BlankEdges ($doc.Range($insertStart, $selection.Range.End))
+            $insertedRange = $doc.Range($insertStart, $selection.Range.End)
+            Trim-BlankEdges $insertedRange
+            Set-ContentIndent $insertedRange $level
         }
     }
 
