@@ -79,12 +79,17 @@ lors de l'assemblage final.
 ${plan}
 
 ## Pour ajouter ou remplacer le contenu d'un chapitre
-1. Crée (ou remplace) le fichier .docx correspondant dans contenus/, avec un nom clair, \
+1. Le dossier contenus/ est partagé par TOUS les mémoires et modèles de cette \
+bibliothèque, pas seulement celui-ci : liste son contenu avant de choisir un nom, et \
+choisis-en un qui n'existe encore nulle part (par exemple en y intégrant l'id du \
+chapitre listé ci-dessus). Un nom déjà pris par un autre chapitre — même dans un autre \
+mémoire — écraserait silencieusement son contenu, sans aucun avertissement.
+2. Crée (ou remplace) le fichier .docx correspondant dans contenus/, avec un nom clair, \
 sans les caractères / : * ? " < > |.
-2. Dans memoires/${draft.id}.json, retrouve le chapitre par son "id" exact (voir la liste \
+3. Dans memoires/${draft.id}.json, retrouve le chapitre par son "id" exact (voir la liste \
 ci-dessus) et pose son champ "content" ainsi :
    "content": { "file": "<nom-du-fichier>.docx", "originalName": "<nom-du-fichier>.docx" }
-3. Ne touche à aucune autre clé du JSON (les autres chapitres, "logo", "secondLogo", \
+4. Ne touche à aucune autre clé du JSON (les autres chapitres, "logo", "secondLogo", \
 "coverPages", "isTemplate"...).
 
 ## Toujours faire une sauvegarde avant d'écraser un fichier existant
