@@ -124,11 +124,13 @@ try {
     function Trim-BlankEdges($range) {
         if ($range.Paragraphs.Count -eq 0) { return }
         $first = $range.Paragraphs.Item(1)
-        if (($first.Range.Text -replace "[\r\a\s]", "") -eq "") { $first.Range.Delete() }
+        # Range.Delete renvoie le nombre de caracteres supprimes : sans Out-Null, ce
+        # nombre part sur stdout au milieu des evenements JSON lus par l'application.
+        if (($first.Range.Text -replace "[\r\a\s]", "") -eq "") { $first.Range.Delete() | Out-Null }
         $count = $range.Paragraphs.Count
         if ($count -ge 1) {
             $last = $range.Paragraphs.Item($count)
-            if (($last.Range.Text -replace "[\r\a\s]", "") -eq "") { $last.Range.Delete() }
+            if (($last.Range.Text -replace "[\r\a\s]", "") -eq "") { $last.Range.Delete() | Out-Null }
         }
     }
 
@@ -143,7 +145,19 @@ try {
         $additional = ($level - 1) * $additionalPerLevel
         if ($additional -le 0 -or $range.Paragraphs.Count -eq 0) { return }
         foreach ($paragraph in $range.Paragraphs) {
-            $paragraph.Range.ParagraphFormat.LeftIndent += $additional
+            # Seul le texte courant se decale. Un tableau garde sa geometrie : retoucher
+            # ses paragraphes ne deplacerait pas le tableau mais retrecirait le texte DANS
+            # chaque cellule. Une image en ligne garde la sienne aussi : large, elle
+            # deborderait de la marge de droite et serait rognee a l'impression.
+            if ($paragraph.Range.Information(12)) { continue }   # wdWithInTable
+            if ($paragraph.Range.InlineShapes.Count -gt 0) { continue }
+
+            $current = $paragraph.Range.ParagraphFormat.LeftIndent
+            # Word rend 9999999 (wdUndefined) quand le retrait n'est pas determinable, et
+            # refuse toute valeur hors de +/-1584 pt : additionner a l'aveugle fait alors
+            # echouer la generation entiere sur un simple paragraphe particulier.
+            if ($current -ge 9999999 -or ($current + $additional) -gt 1584) { continue }
+            $paragraph.Range.ParagraphFormat.LeftIndent = $current + $additional
         }
     }
 
@@ -248,9 +262,15 @@ try {
             $insertStart = $selection.Range.Start
             Insert-DocumentContent $chapter.contentPath
             Go-ToEnd
-            $insertedRange = $doc.Range($insertStart, $selection.Range.End)
-            Trim-BlankEdges $insertedRange
-            Set-ContentIndent $insertedRange $level
+            Trim-BlankEdges ($doc.Range($insertStart, $selection.Range.End))
+            # Le retrait se calcule sur ce qu'il reste APRES le rognage : un contenu
+            # entierement vide n'en laisse rien, et la plage ne delimiterait alors plus
+            # le contenu de ce chapitre mais un paragraphe voisin.
+            Go-ToEnd
+            $contentEnd = $selection.Range.End
+            if ($contentEnd -gt $insertStart) {
+                Set-ContentIndent ($doc.Range($insertStart, $contentEnd)) $level
+            }
         }
     }
 
