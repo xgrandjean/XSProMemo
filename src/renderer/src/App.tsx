@@ -90,7 +90,7 @@ export default function App(): JSX.Element {
           </HelpButton>
           <button
             className={`gear ${view.name === 'config' ? 'active' : ''}`}
-            title="Configuration : présentation et mémoire exemple"
+            title="Configuration : dossier de travail, présentation et modèles"
             onClick={() => navigate({ name: 'config' })}
           >
             ⚙

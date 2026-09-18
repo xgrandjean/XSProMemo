@@ -60,10 +60,20 @@ export function AppHelp(): JSX.Element {
           en un seul document Word.
         </li>
         <li>
-          Un fichier ne contient <b>que du contenu</b> : pas de titre de chapitre, pas de
-          sommaire, pas de numérotation. C&apos;est l&apos;application qui s&apos;en charge.
+          Un fichier ne contient <b>que du contenu</b> : pas de titre de chapitre, aucun
+          style « Titre », pas de sommaire, pas de numérotation. C&apos;est
+          l&apos;application qui s&apos;en charge.
         </li>
       </ul>
+
+      <h3>Le Mode IA</h3>
+      <p>
+        La bascule <b>Mode IA</b>, en haut à droite, ne change rien à vos documents : elle
+        change ce que font les commandes qui ouvrent un fichier dans Word. Activée, ouvrir le
+        contenu d&apos;un chapitre — ou le gabarit — copie en même temps une <b>consigne</b>
+        expliquant à Claude, dans Word, ce qu&apos;il a sous les yeux et ce qu&apos;il ne doit
+        surtout pas y faire. Il ne reste qu&apos;à la coller.
+      </p>
 
       <h3>Où sont vos fichiers</h3>
       <p>
@@ -218,10 +228,10 @@ export function LogoHelp(): JSX.Element {
         logo doit figurer sur ce dossier précis, à côté du vôtre.
       </p>
       <p>
-        Ni l&apos;un ni l&apos;autre n&apos;appartient qu&apos;à ce mémoire. Ils ont été
-        copiés depuis l&apos;exemple au moment de la création, mais dès cet instant tout
-        est indépendant : changer l&apos;un ne touche ni l&apos;autre emplacement, ni un
-        autre mémoire.
+        L&apos;un comme l&apos;autre n&apos;appartiennent qu&apos;à ce mémoire. Ils ont été
+        copiés depuis le modèle au moment de la création, mais dès cet instant tout est
+        indépendant : changer l&apos;un ne touche ni l&apos;autre emplacement, ni le modèle,
+        ni un autre mémoire.
       </p>
       <p className="muted">
         Pour changer ce que propose un modèle aux futurs mémoires, réglez-le sur ce
@@ -250,10 +260,18 @@ export function ModelesHelp(): JSX.Element {
         <b> ensuite</b> : ceux qui existent déjà gardent ce que vous aviez envoyé, ce qui
         est bien ce qu&apos;on veut d&apos;une réponse archivée.
       </p>
+      <h3>Se constituer un modèle</h3>
       <p>
-        Un seul modèle suffit dans la plupart des cas. Ajoutez-en un second — en
-        dupliquant un modèle existant, puis en l&apos;adaptant — quand différents types
-        d&apos;affaires méritent des plans de départ différents.
+        Celui livré avec l&apos;application n&apos;est qu&apos;un squelette de démonstration,
+        volontairement neutre. Le vôtre se fabrique à partir d&apos;un mémoire qui a bien
+        marché : depuis <b>Mes mémoires</b>, l&apos;icône <b>⭐</b> de sa ligne en fait un
+        modèle, sans toucher au mémoire d&apos;origine.
+      </p>
+      <p>
+        Un seul modèle suffit dans la plupart des cas. Ajoutez-en un second — en le
+        dupliquant puis en l&apos;adaptant, ou en important le fichier .zip d&apos;un
+        collègue — quand différents types d&apos;affaires méritent des plans de départ
+        différents.
       </p>
       <p className="muted">
         Mieux vaut un modèle <b>trop fourni que trop pauvre</b> : il est plus rapide de
@@ -350,17 +368,21 @@ export function PlanHelp(): JSX.Element {
           le document et dans le sommaire.
         </li>
         <li>
-          <b>Le contenu</b> : un fichier Word. <i>+ contenu</i> ou l&apos;icône <b>œil</b>
-          (une fois un contenu attaché) ouvrent le même menu — Ouvrir contenu, Remplacer
-          contenu, Retirer contenu, Ajouter un sous-chapitre, et Insérer chapitre avant.
+          <b>Le contenu</b> : un fichier Word. <i>+ contenu</i> (quand il n&apos;y en a pas)
+          ou l&apos;icône <b>œil</b> (quand il y en a un) ouvrent le menu de la ligne :
+          attacher, remplacer ou retirer un contenu, en créer un <b>vide</b> à rédiger
+          directement dans Word, faire commencer le chapitre sur une nouvelle page, le
+          marquer validé, le dupliquer, lui ajouter un sous-chapitre, ou insérer un chapitre
+          avant lui.
         </li>
         <li>
           <b>Clic droit</b> n&apos;importe où sur la ligne ouvre ce même menu, quel que
           soit le niveau ou l&apos;état du chapitre.
         </li>
         <li>
-          <b>Nouvelle page</b> force le chapitre à démarrer en haut d&apos;une page. Sans
-          cette case, il s&apos;enchaîne à la suite du précédent.
+          <b>Les marqueurs</b> signalent d&apos;un coup d&apos;œil ce que vous avez réglé :
+          une page pour « commence sur une nouvelle page », une coche verte pour « validé ».
+          L&apos;un et l&apos;autre se basculent depuis le menu.
         </li>
         <li>
           <b>Portrait / Paysage</b> choisit l&apos;orientation. Vous pouvez alterner dans un
@@ -397,8 +419,11 @@ export function PlanHelp(): JSX.Element {
 
       <h3>Ce que doivent contenir vos fichiers</h3>
       <p>
-        <b>Du contenu, et rien d&apos;autre.</b> Pas de titre de chapitre : l&apos;application
-        l&apos;ajoute déjà, et il ferait doublon. Pas de sommaire non plus.
+        <b>Du contenu, et rien d&apos;autre.</b> Pas de titre de chapitre :
+        l&apos;application l&apos;ajoute déjà, et il ferait doublon. Pas de sommaire non
+        plus. Et surtout <b>aucun style « Titre »</b>, même pour découper un long chapitre :
+        chacun entrerait dans le sommaire du mémoire, sans numéro, entre deux vrais
+        chapitres.
       </p>
       <p>
         Un sous-chapitre est un fichier à part entière. Si un de vos documents contient
@@ -481,6 +506,11 @@ export function MemoiresHelp(): JSX.Element {
           modèle en est une copie indépendante, que vous ferez évoluer de votre côté.
         </li>
         <li>
+          <b>Exporter</b> / <b>Importer</b> (les deux petites icônes) : une archive .zip
+          autonome, qui emporte le plan, tous les contenus et le logo. De quoi sauvegarder un
+          mémoire, l&apos;envoyer à quelqu&apos;un, ou le reprendre sur un autre poste.
+        </li>
+        <li>
           <b>Supprimer</b> : efface le plan et emporte les contenus de ce mémoire, qui
           n&apos;appartiennent qu&apos;à lui. Ils sont mis de côté dans
           <b> contenus\_corbeille</b> plutôt qu&apos;effacés, et aucun autre mémoire
@@ -493,6 +523,12 @@ export function MemoiresHelp(): JSX.Element {
         Le bouton <b>Générer</b> se trouve en haut de l&apos;écran d&apos;un mémoire. Une
         fenêtre affiche l&apos;avancement, puis propose d&apos;ouvrir le document Word ou
         le PDF. Word doit être fermé pendant l&apos;opération.
+      </p>
+      <p className="muted">
+        Si le PDF de ce mémoire est déjà ouvert dans un lecteur, l&apos;application vous le
+        dit <b>avant</b> de commencer : fermez-le et relancez. Et s&apos;il se retrouve
+        verrouillé en cours de route, la génération aboutit quand même — le document Word
+        est produit, seul le PDF manque, et la fenêtre l&apos;explique.
       </p>
       <p>
         Un mémoire déjà généré affiche <b>Ouvrir le dernier PDF</b> : inutile de
