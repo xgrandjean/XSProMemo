@@ -24,7 +24,12 @@ export default function MemoireEditorPage({
 }): JSX.Element {
   const [draft, setDraft] = useState<Memoire | null>(null)
   const [status, setStatus] = useState<'saved' | 'saving' | 'dirty'>('saved')
-  const [error, setError] = useState<string | null>(null)
+  // Deux echecs sans rapport, donc deux etats : celui de l'enregistrement s'affiche dans
+  // la barre du haut, celui de la generation dans sa fenetre. Les confondre faisait
+  // apparaitre l'erreur de generation collee au mot « Enregistré », et surtout l'y laissait
+  // apres la fermeture de la fenetre — un message rouge qui ne partait plus.
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [generationError, setGenerationError] = useState<string | null>(null)
   const [generating, setGenerating] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [steps, setSteps] = useState<string[]>([])
@@ -73,7 +78,7 @@ export default function MemoireEditorPage({
   async function save(): Promise<Memoire> {
     if (!latest.current) throw new Error('Aucun mémoire chargé')
     setStatus('saving')
-    setError(null)
+    setSaveError(null)
     try {
       const saved = await window.api.memoires.save(latest.current)
       latest.current = saved
@@ -82,13 +87,13 @@ export default function MemoireEditorPage({
       return saved
     } catch (err) {
       setStatus('dirty')
-      setError(describeError(err))
+      setSaveError(describeError(err))
       throw err
     }
   }
 
   async function generate(): Promise<void> {
-    setError(null)
+    setGenerationError(null)
     setResult(null)
     setSteps([])
     setDialogOpen(true)
@@ -101,7 +106,7 @@ export default function MemoireEditorPage({
       setDraft(refreshed)
       setStatus('saved')
     } catch (err) {
-      setError(describeError(err))
+      setGenerationError(describeError(err))
     } finally {
       setGenerating(false)
     }
@@ -141,10 +146,17 @@ export default function MemoireEditorPage({
           Enregistrer
         </button>
         <span className="save-status save-status--inline">
-          {status === 'saving' && <span className="muted">Enregistrement...</span>}
-          {status === 'saved' && <span className="muted">Enregistré</span>}
-          {status === 'dirty' && <span className="muted">Modifications non enregistrées</span>}
-          {error && <span className="error-text">{error}</span>}
+          {saveError ? (
+            // Elle dit deja que rien n'est enregistre : repeter le statut a cote n'ajoute
+            // rien et les deux textes se retrouvaient colles l'un a l'autre.
+            <span className="error-text">{saveError}</span>
+          ) : (
+            <>
+              {status === 'saving' && <span className="muted">Enregistrement...</span>}
+              {status === 'saved' && <span className="muted">Enregistré</span>}
+              {status === 'dirty' && <span className="muted">Modifications non enregistrées</span>}
+            </>
+          )}
         </span>
         <button
           className="primary"
@@ -166,8 +178,11 @@ export default function MemoireEditorPage({
           running={generating}
           steps={steps}
           result={result}
-          error={error}
-          onClose={() => setDialogOpen(false)}
+          error={generationError}
+          onClose={() => {
+            setDialogOpen(false)
+            setGenerationError(null)
+          }}
         />
       )}
 

@@ -600,6 +600,12 @@ button.danger-link,
   min-height: auto;
   white-space: nowrap;
 }
+
+/* Le statut tient en deux mots, pas un message d'erreur : sans cela il pousserait les
+   boutons de la barre hors de l'ecran, faute de pouvoir se replier. */
+.save-status--inline .error-text {
+  white-space: normal;
+}
 .chapter-orientation {
   width: auto;
   flex-shrink: 0;
