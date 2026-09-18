@@ -51,6 +51,8 @@ const api = {
       ipcRenderer.invoke('memoires:create', { name, templateId }),
     duplicate: (id: string, name: string): Promise<Memoire> =>
       ipcRenderer.invoke('memoires:duplicate', { id, name }),
+    saveAsTemplate: (id: string, name: string): Promise<Memoire> =>
+      ipcRenderer.invoke('memoires:saveAsTemplate', { id, name }),
     save: (memoire: Memoire): Promise<Memoire> => ipcRenderer.invoke('memoires:save', memoire),
     delete: (id: string): Promise<void> => ipcRenderer.invoke('memoires:delete', id),
     export: (id: string, destPath: string): Promise<void> =>

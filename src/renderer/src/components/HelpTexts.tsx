@@ -407,6 +407,12 @@ export function MemoiresHelp(): JSX.Element {
           proche du nouveau. La copie est indépendante.
         </li>
         <li>
+          <b>⭐ Enregistrer comme modèle</b> : quand un mémoire est devenu votre bonne
+          référence, cette commande en fait un modèle, proposé ensuite au moment de créer un
+          nouveau mémoire. Le mémoire d&apos;origine reste dans la liste, inchangé : le
+          modèle en est une copie indépendante, que vous ferez évoluer de votre côté.
+        </li>
+        <li>
           <b>Supprimer</b> : efface le plan et emporte les contenus de ce mémoire, qui
           n&apos;appartiennent qu&apos;à lui. Ils sont mis de côté dans
           <b> contenus\_corbeille</b> plutôt qu&apos;effacés, et aucun autre mémoire

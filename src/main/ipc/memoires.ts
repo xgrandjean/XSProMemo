@@ -59,6 +59,18 @@ export function registerMemoiresIpc(): void {
     return createMemoireFrom(libraryPath, input.name, input.id)
   })
 
+  /**
+   * Turns a mémoire that worked well into a reusable starting point — the mirror of
+   * `memoires:create`, which makes a working mémoire out of a modèle. A copy rather than a
+   * conversion: the mémoire stays in the list exactly as it was sent to the client, and
+   * the modèle can then be reworked freely without touching that archive.
+   */
+  ipcMain.handle('memoires:saveAsTemplate', async (_event, input: { id: string; name: string }) => {
+    const libraryPath = await requireLibraryPath()
+    const created = await createMemoireFrom(libraryPath, input.name, input.id)
+    return saveMemoire(libraryPath, { ...created, isTemplate: true })
+  })
+
   ipcMain.handle('memoires:save', async (_event, memoire: Memoire) => {
     const libraryPath = await requireLibraryPath()
     return saveMemoire(libraryPath, memoire)

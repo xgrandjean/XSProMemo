@@ -25,6 +25,9 @@ export default function MemoiresListPage({
   const [duplicateName, setDuplicateName] = useState('')
   const [exportingId, setExportingId] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
+  const [toTemplate, setToTemplate] = useState<MemoireSummary | null>(null)
+  const [templateName, setTemplateName] = useState('')
+  const [createdTemplate, setCreatedTemplate] = useState<string | null>(null)
 
   function refresh(): void {
     window.api.memoires.list().then(setMemoires)
@@ -32,14 +35,16 @@ export default function MemoiresListPage({
 
   useEffect(refresh, [])
 
-  // Loaded once: which modèle a new mémoire starts from. With a single one (the common
-  // case) the picker stays hidden and that one is used directly — no added friction.
-  useEffect(() => {
+  // Which modèle a new mémoire starts from. With a single one (the common case) the picker
+  // stays hidden and that one is used directly — no added friction.
+  function refreshTemplates(): void {
     window.api.memoires.listTemplates().then((list) => {
       setTemplates(list)
       setTemplateId((current) => current || list[0]?.id || '')
     })
-  }, [])
+  }
+
+  useEffect(refreshTemplates, [])
 
   async function create(): Promise<void> {
     const name = newName.trim()
@@ -70,6 +75,32 @@ export default function MemoiresListPage({
     try {
       const created = await window.api.memoires.duplicate(source.id, duplicateName.trim())
       onOpen(created.id)
+    } catch (err) {
+      setError(describeError(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function askSaveAsTemplate(memoire: MemoireSummary): void {
+    setToTemplate(memoire)
+    setTemplateName(`${memoire.name} (modèle)`)
+  }
+
+  /** Stays on this page afterwards: the new modèle belongs to another screen, so the only
+   *  visible result would otherwise be nothing at all. Hence the confirmation saying where
+   *  it went. */
+  async function confirmSaveAsTemplate(): Promise<void> {
+    if (!toTemplate || !templateName.trim()) return
+    const source = toTemplate
+    const name = templateName.trim()
+    setToTemplate(null)
+    setBusy(true)
+    setError(null)
+    try {
+      await window.api.memoires.saveAsTemplate(source.id, name)
+      refreshTemplates()
+      setCreatedTemplate(name)
     } catch (err) {
       setError(describeError(err))
     } finally {
@@ -189,6 +220,14 @@ export default function MemoiresListPage({
               <button className="secondary" onClick={() => askDuplicate(memoire)}>
                 Dupliquer
               </button>
+              <button
+                className="icon-btn"
+                title="Enregistrer comme modèle (pour repartir de ce mémoire la prochaine fois)"
+                onClick={() => askSaveAsTemplate(memoire)}
+                disabled={busy}
+              >
+                ⭐
+              </button>
               <button className="icon-btn danger-link" title="Supprimer" onClick={() => setToDelete(memoire)}>
                 ✕
               </button>
@@ -204,6 +243,63 @@ export default function MemoiresListPage({
           </div>
         ))}
       </div>
+
+      {toTemplate && (
+        <Modal
+          title="Enregistrer comme modèle"
+          onClose={() => setToTemplate(null)}
+          actions={
+            <>
+              <button className="secondary" onClick={() => setToTemplate(null)}>
+                Annuler
+              </button>
+              <button
+                className="primary"
+                onClick={confirmSaveAsTemplate}
+                disabled={!templateName.trim()}
+              >
+                Créer le modèle
+              </button>
+            </>
+          }
+        >
+          <div className="field">
+            <label>Nom du modèle</label>
+            <input
+              type="text"
+              autoFocus
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && confirmSaveAsTemplate()}
+            />
+          </div>
+          <p className="muted">
+            « <b>{toTemplate.name}</b> » reste dans vos mémoires, inchangé. Le modèle en est
+            une copie indépendante, avec ses propres fichiers de contenu : vous pourrez le
+            faire évoluer sans jamais toucher au mémoire d&apos;origine.
+          </p>
+        </Modal>
+      )}
+
+      {createdTemplate && (
+        <Modal
+          title="Modèle créé"
+          onClose={() => setCreatedTemplate(null)}
+          actions={
+            <button className="primary" onClick={() => setCreatedTemplate(null)}>
+              Fermer
+            </button>
+          }
+        >
+          <p>
+            « <b>{createdTemplate}</b> » est maintenant un modèle.
+          </p>
+          <p className="muted">
+            Vous le retrouverez dans <b>Configuration → Modèles</b> pour le modifier, et dans
+            le choix de modèle ci-dessus au moment de créer un nouveau mémoire.
+          </p>
+        </Modal>
+      )}
 
       {toDuplicate && (
         <Modal
