@@ -9,6 +9,11 @@ export interface ChapterActions {
    *  renders itself recursively for sub-chapters: anything added to the props has to be
    *  forwarded by hand at every level, while this object already travels down untouched. */
   memoireId: string
+  /** Mode IA actif : chaque chapitre deja redige montre un bouton qui ouvre son fichier
+   *  dans Word et met sa consigne dans le presse-papiers. Ici plutot qu'en prop, meme
+   *  raison que `memoireId`. */
+  aiMode: boolean
+  onCopyWordPrompt: (id: string) => void
   onTitleChange: (id: string, title: string) => void
   onContentChange: (id: string, content: ContentRef | null) => void
   onPageBreakChange: (id: string, value: boolean) => void
@@ -218,6 +223,22 @@ function ChapterRow({
           {validated && (
             <span className="row-badge row-badge-ok" title="Marqué validé">
               ✓
+            </span>
+          )}
+          {actions.aiMode && (
+            <span className="ai-slot">
+              {content && (
+                <button
+                  className="ai-btn"
+                  title="Ouvre le contenu dans Word et copie la consigne à coller dans Claude"
+                  onClick={() => {
+                    onActivate(node.id)
+                    actions.onCopyWordPrompt(node.id)
+                  }}
+                >
+                  IA
+                </button>
+              )}
             </span>
           )}
           {contentError && <span className="error-text">{contentError}</span>}

@@ -164,7 +164,7 @@ export function GabaritHelp(): JSX.Element {
         <li><b>Aide</b> : ce texte.</li>
       </ul>
       <p>
-        Une mise à jour de l&apos;application n&apos;écrase jamais le gabarit d&apos;une
+        Une mise à jour de l&apos;application n&apos;écrase jamais le gabarit d&apos;un
         dossier de travail déjà en place, pour ne jamais perdre une personnalisation. Quand une
         nouvelle version apporte des améliorations au gabarit livré (styles de titre,
         mise en page), l&apos;application vous le propose une fois à l&apos;ouverture ;
@@ -357,6 +357,29 @@ export function PlanHelp(): JSX.Element {
         </li>
       </ul>
 
+      <h3>Rédiger un chapitre avec Claude dans Word</h3>
+      <p>
+        Le bouton <b>Mode IA</b>, en haut de ce panneau, fait apparaître un bouton{' '}
+        <b>IA</b> sur chaque chapitre qui a déjà un contenu. Un clic dessus fait deux choses
+        d&apos;un coup : il <b>ouvre le fichier dans Word</b> et met dans le presse-papiers
+        une <b>consigne</b> préparée pour ce chapitre précis. Il ne vous reste qu&apos;à la
+        coller dans Claude, dans Word.
+      </p>
+      <p>
+        Cette consigne explique à Claude ce qu&apos;il a sous les yeux : le corps d&apos;un
+        seul chapitre, pas un mémoire. Elle lui donne la place de ce chapitre dans le plan et
+        les titres de tous les autres, pour qu&apos;il écrive à propos sans empiéter sur ce
+        qui est traité ailleurs. Et elle lui interdit ce qui casserait le document assemblé :
+        le titre du chapitre, et surtout <b>tout style de titre</b>, même pour découper un
+        long texte — chacun entrerait dans le sommaire du mémoire, sans numéro, entre deux
+        vrais chapitres.
+      </p>
+      <p className="muted">
+        Pas de bouton sur un chapitre sans contenu : ajoutez-lui d&apos;abord un contenu
+        vide. Le mode reste actif d&apos;un mémoire à l&apos;autre jusqu&apos;à ce que vous le
+        désactiviez.
+      </p>
+
       <h3>Ce que doivent contenir vos fichiers</h3>
       <p>
         <b>Du contenu, et rien d&apos;autre.</b> Pas de titre de chapitre : l&apos;application
@@ -462,8 +485,8 @@ export function MemoiresHelp(): JSX.Element {
       </p>
 
       <p className="muted">
-        Les documents produits sont rangés dans le dossier « documents » de la
-        dossier de travail. La Configuration propose un raccourci vers ce dossier.
+        Les documents produits sont rangés dans le sous-dossier « documents » du
+        dossier de travail. La Configuration propose un raccourci pour y accéder.
       </p>
     </>
   )

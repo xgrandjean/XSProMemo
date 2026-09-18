@@ -5,6 +5,7 @@ interface ChapterLine {
   number: string
   id: string
   title: string
+  level: number
   contentFile: string | null
 }
 
@@ -15,6 +16,7 @@ function flattenChapters(nodes: ChapterNode[], prefix: number[] = []): ChapterLi
       number: chapterNumber(numbering),
       id: node.id,
       title: node.title || '(sans titre)',
+      level: numbering.length,
       contentFile: node.content?.file ?? null
     }
     return [line, ...flattenChapters(node.children, numbering)]
@@ -65,6 +67,10 @@ memoires/, ni Gabarit.docx, ni config.json, ni les logos, ni le code de l'applic
 Le contenu d'un chapitre est un fichier .docx autonome, placé dans le dossier \
 ${contentsDir} — le dossier propre à ce ${kind}. Il ne doit contenir que le corps du texte :
 - pas de titre de chapitre (l'application l'ajoute déjà — ce serait en double) ;
+- aucun style de titre, « Titre 1 » à « Titre 9 », même pour découper un long \
+chapitre : un style de titre laissé dans un fichier de contenu entre dans le sommaire du \
+mémoire final, sans numéro, entre deux vrais chapitres. Si une section mérite son propre \
+titre, c'est un sous-chapitre à créer dans le plan, avec son propre fichier ;
 - pas de sommaire ;
 - pas de numérotation manuelle des chapitres ;
 - pas besoin de ligne vide en tête ou en fin de fichier : l'application les retire \
@@ -162,4 +168,91 @@ Une fois terminé, utilise le bouton « Aperçu du style » de l'application (me
 gabarit, dans Configuration) pour voir le rendu réel de chaque niveau de titre avant de \
 considérer le travail terminé.
 ${generalNotes.trim() ? `\n## Consignes générales\n${generalNotes.trim()}\n` : ''}`
+}
+
+/**
+ * Builds the text for the Claude built into Word, working on one chapter's .docx with the
+ * document in front of it and nothing else — no library, no plan file, no other chapter.
+ * Deliberately says nothing about folders or JSON: naming what it cannot reach would only
+ * send it looking.
+ *
+ * Its own chapter is named, and so is the rest of the plan, because the trap here is not
+ * writing badly but writing someone else's chapter. And the rules are given with the
+ * consequence attached — an assistant told "no heading styles" reaches for one anyway to
+ * break up three pages of prose; told that each one lands in the mémoire's table of
+ * contents unnumbered, between two real chapters, it does not.
+ */
+export function buildWordAiInstructions(
+  draft: Memoire,
+  chapterId: string,
+  generalNotes: string
+): string {
+  const lines = flattenChapters(draft.chapters)
+  const current = lines.find((line) => line.id === chapterId)
+  const heading = current ? `${current.number} ${current.title}` : '(chapitre inconnu)'
+  const depth = current
+    ? current.level === 1
+      ? 'un chapitre de premier niveau'
+      : `un sous-chapitre de niveau ${current.level}`
+    : ''
+
+  const plan = lines
+    .map((line) => {
+      const indent = '  '.repeat(line.level - 1)
+      const mark = line.id === chapterId ? '   <<< LE CHAPITRE QUE TU RÉDIGES' : ''
+      return `${indent}${line.number} ${line.title}${mark}`
+    })
+    .join('\n')
+
+  return `Tu travailles dans Word, sur un document qui n'est pas un mémoire : c'est le corps \
+d'un seul chapitre, rien d'autre.
+
+## Ce que deviendra ce document
+XSProMemo assemble un mémoire technique (réponse à un appel d'offres) en mettant bout à bout \
+un fichier Word par chapitre. Au moment de l'assemblage, l'application écrit elle-même, juste \
+avant ce texte, le titre du chapitre et son numéro, puis construit le sommaire et la \
+pagination du document final. Ce fichier ne porte donc que le corps du texte.
+
+## Le chapitre que tu rédiges
+Mémoire : ${draft.name}
+Chapitre : ${heading}${depth ? ` (${depth})` : ''}
+
+## Sa place dans le mémoire
+${plan}
+
+Tiens-t'en à ton chapitre : ce que traitent les autres n'a pas à être repris ici.
+
+## Ce que ce document ne doit jamais contenir
+- Le titre du chapitre. L'application l'ajoute : l'écrire ici le ferait apparaître deux fois.
+- Un style de titre, « Titre 1 » à « Titre 9 », même pour découper un long chapitre. \
+Vérifié sur le logiciel : un « Titre 2 » laissé dans un fichier de contenu entre dans le \
+sommaire du mémoire final, sans numéro, coincé entre deux vrais chapitres. Si une section \
+mérite vraiment son propre titre, ce n'est pas un titre à écrire ici, c'est un sous-chapitre \
+à créer dans le plan de l'application — il aura alors son propre fichier.
+- Un sommaire, une table des matières, une numérotation de chapitre écrite à la main.
+- Un en-tête, un pied de page, un numéro de page : le gabarit du mémoire s'en charge.
+
+## Comment structurer sans titres
+Paragraphes, listes à puces ou numérotées, tableaux, images, un mot en gras pour ouvrir un \
+paragraphe. Tout, sauf un style de titre.
+
+## Mise en forme
+Écris en style « Normal ». Sa police, sa taille et sa couleur dans ce fichier n'ont aucune \
+importance : à l'assemblage, le « Normal » de ce document est remplacé par celui du gabarit \
+du mémoire (vérifié : un fichier rédigé en Comic Sans 16 rouge ressort dans la police \
+du gabarit). \
+En revanche, toute mise en forme posée à la main sur du texte — changer la police, la taille, \
+la couleur — est conservée telle quelle dans le document final. N'en pose donc que si tu la \
+veux vraiment à l'impression.
+
+## Images et légendes
+Si tu insères une image accompagnée d'une légende ou d'une phrase d'introduction, sélectionne \
+les paragraphes concernés et coche, dans Paragraphe → Enchaînements, « Avec le suivant » \
+et/ou « Lignes solidaires ». Sans cela, un saut de page peut séparer l'image de son texte. Ce \
+réglage est conservé à l'assemblage.
+
+## Lignes vides
+Ne te demande pas s'il en faut une au début ou à la fin du document : l'application retire \
+l'une et l'autre automatiquement.
+${generalNotes.trim() ? `\n## Consignes générales de rédaction\n${generalNotes.trim()}\n` : ''}`
 }

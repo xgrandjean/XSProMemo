@@ -171,7 +171,7 @@ export default function MemoireEditorPage({
         </button>
       </div>
 
-      <MemoirePlanEditor draft={draft} edit={edit} />
+      <MemoirePlanEditor draft={draft} edit={edit} generalNotes={generalNotes} />
 
       {dialogOpen && (
         <GenerationDialog

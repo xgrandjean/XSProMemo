@@ -2,8 +2,11 @@ import { useState } from 'react'
 import ChapterRows, { type ChapterActions } from './ChapterRows'
 import ContentSlot from './ContentSlot'
 import LogoPicker from './LogoPicker'
+import Toast from './Toast'
 import { HelpButton } from './Help'
 import { CoverHelp, LogoHelp, PlanHelp } from './HelpTexts'
+import { buildWordAiInstructions } from '../lib/aiInstructions'
+import { describeError } from '../lib/describeError'
 import {
   addChild,
   duplicateChapter,
@@ -14,7 +17,32 @@ import {
   setValidatedDeep,
   updateNode
 } from '../lib/chapterTree'
-import type { ContentRef, Memoire } from '../../../shared/types'
+import type { ChapterNode, ContentRef, Memoire } from '../../../shared/types'
+
+/** Une préférence d'affichage, pas un réglage du mémoire : elle suit la personne d'un
+ *  mémoire à l'autre, et n'a rien à faire dans le fichier partagé. */
+const AI_MODE_KEY = 'xspromemo.modeIA'
+
+function readAiMode(): boolean {
+  try {
+    return localStorage.getItem(AI_MODE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+/** Le fichier attaché à un chapitre, retrouvé n'importe où dans l'arbre. */
+function findContentFile(memoire: Memoire, chapterId: string): string | null {
+  function walk(nodes: ChapterNode[]): string | null {
+    for (const node of nodes) {
+      if (node.id === chapterId) return node.content?.file ?? null
+      const found = walk(node.children)
+      if (found) return found
+    }
+    return null
+  }
+  return walk(memoire.chapters)
+}
 
 /**
  * The plan of one mémoire, editable in place. Used both for real mémoires and for the
@@ -25,11 +53,43 @@ import type { ContentRef, Memoire } from '../../../shared/types'
  */
 export default function MemoirePlanEditor({
   draft,
-  edit
+  edit,
+  generalNotes = ''
 }: {
   draft: Memoire
   edit: (mutate: (current: Memoire) => Memoire) => void
+  /** Les consignes generales de redaction, ajoutees a la fin de la consigne pour Claude. */
+  generalNotes?: string
 }): JSX.Element {
+  const [aiMode, setAiMode] = useState(readAiMode)
+  const [toast, setToast] = useState<string | null>(null)
+
+  function toggleAiMode(): void {
+    setAiMode((on) => {
+      const next = !on
+      try {
+        localStorage.setItem(AI_MODE_KEY, next ? '1' : '0')
+      } catch {
+        // Navigation privee, stockage bloque : le mode marche quand meme, il ne survit
+        // simplement pas a la fermeture.
+      }
+      return next
+    })
+  }
+
+  /** Le geste complet en un clic : la consigne dans le presse-papiers, le fichier ouvert
+   *  dans Word. Il ne reste qu'a coller dans Claude. */
+  async function copyWordPrompt(chapterId: string): Promise<void> {
+    const file = findContentFile(draft, chapterId)
+    try {
+      await navigator.clipboard.writeText(buildWordAiInstructions(draft, chapterId, generalNotes))
+      if (file) await window.api.memoires.openContent(file)
+      setToast('Consigne copiée. Le contenu s’ouvre dans Word : collez-la dans Claude.')
+    } catch (err) {
+      setToast(describeError(err))
+    }
+  }
+
   // Purely a display preference: not part of the plan, never saved with it.
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
   // The row last acted on (chapter id, or `cover-<index>`) — kept highlighted so it stays
@@ -47,6 +107,8 @@ export default function MemoirePlanEditor({
 
   const actions: ChapterActions = {
     memoireId: draft.id,
+    aiMode,
+    onCopyWordPrompt: (id) => void copyWordPrompt(id),
     onTitleChange: (id, title) =>
       edit((m) => ({ ...m, chapters: updateNode(m.chapters, id, (n) => ({ ...n, title })) })),
     onContentChange: (id, content) =>
@@ -177,6 +239,14 @@ export default function MemoirePlanEditor({
           <span className="muted">
             Le sommaire et la pagination sont ajoutés automatiquement à la génération.
           </span>
+          <button
+            className={aiMode ? 'primary' : 'secondary'}
+            onClick={toggleAiMode}
+            aria-pressed={aiMode}
+            title="Affiche, sur chaque chapitre déjà rédigé, un bouton qui ouvre son contenu dans Word et copie la consigne à coller dans Claude"
+          >
+            Mode IA
+          </button>
         </div>
 
         {draft.chapters.length === 0 && <p className="muted">Aucun chapitre.</p>}
@@ -202,6 +272,8 @@ export default function MemoirePlanEditor({
           + Ajouter un chapitre
         </button>
       </div>
+
+      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
     </div>
   )
 }
