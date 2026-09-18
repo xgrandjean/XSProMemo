@@ -117,56 +117,77 @@ ${generalNotes.trim() ? `\n## Consignes générales de rédaction\n${generalNote
 }
 
 /**
- * Builds the text for editing the gabarit itself — not tied to any mémoire, and higher
- * stakes than editing one chapter's content: a mistake here affects every mémoire the
- * library will ever generate, not just one chapter, so the backup rule is stated more
- * firmly and the LLM is told not to worry about the paragraph-flow properties the
- * application itself already enforces on every generation.
+ * Builds the text for editing the gabarit itself. Written for both audiences at once — the
+ * Claude built into Word with the gabarit open in front of it, and an assistant with access
+ * to the working folder — because the substance is the same and two near-identical texts
+ * would drift apart. They already had: the folder-only version claimed the gabarit's header
+ * carries the company details, which generation wipes.
+ *
+ * The first thing it has to explain is why the document looks empty. Opened in Word, the
+ * gabarit shows one blank paragraph: an assistant with no context sees nothing to work on,
+ * or worse, helpfully fills it in — and every mémoire generated would then start with that
+ * text.
+ *
+ * Higher stakes than one chapter's content, too: a mistake here reaches every mémoire the
+ * folder will ever produce, so the way back is named rather than assumed.
  */
 export function buildGabaritAiInstructions(libraryPath: string, generalNotes: string): string {
-  return `Tu es un assistant pour XSProMemo, un logiciel qui assemble des mémoires \
-techniques (réponses à appels d'offres) à partir d'un dossier partagé entre plusieurs \
-personnes de l'entreprise.
+  return `Tu interviens sur le gabarit de XSProMemo, un logiciel qui assemble des mémoires \
+techniques (réponses à appels d'offres) à partir d'un dossier de travail partagé entre \
+plusieurs personnes de l'entreprise.
 
-## Dossier de travail
-Dossier de travail XSProMemo : ${libraryPath}
-Vérifie que tu es bien positionné dans ce dossier avant de continuer.
+## Ce document est vide, et il doit le rester
+Ouvert dans Word, le gabarit ne montre presque rien : un paragraphe vide, c'est tout. Ce \
+n'est pas un document inachevé, c'est sa raison d'être. À chaque génération, l'application \
+part d'une copie de ce fichier, puis y écrit elle-même les titres de chapitres numérotés, le \
+sommaire, la pagination, et y verse le contenu de chaque chapitre. Tout texte que tu \
+laisserais dans le corps de ce document apparaîtrait en tête de chaque mémoire produit.
+N'écris donc aucun texte, aucun titre, aucun exemple dans le corps du document.
 
-## Périmètre strict
-Tu ne dois modifier que le fichier Gabarit.docx, à la racine de ce dossier de travail, et \
-rien d'autre : ni un mémoire ou modèle dans memoires/, ni un contenu dans contenus/ (chaque \
-mémoire y a son propre dossier), ni \
-config.json, ni les logos, ni le code de l'application. Ce fichier est partagé par tous \
-les mémoires : une erreur dessus se répercute sur chacun d'eux, pas un seul.
+## Ce que le gabarit définit, et qui est la seule chose à régler
+1. **Les styles.** « Titre 1 » à « Titre 9 » — un par niveau de chapitre : police, taille, \
+couleur, gras, italique, espacement. Et « Normal », qui donne son allure à tout le texte \
+courant : le « Normal » de chaque fichier de contenu est remplacé par celui-ci au moment de \
+l'assemblage. Modifie la *définition* des styles, jamais du texte.
+2. **Le pied de page.** Numéro de page, coordonnées de l'entreprise, mention fixe : c'est le \
+seul endroit où poser quelque chose qui doit apparaître sur chaque page. Il est repris tel \
+quel dans le document final.
+3. **La mise en page.** Marges, format, orientation par défaut.
 
-## Ce que contient le gabarit
-Il est volontairement vide de tout contenu (un mémoire y insère ses chapitres au moment \
-de sa génération) et ne définit que trois choses :
-- les styles de titre « Titre 1 » à « Titre 9 » (un par niveau de chapitre : police, \
-taille, couleur, gras/italique) et le style « Normal » pour le texte courant ;
-- l'en-tête et le pied de page (numéro de page, coordonnées de l'entreprise ou tout \
-texte fixe voulu sur chaque page) ;
-- le format de page (marges, orientation par défaut).
+## L'en-tête ne sert à rien ici
+Vérifié sur le logiciel : l'en-tête du gabarit est intégralement effacé à la génération. \
+L'application y place le logo propre à chaque mémoire, et vide ce qui s'y trouvait avant — \
+texte compris, même quand le mémoire n'a aucun logo. Y mettre les coordonnées de \
+l'entreprise ne servirait à rien : elles disparaîtraient sans un mot. Leur place est le pied \
+de page.
 
-## Ce que tu n'as pas à gérer toi-même
-L'application impose déjà, à chaque génération, « Avec le suivant » et « Lignes \
-solidaires » sur les 9 styles de titre, le contrôle des veuves/orphelines, et retire \
-toute numérotation automatique éventuellement associée à un style — inutile d'ajouter ou \
-de vérifier ces réglages, ils sont garantis quel que soit l'état du fichier.
+## Ce dont tu n'as pas à t'occuper
+À chaque génération, l'application impose déjà « Avec le suivant » et « Lignes solidaires » \
+sur les 9 styles de titre, le contrôle des veuves et orphelines, et retire toute \
+numérotation automatique associée à un style de titre. Inutile d'ajouter ou de vérifier ces \
+réglages : ils sont garantis quel que soit l'état du fichier. N'ajoute surtout pas de \
+numérotation automatique aux styles de titre — l'application numérote elle-même, tu \
+obtiendrais un double numéro.
 
-## Toujours faire une sauvegarde avant de modifier ce fichier
-Avant le moindre changement, copie Gabarit.docx à côté (par exemple \
-"Gabarit.avant-ia.bak.docx") pour permettre de revenir en arrière. Ne supprime jamais un \
-.bak de ta propre initiative : laisse l'équipe décider quoi en faire.
-
-## Attention à l'édition simultanée
-Assure-toi qu'aucun collègue n'est en train de générer un mémoire pendant que tu \
-modifies ce fichier (l'application copie le gabarit au moment de la génération).
+## Avant de modifier quoi que ce soit
+Ce fichier est partagé par tous les mémoires : une erreur dessus se répercute sur chacun \
+d'eux, pas sur un seul.
+- Si tu travailles dans Word, sur le gabarit déjà ouvert : tu ne peux pas faire de copie de \
+sauvegarde toi-même. Dis-le à la personne avant de commencer, pour qu'elle en fasse une. \
+Elle dispose aussi, dans la Configuration de l'application, d'un bouton « Restaurer le \
+gabarit par défaut » qui remet celui livré et met l'ancien de côté.
+- Si tu as accès au dossier de travail (${libraryPath}) : copie d'abord Gabarit.docx à côté, \
+par exemple sous "Gabarit.avant-ia.bak.docx". Ne supprime jamais un .bak de ta propre \
+initiative. Et ne touche à rien d'autre : ni un mémoire dans memoires/, ni un contenu dans \
+contenus/, ni config.json, ni les logos, ni le code de l'application.
+- Dans les deux cas, assure-toi que personne n'est en train de générer un mémoire pendant \
+que tu modifies ce fichier : l'application en fait une copie à ce moment-là.
 
 ## Vérifier le résultat
-Une fois terminé, utilise le bouton « Aperçu du style » de l'application (menu à côté du \
-gabarit, dans Configuration) pour voir le rendu réel de chaque niveau de titre avant de \
-considérer le travail terminé.
+Le gabarit ne se juge pas à l'œil, puisqu'il est vide. Une fois les modifications \
+enregistrées, la personne ouvre « Aperçu du style » dans la Configuration de l'application : \
+un document d'exemple, régénéré à la demande, qui montre le rendu réel de chaque niveau de \
+titre et du texte courant. C'est la seule façon de voir ce que ton travail donne.
 ${generalNotes.trim() ? `\n## Consignes générales\n${generalNotes.trim()}\n` : ''}`
 }
 

@@ -788,3 +788,35 @@ button.danger-link,
   justify-content: flex-end;
   flex-shrink: 0;
 }
+
+/* La bascule « Mode IA » de la barre du haut : discrète tant qu'elle est éteinte, nettement
+   allumée sinon — elle change ce que font d'autres boutons, ailleurs, ça ne doit pas se
+   deviner. */
+.ai-toggle {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ai-toggle:hover {
+  border-color: var(--muted);
+  color: var(--text);
+}
+
+.ai-toggle.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.ai-toggle.active:hover {
+  background: var(--accent-hover);
+  color: #fff;
+}

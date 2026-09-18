@@ -5,6 +5,8 @@ import DropdownMenu, { type DropdownMenuItem } from '../components/DropdownMenu'
 import { GabaritHelp, DossierTravailHelp, ModelesHelp } from '../components/HelpTexts'
 import { describeError } from '../lib/describeError'
 import { buildGabaritAiInstructions } from '../lib/aiInstructions'
+import { useAiMode } from '../lib/aiMode'
+import Toast from '../components/Toast'
 import type {
   FolderProbeResult,
   LibrarySetupMode,
@@ -35,6 +37,8 @@ export default function ConfigPage({
   const [gabaritMenuOpen, setGabaritMenuOpen] = useState(false)
   const [gabaritPromptCopied, setGabaritPromptCopied] = useState(false)
   const [showGabaritHelp, setShowGabaritHelp] = useState(false)
+  const aiMode = useAiMode()
+  const [toast, setToast] = useState<string | null>(null)
   const gabaritTriggerRef = useRef<HTMLButtonElement>(null)
 
   const [libraryBusy, setLibraryBusy] = useState(false)
@@ -99,6 +103,23 @@ export default function ConfigPage({
     const text = buildGabaritAiInstructions(status.library.path, aiInstructions)
     await navigator.clipboard.writeText(text)
     setGabaritPromptCopied(true)
+  }
+
+  /** Le même geste que le bouton IA d'un chapitre, appliqué au gabarit : le fichier s'ouvre
+   *  et la consigne part dans le presse-papiers. Réservé au mode IA — sinon, ouvrir le
+   *  gabarit pour corriger deux mots dans le pied de page n'a aucune raison d'écraser ce que
+   *  vous y aviez mis. */
+  async function openTemplateWithPrompt(): Promise<void> {
+    if (!status) return
+    try {
+      await navigator.clipboard.writeText(
+        buildGabaritAiInstructions(status.library.path, aiInstructions)
+      )
+      await window.api.model.openTemplate()
+      setToast('Consigne copiée. Le gabarit s’ouvre dans Word : collez-la dans Claude.')
+    } catch (err) {
+      setToast(describeError(err))
+    }
   }
 
   async function confirmRestoreDefaultTemplate(): Promise<void> {
@@ -229,7 +250,14 @@ export default function ConfigPage({
 
   const gabaritMenuItems: DropdownMenuItem[] = [
     { label: 'Aperçu', onSelect: () => void previewStyles() },
-    { label: 'Ouvrir le gabarit dans Word', onSelect: () => window.api.model.openTemplate() },
+    // Le libellé dit ce qui va se passer : en mode IA le geste emporte la consigne, et
+    // personne n'a à le deviner.
+    aiMode
+      ? {
+          label: 'Ouvrir le gabarit dans Word + consigne',
+          onSelect: () => void openTemplateWithPrompt()
+        }
+      : { label: 'Ouvrir le gabarit dans Word', onSelect: () => window.api.model.openTemplate() },
     { label: 'Copier consigne pour IA', onSelect: () => void copyGabaritAiPrompt(), separatorBefore: true },
     { label: 'Aide', onSelect: () => setShowGabaritHelp(true), separatorBefore: true }
   ]
@@ -619,6 +647,8 @@ export default function ConfigPage({
           </p>
         </Modal>
       )}
+
+      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
     </div>
   )
 }

@@ -12,8 +12,9 @@ export function AppHelp(): JSX.Element {
       <dl>
         <dt>La présentation</dt>
         <dd>
-          Un document Word — le gabarit — qui porte styles, logo en en-tête, pied de page
-          et marges. Aucun contenu. Chaque mémoire produit en est une copie. Elle se règle
+          Un document Word — le gabarit — qui porte les styles, le pied de page et les
+          marges. Aucun contenu. (L&apos;en-tête, lui, reçoit le logo propre à chaque
+          mémoire, posé à la génération.) Chaque mémoire produit en est une copie. Elle se règle
           dans la Configuration, derrière l&apos;engrenage.
         </dd>
 
@@ -107,7 +108,13 @@ export function GabaritHelp(): JSX.Element {
         chaque chapitre, elle tape elle-même son titre avec le style « Titre » du bon
         niveau (1 pour un chapitre principal, 2 pour un sous-chapitre, etc.), puis verse à
         la suite le contenu du fichier attaché, sans y toucher. C&apos;est donc le gabarit
-        qui donne son allure à tout le document — styles, marges, en-tête, pied de page.
+        qui donne son allure à tout le document — styles, marges, pied de page.
+      </p>
+      <p className="muted">
+        Une exception : l&apos;<b>en-tête</b> du gabarit n&apos;est jamais repris.
+        L&apos;application le vide à chaque génération pour y placer le logo propre au
+        mémoire. Ce qui doit apparaître sur toutes les pages — coordonnées, mention fixe —
+        se met donc dans le <b>pied de page</b>.
       </p>
 
       <h3>Rédiger un fichier de contenu</h3>
@@ -158,8 +165,16 @@ export function GabaritHelp(): JSX.Element {
         <li><b>Ouvrir le gabarit dans Word</b> : pour les retouches simples (texte du pied de page, marges) qu&apos;un clic direct suffit à faire.</li>
         <li>
           <b>Copier consigne pour IA</b> : pour les retouches plus techniques (styles de
-          titre, polices, couleurs) — un texte à coller dans une session IA pointée sur ce
-          dossier, qui explique le format et rappelle de sauvegarder avant tout changement.
+          titre, polices, couleurs) — un texte à coller dans une IA, qui lui explique
+          pourquoi ce document paraît vide, ce qui s&apos;y règle vraiment, et ce qu&apos;il
+          ne faut surtout pas y écrire. Il vaut aussi bien pour le Claude intégré à Word que
+          pour une IA ayant accès au dossier de travail.
+        </li>
+        <li>
+          Quand le <b>Mode IA</b> est actif, en haut de l&apos;application, la commande
+          d&apos;ouverture devient <b>Ouvrir le gabarit dans Word + consigne</b> : elle ouvre
+          le fichier <i>et</i> copie cette consigne, d&apos;un seul geste — comme le bouton
+          IA d&apos;un chapitre.
         </li>
         <li><b>Aide</b> : ce texte.</li>
       </ul>
@@ -359,8 +374,8 @@ export function PlanHelp(): JSX.Element {
 
       <h3>Rédiger un chapitre avec Claude dans Word</h3>
       <p>
-        Le bouton <b>Mode IA</b>, en haut de ce panneau, fait apparaître un bouton{' '}
-        <b>IA</b> sur chaque chapitre qui a déjà un contenu. Un clic dessus fait deux choses
+        Le bouton <b>Mode IA</b>, en haut de l&apos;application, fait apparaître un
+        bouton <b>IA</b> sur chaque chapitre qui a déjà un contenu. Un clic dessus fait deux choses
         d&apos;un coup : il <b>ouvre le fichier dans Word</b> et met dans le presse-papiers
         une <b>consigne</b> préparée pour ce chapitre précis. Il ne vous reste qu&apos;à la
         coller dans Claude, dans Word.
@@ -376,8 +391,8 @@ export function PlanHelp(): JSX.Element {
       </p>
       <p className="muted">
         Pas de bouton sur un chapitre sans contenu : ajoutez-lui d&apos;abord un contenu
-        vide. Le mode reste actif d&apos;un mémoire à l&apos;autre jusqu&apos;à ce que vous le
-        désactiviez.
+        vide. Le mode reste actif jusqu&apos;à ce que vous le désactiviez, et vaut aussi pour
+        le gabarit, dans la Configuration.
       </p>
 
       <h3>Ce que doivent contenir vos fichiers</h3>

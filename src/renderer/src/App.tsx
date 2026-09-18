@@ -5,11 +5,13 @@ import ConfigPage from './pages/ConfigPage'
 import Modal from './components/Modal'
 import { HelpButton } from './components/Help'
 import { AppHelp } from './components/HelpTexts'
+import { setAiMode, useAiMode } from './lib/aiMode'
 import { describeError } from './lib/describeError'
 
 type View = { name: 'list' } | { name: 'editor'; memoireId: string } | { name: 'config' }
 
 export default function App(): JSX.Element {
+  const aiMode = useAiMode()
   const [view, setView] = useState<View>({ name: 'list' })
   // Whether the currently-open mémoire editor (if any) has unsaved changes — reset
   // whenever the editor isn't mounted, since a fresh editor always starts clean.
@@ -72,6 +74,17 @@ export default function App(): JSX.Element {
           XSProMemo
         </span>
         <span className="topbar-actions">
+          {/* Une posture de travail, valable sur tous les ecrans : dans le plan d'un
+              memoire comme sur le gabarit, elle ajoute la consigne pour Claude aux gestes
+              qui ouvrent un document dans Word. D'ou sa place ici, et non dans un ecran. */}
+          <button
+            className={`ai-toggle${aiMode ? ' active' : ''}`}
+            onClick={() => setAiMode(!aiMode)}
+            aria-pressed={aiMode}
+            title="Mode IA : ouvrir un contenu ou le gabarit dans Word copie aussi la consigne à coller dans Claude"
+          >
+            Mode IA
+          </button>
           <HelpButton title="Comment fonctionne XSProMemo" label="Aide">
             <AppHelp />
           </HelpButton>
