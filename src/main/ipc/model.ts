@@ -6,7 +6,7 @@ import { chooseLibraryFolder, probeFolder, useDefaultLibrary } from '../store/li
 import { dismissGabaritUpdate, restoreDefaultTemplate } from '../store/seed'
 import { previewStyles } from '../render/previewStyles'
 import { requireLibraryPath } from './context'
-import type { ModelStatus } from '../../shared/types'
+import type { LibrarySetupMode, ModelStatus } from '../../shared/types'
 
 async function buildStatus(root: string): Promise<ModelStatus> {
   const template = templatePath(root)
@@ -79,11 +79,14 @@ export function registerModelIpc(): void {
 
   // Switching library ends the session: too many screens (the mémoires list, an open
   // editor) hold state tied to the old folder to carry on safely without a fresh start.
-  ipcMain.handle('model:chooseLibraryFolder', async (_event, target: string) => {
-    await chooseLibraryFolder(target)
-    app.relaunch()
-    app.exit(0)
-  })
+  ipcMain.handle(
+    'model:chooseLibraryFolder',
+    async (_event, input: { target: string; mode: LibrarySetupMode }) => {
+      await chooseLibraryFolder(input.target, input.mode)
+      app.relaunch()
+      app.exit(0)
+    }
+  )
 
   ipcMain.handle('model:useDefaultLibrary', async () => {
     await useDefaultLibrary()

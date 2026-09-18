@@ -2,10 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 import Modal from '../components/Modal'
 import { HelpButton } from '../components/Help'
 import DropdownMenu, { type DropdownMenuItem } from '../components/DropdownMenu'
-import { GabaritHelp, BibliothequeHelp, ModelesHelp } from '../components/HelpTexts'
+import { GabaritHelp, DossierTravailHelp, ModelesHelp } from '../components/HelpTexts'
 import { describeError } from '../lib/describeError'
 import { buildGabaritAiInstructions } from '../lib/aiInstructions'
-import type { FolderProbeResult, MemoireSummary, ModelStatus } from '../../../shared/types'
+import type {
+  FolderProbeResult,
+  LibrarySetupMode,
+  MemoireSummary,
+  ModelStatus
+} from '../../../shared/types'
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -117,7 +122,8 @@ export default function ConfigPage({
       const probe = await window.api.model.probeLibraryFolder(folder)
       if (probe === 'nonEmptyOther') {
         setLibraryError(
-          "Ce dossier contient déjà autre chose et ne ressemble pas à une bibliothèque XSProMemo."
+          'Ce dossier contient déjà autre chose et ne ressemble pas à un dossier de travail XSProMemo. '
+          + "Choisissez un dossier vide, ou un dossier XSProMemo existant."
         )
         return
       }
@@ -127,12 +133,12 @@ export default function ConfigPage({
     }
   }
 
-  async function confirmChooseFolder(): Promise<void> {
+  async function confirmChooseFolder(mode: LibrarySetupMode): Promise<void> {
     if (!confirmTarget) return
     setLibraryBusy(true)
     setLibraryError(null)
     try {
-      await window.api.model.chooseLibraryFolder(confirmTarget.path)
+      await window.api.model.chooseLibraryFolder(confirmTarget.path, mode)
       // The application relaunches itself on success — nothing left to do here.
     } catch (err) {
       setLibraryError(describeError(err))
@@ -323,12 +329,13 @@ export default function ConfigPage({
 
       <div className="panel">
         <div className="panel-head">
-          <h2>Emplacement de la bibliothèque</h2>
-          <HelpButton title="L'emplacement de la bibliothèque">
-            <BibliothequeHelp />
+          <h2>Dossier de travail</h2>
+          <HelpButton title="Le dossier de travail">
+            <DossierTravailHelp />
           </HelpButton>
           <span className="muted">
-            Où vivent le gabarit, vos contenus, vos modèles et vos mémoires.
+            Le dossier où l&apos;application range tout : le gabarit, vos contenus, vos
+            modèles, vos mémoires et les documents générés.
           </span>
         </div>
 
@@ -346,21 +353,13 @@ export default function ConfigPage({
             className="secondary"
             onClick={chooseFolder}
             disabled={libraryBusy}
-            title="Ouvrir un dossier — emplacement de la bibliothèque"
+            title="Désigner un autre dossier de travail — le sélecteur Windows permet d'en créer un au passage"
           >
-            Ouvrir un dossier
-          </button>
-          <button
-            className="secondary"
-            onClick={chooseFolder}
-            disabled={libraryBusy}
-            title="Créer un dossier — emplacement de la bibliothèque (doit être vide)"
-          >
-            Créer un dossier
+            Changer de dossier de travail
           </button>
           {!status.library.isDefault && (
             <button className="secondary" onClick={useDefaultLibrary} disabled={libraryBusy}>
-              Revenir à l&apos;emplacement par défaut
+              Revenir au dossier par défaut
             </button>
           )}
         </div>
@@ -424,7 +423,7 @@ export default function ConfigPage({
 
       {confirmTarget && (
         <Modal
-          title="Choisir ce dossier"
+          title={confirmTarget.probe === 'empty' ? 'Ce dossier est vide' : 'Rejoindre ce dossier'}
           onClose={() => (libraryBusy ? undefined : setConfirmTarget(null))}
           dismissable={!libraryBusy}
           actions={
@@ -436,27 +435,70 @@ export default function ConfigPage({
               >
                 Annuler
               </button>
-              <button className="primary" onClick={confirmChooseFolder} disabled={libraryBusy}>
-                {libraryBusy ? 'En cours...' : 'Confirmer'}
-              </button>
+              {confirmTarget.probe === 'empty' ? (
+                <>
+                  <button
+                    className="secondary"
+                    onClick={() => void confirmChooseFolder('fresh')}
+                    disabled={libraryBusy}
+                  >
+                    Démarrer à neuf
+                  </button>
+                  <button
+                    className="primary"
+                    onClick={() => void confirmChooseFolder('templates')}
+                    disabled={libraryBusy}
+                  >
+                    {libraryBusy ? 'En cours...' : 'Emporter le gabarit et mes modèles'}
+                  </button>
+                </>
+              ) : (
+                <button
+                  className="primary"
+                  onClick={() => void confirmChooseFolder('templates')}
+                  disabled={libraryBusy}
+                >
+                  {libraryBusy ? 'En cours...' : 'Rejoindre ce dossier'}
+                </button>
+              )}
             </>
           }
         >
-          {confirmTarget.probe === 'empty' ? (
-            <p>
-              Ce dossier est vide : tout le contenu actuel (gabarit, contenus, modèles,
-              mémoires) y sera recopié, puis l&apos;application redémarrera sur ce nouvel
-              emplacement.
-            </p>
-          ) : (
-            <p>
-              Ce dossier contient déjà une bibliothèque XSProMemo : l&apos;application va la
-              rejoindre telle quelle, sans rien recopier, puis redémarrer.
-            </p>
-          )}
-          <p className="muted">
+          <p className="muted" style={{ marginTop: 0 }}>
             <code>{confirmTarget.path}</code>
           </p>
+          {confirmTarget.probe === 'empty' ? (
+            <>
+              <p>Il y a deux façons de démarrer ici :</p>
+              <ul>
+                <li>
+                  <b>Emporter le gabarit et mes modèles</b> — vous retrouvez votre
+                  présentation, vos réglages et vos modèles, prêts à l&apos;emploi.
+                </li>
+                <li>
+                  <b>Démarrer à neuf</b> — comme une installation toute neuve : le gabarit
+                  livré et un modèle d&apos;exemple, rien d&apos;autre.
+                </li>
+              </ul>
+              <p className="muted">
+                Dans les deux cas, vos <b>mémoires en cours</b> et les <b>documents déjà
+                générés</b> restent dans le dossier actuel, qui n&apos;est pas modifié : vous
+                pourrez y revenir. Pour tout déménager plutôt que recommencer, copiez le
+                dossier actuel dans l&apos;explorateur Windows, puis désignez la copie ici.
+              </p>
+            </>
+          ) : (
+            <>
+              <p>
+                Ce dossier est déjà un dossier de travail XSProMemo : l&apos;application va le
+                rejoindre tel quel, sans rien copier ni modifier.
+              </p>
+              <p className="muted">
+                Le dossier actuel reste intact de son côté.
+              </p>
+            </>
+          )}
+          <p className="muted">L&apos;application redémarrera ensuite.</p>
         </Modal>
       )}
 

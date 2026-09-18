@@ -51,7 +51,7 @@ mémoires techniques (réponses à appels d'offres) à partir d'un dossier parta
 plusieurs personnes de l'entreprise.
 
 ## Dossier de travail
-Bibliothèque XSProMemo : ${libraryPath}
+Dossier de travail XSProMemo : ${libraryPath}
 Vérifie que tu es bien positionné dans ce dossier avant de continuer.
 
 ## Périmètre strict
@@ -123,11 +123,11 @@ techniques (réponses à appels d'offres) à partir d'un dossier partagé entre 
 personnes de l'entreprise.
 
 ## Dossier de travail
-Bibliothèque XSProMemo : ${libraryPath}
+Dossier de travail XSProMemo : ${libraryPath}
 Vérifie que tu es bien positionné dans ce dossier avant de continuer.
 
 ## Périmètre strict
-Tu ne dois modifier que le fichier Gabarit.docx, à la racine de cette bibliothèque, et \
+Tu ne dois modifier que le fichier Gabarit.docx, à la racine de ce dossier de travail, et \
 rien d'autre : ni un mémoire ou modèle dans memoires/, ni un contenu dans contenus/ (chaque \
 mémoire y a son propre dossier), ni \
 config.json, ni les logos, ni le code de l'application. Ce fichier est partagé par tous \

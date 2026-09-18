@@ -89,6 +89,15 @@ export interface ModelStatus {
 
 export type FolderProbeResult = 'empty' | 'existingLibrary' | 'nonEmptyOther'
 
+/**
+ * What an empty folder should be given when it becomes the working folder: the shipped
+ * gabarit and neutral example (`fresh`), or this machine's gabarit, settings and modèles
+ * (`templates`). Working mémoires and generated documents are never carried over — moving
+ * a whole working folder is a copy/paste in the file explorer, after which the folder is
+ * simply joined as it stands.
+ */
+export type LibrarySetupMode = 'fresh' | 'templates'
+
 export interface GenerationProgressEvent {
   memoireId: string
   message: string

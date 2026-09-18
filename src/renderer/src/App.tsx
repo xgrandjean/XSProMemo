@@ -142,7 +142,7 @@ export default function App(): JSX.Element {
           <p>
             Cette version de XSProMemo apporte des améliorations au gabarit par défaut
             (mise en page plus robuste, styles de titre harmonisés). Voulez-vous les
-            appliquer au gabarit de votre bibliothèque actuelle ?
+            appliquer au gabarit de votre dossier de travail ?
           </p>
           <p className="muted">
             Une copie de votre gabarit actuel est gardée à côté au cas où, mais toute

@@ -4,6 +4,7 @@ import type {
   FolderProbeResult,
   GenerationProgressEvent,
   GenerationResult,
+  LibrarySetupMode,
   LogoField,
   Memoire,
   MemoireSummary,
@@ -39,8 +40,8 @@ const api = {
     openDataFolder: (): Promise<void> => ipcRenderer.invoke('model:openDataFolder'),
     probeLibraryFolder: (target: string): Promise<FolderProbeResult> =>
       ipcRenderer.invoke('model:probeLibraryFolder', target),
-    chooseLibraryFolder: (target: string): Promise<void> =>
-      ipcRenderer.invoke('model:chooseLibraryFolder', target),
+    chooseLibraryFolder: (target: string, mode: LibrarySetupMode): Promise<void> =>
+      ipcRenderer.invoke('model:chooseLibraryFolder', { target, mode }),
     useDefaultLibrary: (): Promise<void> => ipcRenderer.invoke('model:useDefaultLibrary')
   },
   memoires: {

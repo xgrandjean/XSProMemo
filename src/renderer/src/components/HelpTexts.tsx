@@ -165,7 +165,7 @@ export function GabaritHelp(): JSX.Element {
       </ul>
       <p>
         Une mise à jour de l&apos;application n&apos;écrase jamais le gabarit d&apos;une
-        bibliothèque déjà en place, pour ne jamais perdre une personnalisation. Quand une
+        dossier de travail déjà en place, pour ne jamais perdre une personnalisation. Quand une
         nouvelle version apporte des améliorations au gabarit livré (styles de titre,
         mise en page), l&apos;application vous le propose une fois à l&apos;ouverture ;
         <b> Restaurer le gabarit par défaut</b> permet de le faire à tout moment, avec une
@@ -248,28 +248,58 @@ export function ModelesHelp(): JSX.Element {
   )
 }
 
-export function BibliothequeHelp(): JSX.Element {
+export function DossierTravailHelp(): JSX.Element {
   return (
     <>
       <p>
-        La bibliothèque est le dossier où vit tout ce que l&apos;application possède : le
-        gabarit, les contenus, les modèles, les mémoires et les documents générés. Par
-        défaut, c&apos;est <b>Documents\XSProMemo</b>, sur ce poste.
+        Le dossier de travail est <b>le dossier où vit tout ce que l&apos;application
+        possède</b> : le gabarit, les contenus, les modèles, les mémoires et les documents
+        générés. Il n&apos;y a rien ailleurs — ni base de données cachée, ni données dans le
+        programme lui-même. Par défaut, c&apos;est <b>Documents\XSProMemo</b> sur ce poste.
       </p>
+      <p>Ce que cela veut dire concrètement :</p>
+      <ul>
+        <li>
+          <b>Sauvegarder votre travail</b>, c&apos;est copier ce dossier. Rien d&apos;autre à
+          penser.
+        </li>
+        <li>
+          <b>Travailler à plusieurs</b>, c&apos;est poser ce dossier sur un disque réseau et
+          désigner le même depuis chaque poste.
+        </li>
+        <li>
+          <b>Tout déménager</b> (par exemple sortir d&apos;un dossier mal nommé), c&apos;est
+          copier le dossier dans l&apos;explorateur Windows, puis désigner la copie ici :
+          elle sera rejointe telle quelle, avec vos mémoires.
+        </li>
+      </ul>
       <p className="muted">
         Chaque mémoire y possède son propre dossier de contenus (<b>contenus\</b> suivi de
         son identifiant), comme il possède déjà son logo et ses documents générés. Deux
         mémoires ne se partagent donc jamais un fichier Word.
       </p>
+
+      <h3>Changer de dossier de travail</h3>
       <p>
-        <b>Ouvrir un dossier</b> et <b>Créer un dossier</b> permettent de pointer ailleurs
-        — un autre disque, ou un dossier réseau accessible depuis plusieurs postes de
-        l&apos;entreprise. Les deux ouvrent le même sélecteur ; le résultat dépend
-        seulement du dossier choisi : s&apos;il n&apos;existe pas encore, il est créé après
-        confirmation ; s&apos;il est vide, il reçoit une copie complète de la bibliothèque
-        actuelle ; s&apos;il en contient déjà une, elle est rejointe telle quelle, sans
-        rien recopier.
+        Le bouton ouvre le sélecteur Windows, où vous pouvez aussi créer un dossier au
+        passage. Ce qui se produit ensuite dépend du dossier choisi :
       </p>
+      <ul>
+        <li>
+          <b>Il contient déjà un dossier de travail XSProMemo</b> : il est rejoint tel quel,
+          rien n&apos;est copié ni modifié.
+        </li>
+        <li>
+          <b>Il est vide</b> : vous choisissez entre emporter votre gabarit, vos réglages et
+          vos modèles, ou démarrer à neuf comme après une installation. Dans les deux cas,
+          vos mémoires en cours et vos documents générés <b>restent dans le dossier
+          précédent</b>, qui n&apos;est pas modifié.
+        </li>
+        <li>
+          <b>Il contient autre chose</b> : l&apos;application refuse, pour ne pas se greffer
+          sur un dossier sans rapport.
+        </li>
+      </ul>
       <p>
         L&apos;application redémarre après un changement : trop d&apos;écrans dépendent de
         l&apos;ancien dossier pour continuer proprement sans repartir de zéro.
@@ -433,7 +463,7 @@ export function MemoiresHelp(): JSX.Element {
 
       <p className="muted">
         Les documents produits sont rangés dans le dossier « documents » de la
-        bibliothèque. La Configuration propose un raccourci vers ce dossier.
+        dossier de travail. La Configuration propose un raccourci vers ce dossier.
       </p>
     </>
   )
