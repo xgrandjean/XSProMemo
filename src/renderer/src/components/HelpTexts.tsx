@@ -226,8 +226,14 @@ export function ModelesHelp(): JSX.Element {
       </p>
       <p>
         Quand vous créez un mémoire, l&apos;application en fait une copie complète et
-        indépendante du modèle choisi, logo compris. Modifier ce mémoire ne touche pas au
-        modèle, et inversement.
+        indépendante du modèle choisi : le plan, le logo, et <b>une copie de chaque fichier
+        de contenu</b>. Retravailler un chapitre dans ce mémoire ne touche donc pas au
+        modèle, ni à aucun mémoire déjà rendu.
+      </p>
+      <p className="muted">
+        Autrement dit, améliorer le modèle sert les mémoires que vous créerez
+        <b> ensuite</b> : ceux qui existent déjà gardent ce que vous aviez envoyé, ce qui
+        est bien ce qu&apos;on veut d&apos;une réponse archivée.
       </p>
       <p>
         Un seul modèle suffit dans la plupart des cas. Ajoutez-en un second — en
@@ -249,6 +255,11 @@ export function BibliothequeHelp(): JSX.Element {
         La bibliothèque est le dossier où vit tout ce que l&apos;application possède : le
         gabarit, les contenus, les modèles, les mémoires et les documents générés. Par
         défaut, c&apos;est <b>Documents\XSProMemo</b>, sur ce poste.
+      </p>
+      <p className="muted">
+        Chaque mémoire y possède son propre dossier de contenus (<b>contenus\</b> suivi de
+        son identifiant), comme il possède déjà son logo et ses documents générés. Deux
+        mémoires ne se partagent donc jamais un fichier Word.
       </p>
       <p>
         <b>Ouvrir un dossier</b> et <b>Créer un dossier</b> permettent de pointer ailleurs
@@ -341,8 +352,8 @@ export function PlanHelp(): JSX.Element {
       </p>
 
       <p className="muted">
-        Supprimer un chapitre ne supprime pas le fichier : il reste utilisable dans vos
-        autres mémoires.
+        Supprimer un chapitre ne supprime pas le fichier : il reste dans le dossier de ce
+        mémoire, prêt à être rattaché à un autre chapitre.
       </p>
     </>
   )
@@ -396,8 +407,10 @@ export function MemoiresHelp(): JSX.Element {
           proche du nouveau. La copie est indépendante.
         </li>
         <li>
-          <b>Supprimer</b> : efface le plan. Les fichiers de contenu, eux, restent — ils
-          servent peut-être à un autre mémoire.
+          <b>Supprimer</b> : efface le plan et emporte les contenus de ce mémoire, qui
+          n&apos;appartiennent qu&apos;à lui. Ils sont mis de côté dans
+          <b> contenus\_corbeille</b> plutôt qu&apos;effacés, et aucun autre mémoire
+          n&apos;est touché.
         </li>
       </ul>
 

@@ -569,9 +569,11 @@ export default function ConfigPage({
             Supprimer « <b>{toDeleteTemplate.name}</b> » ?
           </p>
           <p className="muted">
-            Si c&apos;était le dernier modèle, un modèle par défaut sera recréé
-            automatiquement. Les fichiers de contenu, eux, restent disponibles pour vos
-            autres mémoires.
+            Ses fichiers de contenu partent avec lui — ils n&apos;appartiennent qu&apos;à ce
+            modèle. Ils sont mis de côté dans <b>contenus\_corbeille</b>, d&apos;où vous
+            pouvez les récupérer. Les mémoires déjà créés à partir de ce modèle gardent les
+            leurs, qui sont des copies. Si c&apos;était le dernier modèle, l&apos;exemple
+            livré avec l&apos;application sera recréé automatiquement.
           </p>
         </Modal>
       )}

@@ -8,11 +8,14 @@ import type { ContentRef } from '../../../shared/types'
  * open it in its native editor, or detach it.
  */
 export default function ContentSlot({
+  memoireId,
   content,
   onChange,
   compact = false,
   addLabel = '+ contenu'
 }: {
+  /** The mémoire this content belongs to — a new file is written inside its own folder. */
+  memoireId: string
   content: ContentRef | null
   onChange: (content: ContentRef | null) => void
   compact?: boolean
@@ -25,7 +28,7 @@ export default function ContentSlot({
     setError(null)
     setBusy(true)
     try {
-      const picked = await pickAndImportContent()
+      const picked = await pickAndImportContent(memoireId)
       if (picked) onChange(picked)
     } catch (err) {
       setError(describeError(err))
@@ -38,7 +41,7 @@ export default function ContentSlot({
     setError(null)
     setBusy(true)
     try {
-      onChange(await createBlankContent())
+      onChange(await createBlankContent(memoireId))
     } catch (err) {
       setError(describeError(err))
     } finally {

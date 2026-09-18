@@ -1,6 +1,6 @@
 {
   "name": "xspromemo",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Générateur de mémoires techniques pour appels d'offres",
   "main": "./out/main/index.js",
   "author": "scse972",
@@ -12,10 +12,7 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
-    "build:win": "electron-vite build && electron-builder --win",
-    "modele:figer": "node scripts/exporter-modele.mjs",
-    "modele:verifier": "node scripts/exporter-modele.mjs --simuler",
-    "prebuild:win": "npm run modele:verifier"
+    "build:win": "electron-vite build && electron-builder --win"
   },
   "devDependencies": {
     "@electron-toolkit/preload": "^3.0.1",

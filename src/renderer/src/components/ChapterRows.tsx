@@ -5,6 +5,10 @@ import { describeError } from '../lib/describeError'
 import type { ChapterNode, ContentRef, Orientation } from '../../../shared/types'
 
 export interface ChapterActions {
+  /** The mémoire being edited. Carried here rather than as a prop because `ChapterRows`
+   *  renders itself recursively for sub-chapters: anything added to the props has to be
+   *  forwarded by hand at every level, while this object already travels down untouched. */
+  memoireId: string
   onTitleChange: (id: string, title: string) => void
   onContentChange: (id: string, content: ContentRef | null) => void
   onPageBreakChange: (id: string, value: boolean) => void
@@ -62,7 +66,7 @@ function ChapterRow({
     setContentError(null)
     onActivate(node.id)
     try {
-      const picked = await pickAndImportContent()
+      const picked = await pickAndImportContent(actions.memoireId)
       if (picked) actions.onContentChange(node.id, picked)
     } catch (err) {
       setContentError(describeError(err))
@@ -73,7 +77,7 @@ function ChapterRow({
     setContentError(null)
     onActivate(node.id)
     try {
-      actions.onContentChange(node.id, await createBlankContent())
+      actions.onContentChange(node.id, await createBlankContent(actions.memoireId))
     } catch (err) {
       setContentError(describeError(err))
     }

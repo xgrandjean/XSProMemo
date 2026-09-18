@@ -46,6 +46,7 @@ export default function MemoirePlanEditor({
   }
 
   const actions: ChapterActions = {
+    memoireId: draft.id,
     onTitleChange: (id, title) =>
       edit((m) => ({ ...m, chapters: updateNode(m.chapters, id, (n) => ({ ...n, title })) })),
     onContentChange: (id, content) =>
@@ -146,11 +147,16 @@ export default function MemoirePlanEditor({
             key={`${cover.file}-${index}`}
           >
             <span className="muted">Page {index + 1}</span>
-            <ContentSlot content={cover} onChange={(c) => setCoverPage(index, c)} />
+            <ContentSlot
+              memoireId={draft.id}
+              content={cover}
+              onChange={(c) => setCoverPage(index, c)}
+            />
           </div>
         ))}
         <div className="cover-row">
           <ContentSlot
+            memoireId={draft.id}
             content={null}
             onChange={addCoverPage}
             addLabel={

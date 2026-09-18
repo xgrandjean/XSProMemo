@@ -1,7 +1,7 @@
 import { app } from 'electron'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import { configJsonPath, storeContentBytes, storeNewContentFile, writeJsonAtomic } from './paths'
+import { configJsonPath, storeContentFor, writeJsonAtomic } from './paths'
 import type { ContentRef, ModelConfig } from '../../shared/types'
 
 const defaultModelConfig: ModelConfig = {
@@ -29,13 +29,16 @@ export async function writeModelConfig(root: string, config: ModelConfig): Promi
 }
 
 /**
- * Copies a content file into the contents folder, keeping a readable name so the folder
- * can be browsed and its files replaced by hand. A name already in the pool is reused
- * as-is only if its bytes match (picking the file already there is a normal thing to do);
- * otherwise a numbered suffix is used, since two chapters (in the same mémoire or in two
- * different ones) can share a title without their content being the same file.
+ * Copies a chosen file into the folder of the mémoire it is being attached to, keeping a
+ * readable name so the folder can be browsed and its files replaced by hand. Always a copy
+ * of its own: picking the same document for two mémoires gives each one its own, so
+ * reworking it for this year's tender never reaches into one already submitted.
  */
-export async function importContent(root: string, srcAbsPath: string): Promise<ContentRef> {
+export async function importContent(
+  root: string,
+  memoireId: string,
+  srcAbsPath: string
+): Promise<ContentRef> {
   if (path.extname(srcAbsPath).toLowerCase() !== '.docx') {
     throw new Error('Seuls les fichiers Word (.docx) peuvent servir de contenu.')
   }
@@ -43,8 +46,8 @@ export async function importContent(root: string, srcAbsPath: string): Promise<C
   const base = path.basename(srcAbsPath, '.docx').replace(/[\/:*?"<>|]/g, '-').trim() || 'contenu'
   const originalName = `${base}.docx`
   const bytes = await fs.readFile(srcAbsPath)
-  const fileName = await storeContentBytes(root, originalName, bytes)
-  return { file: fileName, originalName }
+  const file = await storeContentFor(root, memoireId, originalName, bytes)
+  return { file, originalName }
 }
 
 /** An empty Word document, shipped once and copied for every "contenu vide". */
@@ -56,12 +59,11 @@ function blankContentSource(): string {
 /**
  * Starts a new content from a blank page rather than an existing file — for a chapter or
  * cover page the user wants to write directly in Word instead of attaching something
- * already prepared. Always its own file (see `storeNewContentFile`): unlike importing an
- * existing file, there is nothing here the user could sensibly mean to keep sharing.
+ * already prepared.
  */
-export async function createBlankContent(root: string): Promise<ContentRef> {
+export async function createBlankContent(root: string, memoireId: string): Promise<ContentRef> {
   const bytes = await fs.readFile(blankContentSource())
   const originalName = 'Nouveau contenu.docx'
-  const fileName = await storeNewContentFile(root, originalName, bytes)
-  return { file: fileName, originalName }
+  const file = await storeContentFor(root, memoireId, originalName, bytes)
+  return { file, originalName }
 }

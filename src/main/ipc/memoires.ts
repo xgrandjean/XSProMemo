@@ -15,6 +15,17 @@ import { setMemoireLogo, clearMemoireLogo, readMemoireLogoPreview } from '../sto
 import { requireLibraryPath } from './context'
 import type { LogoField, Memoire } from '../../shared/types'
 
+/**
+ * A content file is written inside its mémoire's own folder, so the id is not optional.
+ * Refusing it outright beats letting it stringify into a `contenus/undefined/` folder that
+ * nothing would ever find again — the failure mode if a renderer were ever out of step
+ * with this process.
+ */
+function requireMemoireId(id: string | undefined): string {
+  if (!id) throw new Error("Aucun mémoire n'est associé à ce contenu.")
+  return id
+}
+
 export function registerMemoiresIpc(): void {
   ipcMain.handle('memoires:list', async () => {
     const libraryPath = await requireLibraryPath()
@@ -68,16 +79,19 @@ export function registerMemoiresIpc(): void {
     return importMemoire(libraryPath, zipPath)
   })
 
-  /** Copies a chosen file into the shared asset pool and returns a reference to it. */
-  ipcMain.handle('memoires:importContent', async (_event, sourceAbsPath: string) => {
-    const libraryPath = await requireLibraryPath()
-    return importContent(libraryPath, sourceAbsPath)
-  })
+  /** Copies a chosen file into the folder of the mémoire it belongs to. */
+  ipcMain.handle(
+    'memoires:importContent',
+    async (_event, input: { id: string; sourceAbsPath: string }) => {
+      const libraryPath = await requireLibraryPath()
+      return importContent(libraryPath, requireMemoireId(input?.id), input.sourceAbsPath)
+    }
+  )
 
   /** Starts a new content from a blank page instead of an existing file. */
-  ipcMain.handle('memoires:createBlankContent', async () => {
+  ipcMain.handle('memoires:createBlankContent', async (_event, id: string) => {
     const libraryPath = await requireLibraryPath()
-    return createBlankContent(libraryPath)
+    return createBlankContent(libraryPath, requireMemoireId(id))
   })
 
   /** Opens a content file in whatever application handles it (Word, a PDF reader...). */

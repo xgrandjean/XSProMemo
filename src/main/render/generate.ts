@@ -93,8 +93,8 @@ export async function generateMemoire(
   if (expectedContents > 0 && resolvedContents === 0) {
     throw new GenerationError(
       expectedContents === 1
-        ? "Le fichier de contenu de ce mémoire est introuvable. Rattachez-le depuis le plan, ou relancez l'application : elle rétablira les fichiers de l'exemple."
-        : `Aucun des ${expectedContents} fichiers de contenu n'a été trouvé. Le dossier des contenus a sans doute été déplacé ou vidé — relancez l'application, elle rétablira les fichiers de l'exemple.`
+        ? "Le fichier de contenu de ce mémoire est introuvable. Rattachez-le depuis le plan."
+        : `Aucun des ${expectedContents} fichiers de contenu n'a été trouvé. Le dossier de contenus de ce mémoire a sans doute été déplacé ou vidé — vérifiez le dossier « contenus » de la bibliothèque, y compris « _corbeille » si le mémoire a été supprimé puis rétabli.`
     )
   }
 

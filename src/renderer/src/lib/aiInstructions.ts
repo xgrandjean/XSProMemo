@@ -35,11 +35,12 @@ export function buildAiInstructions(
 ): string {
   const kind = draft.isTemplate ? 'modèle' : 'mémoire'
   const lines = flattenChapters(draft.chapters)
+  const contentsDir = `contenus/${draft.id}/`
   const plan = lines.length
     ? lines
         .map((line) =>
           line.contentFile
-            ? `- ${line.number} ${line.title} (id: ${line.id}) — déjà rédigé, fichier contenus/${line.contentFile}`
+            ? `- ${line.number} ${line.title} (id: ${line.id}) — déjà rédigé, fichier ${line.contentFile}`
             : `- ${line.number} ${line.title} (id: ${line.id}) — à rédiger`
         )
         .join('\n')
@@ -62,7 +63,7 @@ memoires/, ni Gabarit.docx, ni config.json, ni les logos, ni le code de l'applic
 
 ## Format attendu du contenu d'un chapitre
 Le contenu d'un chapitre est un fichier .docx autonome, placé dans le dossier \
-contenus/ de cette bibliothèque. Il ne doit contenir que le corps du texte :
+${contentsDir} — le dossier propre à ce ${kind}. Il ne doit contenir que le corps du texte :
 - pas de titre de chapitre (l'application l'ajoute déjà — ce serait en double) ;
 - pas de sommaire ;
 - pas de numérotation manuelle des chapitres ;
@@ -79,22 +80,24 @@ lors de l'assemblage final.
 ${plan}
 
 ## Pour ajouter ou remplacer le contenu d'un chapitre
-1. Le dossier contenus/ est partagé par TOUS les mémoires et modèles de cette \
-bibliothèque, pas seulement celui-ci : liste son contenu avant de choisir un nom, et \
-choisis-en un qui n'existe encore nulle part (par exemple en y intégrant l'id du \
-chapitre listé ci-dessus). Un nom déjà pris par un autre chapitre — même dans un autre \
-mémoire — écraserait silencieusement son contenu, sans aucun avertissement.
-2. Crée (ou remplace) le fichier .docx correspondant dans contenus/, avec un nom clair, \
-sans les caractères / : * ? " < > |.
+1. Chaque mémoire possède son propre dossier de contenus. Celui de ce ${kind} est \
+${contentsDir}, et c'est le seul où tu as le droit d'écrire. N'écris jamais dans le dossier \
+d'un autre mémoire, et ne fais jamais pointer un chapitre de ce ${kind} vers un fichier situé \
+ailleurs : ce serait rendre un même fichier Word modifiable depuis deux mémoires à la fois, \
+exactement ce que cette organisation existe pour empêcher.
+2. Crée (ou remplace) le fichier .docx dans ${contentsDir}, avec un nom clair, sans les \
+caractères / : * ? " < > |. Un nom déjà utilisé par un autre chapitre du même ${kind} \
+écraserait son contenu : liste le dossier avant de choisir.
 3. Dans memoires/${draft.id}.json, retrouve le chapitre par son "id" exact (voir la liste \
-ci-dessus) et pose son champ "content" ainsi :
-   "content": { "file": "<nom-du-fichier>.docx", "originalName": "<nom-du-fichier>.docx" }
+ci-dessus) et pose son champ "content" ainsi — le "file" est le chemin relatif au dossier \
+contenus/, dossier du mémoire compris, et le "originalName" le seul nom du fichier :
+   "content": { "file": "${draft.id}/<nom-du-fichier>.docx", "originalName": "<nom-du-fichier>.docx" }
 4. Ne touche à aucune autre clé du JSON (les autres chapitres, "logo", "secondLogo", \
 "coverPages", "isTemplate"...).
 
 ## Toujours faire une sauvegarde avant d'écraser un fichier existant
 Avant de remplacer un fichier déjà présent — memoires/${draft.id}.json ou un .docx déjà \
-attaché à un chapitre dans contenus/ — fais-en d'abord une copie à côté (par exemple \
+attaché à un chapitre dans ${contentsDir} — fais-en d'abord une copie à côté (par exemple \
 "<nom>.avant-ia.bak") pour permettre de revenir en arrière. Ne supprime jamais un .bak \
 de ta propre initiative : laisse l'équipe décider quoi en faire.
 
@@ -125,7 +128,8 @@ Vérifie que tu es bien positionné dans ce dossier avant de continuer.
 
 ## Périmètre strict
 Tu ne dois modifier que le fichier Gabarit.docx, à la racine de cette bibliothèque, et \
-rien d'autre : ni un mémoire ou modèle dans memoires/, ni un contenu dans contenus/, ni \
+rien d'autre : ni un mémoire ou modèle dans memoires/, ni un contenu dans contenus/ (chaque \
+mémoire y a son propre dossier), ni \
 config.json, ni les logos, ni le code de l'application. Ce fichier est partagé par tous \
 les mémoires : une erreur dessus se répercute sur chacun d'eux, pas un seul.
 

@@ -1,8 +1,16 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
-import { memoiresDir, writeJsonAtomic } from './paths'
+import {
+  contentsDir,
+  memoireContentsDir,
+  memoiresDir,
+  resolveContentFile,
+  storeContentFor,
+  writeJsonAtomic
+} from './paths'
 import { clearMemoireLogo, copyMemoireLogo, snapshotLogoFromTemplate } from './logoStore'
+import { collectContentFiles, remapChapters, remapCoverPages } from './contentRefs'
 import type { ChapterNode, Memoire, MemoireSummary } from '../../shared/types'
 
 function memoireFilePath(libraryPath: string, id: string): string {
@@ -45,7 +53,9 @@ function toSummary(memoire: Memoire): MemoireSummary {
   }
 }
 
-async function readAllMemoires(libraryPath: string): Promise<Memoire[]> {
+/** Every mémoire the application recognizes, modèles included. Exported so the seeding
+ *  code applies exactly the same rule about what counts as one. */
+export async function readAllMemoires(libraryPath: string): Promise<Memoire[]> {
   let files: string[] = []
   try {
     files = await fs.readdir(memoiresDir(libraryPath))
@@ -124,22 +134,91 @@ export async function saveMemoire(libraryPath: string, memoire: Memoire): Promis
   return updated
 }
 
-export async function deleteMemoire(libraryPath: string, id: string): Promise<void> {
-  // Unlike content files, a logo is never shared with another mémoire: nothing else
-  // could still be pointing at it.
-  await clearMemoireLogo(libraryPath, id, 'logo')
-  await clearMemoireLogo(libraryPath, id, 'secondLogo')
-  await fs.rm(memoireFilePath(libraryPath, id), { force: true })
+/**
+ * Puts a deleted mémoire's content folder aside instead of erasing it. Deleting a plan is
+ * one click, and it now takes real documents with it — several months of writing, in the
+ * case of a modèle. Same habit as `Gabarit.avant-restauration.<stamp>.bak.docx`: a rename
+ * on the same volume, instant, and undoable from the file explorer.
+ *
+ * Addressed strictly by `contenus/<id>/`, never by the list of files the mémoire
+ * referenced — a mémoire written before this layout still points at bare names in the
+ * shared pool, and deleting those would take other mémoires' content with them.
+ */
+async function binContentsOf(libraryPath: string, id: string): Promise<void> {
+  const dir = memoireContentsDir(libraryPath, id)
+  try {
+    await fs.access(dir)
+  } catch {
+    return // nothing of its own — a mémoire from before this layout
+  }
+
+  // The folder is this mémoire's by construction, but a hand-copied JSON or a plan edited
+  // through the "consigne pour IA" feature can point another mémoire into it. Cheap to
+  // check, and it makes "nothing else can be pointing there" true rather than assumed.
+  const prefix = `${id}/`
+  for (const other of await readAllMemoires(libraryPath)) {
+    if (other.id === id) continue
+    for (const file of collectContentFiles(other)) {
+      if (file.replace(/\\/g, '/').startsWith(prefix)) return
+    }
+  }
+
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+  const binned = path.join(contentsDir(libraryPath), '_corbeille', `${id}-${stamp}`)
+  await fs.mkdir(path.dirname(binned), { recursive: true })
+  await fs.rename(dir, binned)
 }
 
-/** Deep-copies a chapter tree, assigning fresh ids so the copy is fully independent. */
-function cloneChapters(nodes: ChapterNode[]): ChapterNode[] {
-  return nodes.map((node) => ({
-    ...node,
-    id: randomUUID(),
-    content: node.content ? { ...node.content } : null,
-    children: cloneChapters(node.children)
-  }))
+export async function deleteMemoire(libraryPath: string, id: string): Promise<void> {
+  // The plan goes first: that is the act the user asked for, and it must not be held back
+  // by a content file Word happens to have open. Anything after is best-effort.
+  await fs.rm(memoireFilePath(libraryPath, id), { force: true })
+  try {
+    await binContentsOf(libraryPath, id)
+  } catch {
+    // A file locked by Word blocks the rename. The mémoire is gone from the list either
+    // way; its folder stays where it was, which is the harmless outcome.
+  }
+  await clearMemoireLogo(libraryPath, id, 'logo')
+  await clearMemoireLogo(libraryPath, id, 'secondLogo')
+}
+
+/**
+ * Gives `target` its own copy of every content file `source` points at, and returns the
+ * map from old reference to new one.
+ *
+ * Every reference gets an entry, including those whose file could not be read: the new
+ * mémoire then points at a file of its own that does not exist yet, and generation says so
+ * through the "Fichier introuvable pour « X »" warning it already has. Falling back to the
+ * source's reference instead would silently hand the copy a shared file — exactly what
+ * this function exists to prevent, and invisible until someone's edit reached into another
+ * mémoire.
+ *
+ * Two chapters pointing at one file still share one file afterwards, now inside the new
+ * mémoire: that aliasing was the author's doing and is theirs to keep, the problem was only
+ * ever that it crossed mémoires.
+ */
+async function copyContentsFor(
+  libraryPath: string,
+  source: Memoire,
+  targetId: string
+): Promise<Map<string, string>> {
+  const renamed = new Map<string, string>()
+  for (const file of collectContentFiles(source)) {
+    const originalName = path.basename(file.replace(/\\/g, '/'))
+    try {
+      const bytes = await fs.readFile(resolveContentFile(libraryPath, file))
+      renamed.set(file, await storeContentFor(libraryPath, targetId, originalName, bytes))
+    } catch {
+      renamed.set(file, `${targetId}/${originalName}`)
+    }
+  }
+  return renamed
+}
+
+/** Assigns fresh ids so the copy's chapters are fully independent of the source's. */
+function withFreshId(node: ChapterNode): ChapterNode {
+  return { ...node, id: randomUUID() }
 }
 
 function blankMemoire(name: string): Memoire {
@@ -162,9 +241,14 @@ function blankMemoire(name: string): Memoire {
 
 /**
  * Creates a new mémoire as an independent copy of `sourceId` (a modèle, for "Nouveau
- * mémoire" — or any mémoire, for "Dupliquer"). Content files are shared by reference —
- * only the plan is duplicated. The logo is a real copy, not a reference: it starts as
- * the source's own, but changing either one afterward must not touch the other.
+ * mémoire" — or any mémoire, for "Dupliquer"). Independent all the way down: the plan, the
+ * logos *and* the content files are real copies, so reworking a chapter for this tender can
+ * never reach back into the modèle it came from, nor into a tender already submitted.
+ *
+ * This is what makes a modèle a master rather than a shared document: updating it serves
+ * the mémoires created after, and leaves the ones already created exactly as they were
+ * sent. Content used to be shared by reference here, which meant editing any mémoire's
+ * cover page rewrote the modèle's.
  *
  * The copy inherits the source's modèle status — duplicating a modèle gives another
  * modèle, duplicating a working mémoire gives another working mémoire. Callers that need
@@ -194,12 +278,17 @@ export async function createMemoireFrom(
     : null
 
   if (!source) return saveMemoire(libraryPath, { ...fresh, logo, secondLogo })
+
+  // Files first, plan second: interrupted halfway this leaves copies nothing points at,
+  // rather than a saved mémoire whose chapters point at files that were never written.
+  const renamed = await copyContentsFor(libraryPath, source, fresh.id)
+
   return saveMemoire(libraryPath, {
     ...fresh,
     logo,
     secondLogo,
     isTemplate: source.isTemplate,
-    coverPages: source.coverPages.map((c) => ({ ...c })),
-    chapters: cloneChapters(source.chapters)
+    coverPages: remapCoverPages(source.coverPages, renamed),
+    chapters: remapChapters(source.chapters, renamed, withFreshId)
   })
 }

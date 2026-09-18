@@ -6,13 +6,16 @@ import {
   configJsonPath,
   contentsDir,
   documentsDir,
+  memoireContentsDir,
   memoiresDir,
+  storeContentFor,
   templatePath,
   writeJsonAtomic
 } from './paths'
 import { readModelConfig, writeModelConfig } from './modelStore'
 import { setMemoireLogo } from './logoStore'
-import { getMemoire, saveMemoire } from './memoireStore'
+import { getMemoire, readAllMemoires, saveMemoire } from './memoireStore'
+import { collectContentFiles, remapContent, remapCoverPages } from './contentRefs'
 import type { ChapterNode, ContentRef, Memoire } from '../../shared/types'
 
 interface SeedNode {
@@ -38,34 +41,78 @@ async function exists(absPath: string): Promise<boolean> {
 }
 
 /**
- * Puts back any shipped content file that has gone missing, leaving everything else
- * alone. Without this, emptying the contents folder produced a document made of titles
- * with no text — and the application reported success.
+ * Puts back a shipped content file that has gone missing from the default template's own
+ * folder, leaving everything else alone. Without this, emptying the contents folder
+ * produced a document made of titles with no text — and the application reported success.
+ *
+ * Deliberately narrow. It runs on every `memoires:listTemplates`, i.e. every time the
+ * mémoires list or the configuration screen opens, so it must never write anything a
+ * library did not already have: it only ever restores a reference of the exact shape
+ * `<that template's own id>/<name>` whose `<name>` the application ships. A modèle the
+ * user built matches nothing and is left alone, and a working mémoire is never touched at
+ * all — quietly pouring demonstration text into a real tender response would be far worse
+ * than the missing-content warning generation already gives.
  */
-async function restoreMissingContents(fromDir: string, toDir: string): Promise<void> {
-  await fs.mkdir(toDir, { recursive: true })
-  let shippedFiles: string[]
-  try {
-    shippedFiles = await fs.readdir(fromDir)
-  } catch {
-    return
-  }
-  for (const entry of shippedFiles) {
-    const destination = path.join(toDir, entry)
-    if (await exists(destination)) continue
-    await fs.copyFile(path.join(fromDir, entry), destination)
+async function restoreMissingContents(root: string, shipped: string): Promise<void> {
+  const fromDir = path.join(shipped, 'contenus')
+  if (!(await exists(fromDir))) return
+
+  for (const memoire of await readAllMemoires(root)) {
+    if (!memoire.isTemplate) continue
+    const prefix = `${memoire.id}/`
+    for (const ref of collectContentFiles(memoire)) {
+      const normalized = ref.replace(/\\/g, '/')
+      if (!normalized.startsWith(prefix)) continue
+      const name = normalized.slice(prefix.length)
+      if (name.includes('/')) continue
+      const source = path.join(fromDir, name)
+      const destination = path.join(memoireContentsDir(root, memoire.id), name)
+      if (!(await exists(source)) || (await exists(destination))) continue
+      await fs.mkdir(path.dirname(destination), { recursive: true })
+      await fs.copyFile(source, destination)
+    }
   }
 }
 
-function withIds(nodes: SeedNode[]): ChapterNode[] {
+function withIds(nodes: SeedNode[], renamed: Map<string, string>): ChapterNode[] {
   return nodes.map((node) => ({
     id: randomUUID(),
     title: node.title,
     pageBreakBefore: node.pageBreakBefore,
     orientation: node.orientation,
-    content: node.content,
-    children: withIds(node.children)
+    content: remapContent(node.content, renamed),
+    children: withIds(node.children, renamed)
   }))
+}
+
+/** The shipped plan names its files bare — no id exists before the template is minted.
+ *  Copying them into the new template's own folder is what makes it independent from the
+ *  start, like every mémoire created from it afterwards. */
+async function installShippedContents(
+  root: string,
+  shipped: string,
+  templateId: string,
+  plan: { coverPages: ContentRef[]; chapters: SeedNode[] }
+): Promise<Map<string, string>> {
+  const fromDir = path.join(shipped, 'contenus')
+  const renamed = new Map<string, string>()
+
+  const referenced = new Set<string>()
+  function walk(nodes: SeedNode[]): void {
+    for (const node of nodes) {
+      if (node.content) referenced.add(node.content.file)
+      walk(node.children)
+    }
+  }
+  walk(plan.chapters)
+  for (const cover of plan.coverPages) referenced.add(cover.file)
+
+  for (const name of referenced) {
+    const source = path.join(fromDir, name)
+    if (!(await exists(source))) continue
+    renamed.set(name, await storeContentFor(root, templateId, name, await fs.readFile(source)))
+  }
+  return renamed
 }
 
 /**
@@ -95,26 +142,7 @@ async function migrateLegacyExample(root: string): Promise<void> {
 }
 
 async function hasAnyTemplate(root: string): Promise<boolean> {
-  let files: string[]
-  try {
-    files = await fs.readdir(memoiresDir(root))
-  } catch {
-    return false
-  }
-  for (const file of files) {
-    if (!file.endsWith('.json')) continue
-    try {
-      const raw = await fs.readFile(path.join(memoiresDir(root), file), 'utf-8')
-      const memoire: Memoire = JSON.parse(raw)
-      // Same rule as memoireStore's readAllMemoires: a stray .json not named after its
-      // own id (a backup, a conflicted sync copy...) is not a mémoire the app recognizes.
-      if (file !== `${memoire.id}.json`) continue
-      if (memoire.isTemplate) return true
-    } catch {
-      // skip unreadable/corrupt file
-    }
-  }
-  return false
+  return (await readAllMemoires(root)).some((memoire) => memoire.isTemplate)
 }
 
 /**
@@ -154,13 +182,16 @@ async function createDefaultTemplateIfNeeded(root: string, shipped: string): Pro
     const now = new Date().toISOString()
     const templateId = randomUUID()
     const shippedLogo = path.join(shipped, 'Logo.png')
+    // Only now, past every early return above: a machine that lost the race to the lock
+    // must not leave a content folder behind that nothing will ever reference or clean up.
+    const renamed = await installShippedContents(root, shipped, templateId, plan)
     const template: Memoire = {
       id: templateId,
       name: plan.name || 'Exemple',
       createdAt: now,
       updatedAt: now,
-      coverPages: plan.coverPages,
-      chapters: withIds(plan.chapters),
+      coverPages: remapCoverPages(plan.coverPages, renamed),
+      chapters: withIds(plan.chapters, renamed),
       logo: (await exists(shippedLogo))
         ? await setMemoireLogo(root, templateId, 'logo', shippedLogo)
         : null,
@@ -187,7 +218,7 @@ async function createDefaultTemplateIfNeeded(root: string, shipped: string): Pro
  */
 export async function ensureDefaultTemplate(root: string): Promise<void> {
   const shipped = shippedDir()
-  await restoreMissingContents(path.join(shipped, 'contenus'), contentsDir(root))
+  await restoreMissingContents(root, shipped)
   await createDefaultTemplateIfNeeded(root, shipped)
 }
 

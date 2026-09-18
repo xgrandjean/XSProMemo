@@ -255,8 +255,10 @@ export default function MemoiresListPage({
             Supprimer « <b>{toDelete.name}</b> » ?
           </p>
           <p className="muted">
-            Son plan est perdu. Les fichiers de contenu, eux, restent disponibles pour vos
-            autres mémoires.
+            Son plan est perdu, et ses fichiers de contenu partent avec lui — ils
+            n&apos;appartiennent qu&apos;à ce mémoire. Ils ne sont pas effacés pour autant :
+            ils sont mis de côté dans <b>contenus\_corbeille</b>, d&apos;où vous pouvez les
+            récupérer. Les autres mémoires ne sont pas concernés.
           </p>
         </Modal>
       )}

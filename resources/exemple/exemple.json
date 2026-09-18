@@ -8,97 +8,28 @@
   ],
   "chapters": [
     {
-      "title": "Présentation de l’entreprise",
+      "title": "Présentation de l'entreprise",
       "pageBreakBefore": true,
       "orientation": "portrait",
       "content": {
-        "file": "Présentation de l’entreprise.docx",
-        "originalName": "Présentation de l’entreprise.docx"
+        "file": "Présentation de l'entreprise.docx",
+        "originalName": "Présentation de l'entreprise.docx"
       },
-      "children": [
-        {
-          "title": "Une ambition collective",
-          "pageBreakBefore": false,
-          "orientation": "portrait",
-          "content": {
-            "file": "Une ambition collective.docx",
-            "originalName": "Une ambition collective.docx"
-          },
-          "children": []
-        },
-        {
-          "title": "Avis de constitution",
-          "pageBreakBefore": false,
-          "orientation": "portrait",
-          "content": {
-            "file": "Avis de constitution.docx",
-            "originalName": "Avis de constitution.docx"
-          },
-          "children": []
-        },
-        {
-          "title": "Expérience professionnelle des dirigeants",
-          "pageBreakBefore": false,
-          "orientation": "portrait",
-          "content": {
-            "file": "Expérience professionnelle des dirigeants.docx",
-            "originalName": "Expérience professionnelle des dirigeants.docx"
-          },
-          "children": []
-        },
-        {
-          "title": "Nos références",
-          "pageBreakBefore": false,
-          "orientation": "portrait",
-          "content": {
-            "file": "Nos références.docx",
-            "originalName": "Nos références.docx"
-          },
-          "children": []
-        }
-      ]
+      "children": []
     },
     {
-      "title": "Nos Métiers",
-      "pageBreakBefore": false,
+      "title": "Moyens mis en œuvre",
+      "pageBreakBefore": true,
       "orientation": "portrait",
       "content": null,
       "children": [
         {
-          "title": "Nos champs d’activité",
+          "title": "Moyens humains",
           "pageBreakBefore": false,
           "orientation": "portrait",
           "content": {
-            "file": "Nos champs d’activité.docx",
-            "originalName": "Nos champs d’activité.docx"
-          },
-          "children": []
-        },
-        {
-          "title": "Notre philosophie",
-          "pageBreakBefore": false,
-          "orientation": "portrait",
-          "content": {
-            "file": "Notre philosophie.docx",
-            "originalName": "Notre philosophie.docx"
-          },
-          "children": []
-        }
-      ]
-    },
-    {
-      "title": "Mémoire technique",
-      "pageBreakBefore": false,
-      "orientation": "portrait",
-      "content": null,
-      "children": [
-        {
-          "title": "Contexte et nature des travaux",
-          "pageBreakBefore": false,
-          "orientation": "portrait",
-          "content": {
-            "file": "Contexte et nature des travaux.docx",
-            "originalName": "Contexte et nature des travaux.docx"
+            "file": "Moyens humains.docx",
+            "originalName": "Moyens humains.docx"
           },
           "children": []
         },
@@ -111,335 +42,59 @@
             "originalName": "Moyens matériels.docx"
           },
           "children": []
-        },
-        {
-          "title": "Moyens humains",
-          "pageBreakBefore": false,
-          "orientation": "portrait",
-          "content": null,
-          "children": [
-            {
-              "title": "Organisation",
-              "pageBreakBefore": false,
-              "orientation": "portrait",
-              "content": {
-                "file": "Organisation.docx",
-                "originalName": "Organisation.docx"
-              },
-              "children": []
-            },
-            {
-              "title": "Qualification de notre personnel",
-              "pageBreakBefore": false,
-              "orientation": "portrait",
-              "content": {
-                "file": "Qualification de notre personnel.docx",
-                "originalName": "Qualification de notre personnel.docx"
-              },
-              "children": [
-                {
-                  "title": "Capacités professionnelles",
-                  "pageBreakBefore": false,
-                  "orientation": "portrait",
-                  "content": {
-                    "file": "Capacités professionnelles.docx",
-                    "originalName": "Capacités professionnelles.docx"
-                  },
-                  "children": []
-                },
-                {
-                  "title": "Capacités techniques",
-                  "pageBreakBefore": false,
-                  "orientation": "portrait",
-                  "content": {
-                    "file": "Capacités techniques.docx",
-                    "originalName": "Capacités techniques.docx"
-                  },
-                  "children": []
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "title": "Méthodologie et organisation",
-          "pageBreakBefore": false,
-          "orientation": "portrait",
-          "content": {
-            "file": "Méthodologie et organisation.docx",
-            "originalName": "Méthodologie et organisation.docx"
-          },
-          "children": [
-            {
-              "title": "Planning prévisionnel",
-              "pageBreakBefore": false,
-              "orientation": "portrait",
-              "content": {
-                "file": "Planning prévisionnel.docx",
-                "originalName": "Planning prévisionnel.docx"
-              },
-              "children": []
-            },
-            {
-              "title": "Installation et préparation de chantier",
-              "pageBreakBefore": false,
-              "orientation": "portrait",
-              "content": {
-                "file": "Installation et préparation de chantier.docx",
-                "originalName": "Installation et préparation de chantier.docx"
-              },
-              "children": []
-            },
-            {
-              "title": "Documents d’exécution",
-              "pageBreakBefore": false,
-              "orientation": "portrait",
-              "content": {
-                "file": "Documents d’exécution.docx",
-                "originalName": "Documents d’exécution.docx"
-              },
-              "children": []
-            },
-            {
-              "title": "Étude d’éclairement et définition du matériel",
-              "pageBreakBefore": false,
-              "orientation": "portrait",
-              "content": {
-                "file": "Étude d’éclairement et définition du matériel.docx",
-                "originalName": "Étude d’éclairement et définition du matériel.docx"
-              },
-              "children": []
-            },
-            {
-              "title": "Plans exe et notes de calcul",
-              "pageBreakBefore": false,
-              "orientation": "portrait",
-              "content": {
-                "file": "Plans exe et notes de calcul.docx",
-                "originalName": "Plans exe et notes de calcul.docx"
-              },
-              "children": []
-            },
-            {
-              "title": "Plans EXE et notes de calcul des massifs",
-              "pageBreakBefore": false,
-              "orientation": "portrait",
-              "content": {
-                "file": "Plans EXE et notes de calcul des massifs.docx",
-                "originalName": "Plans EXE et notes de calcul des massifs.docx"
-              },
-              "children": []
-            },
-            {
-              "title": "PPSPS et plans de balisage",
-              "pageBreakBefore": false,
-              "orientation": "portrait",
-              "content": {
-                "file": "PPSPS et plans de balisage.docx",
-                "originalName": "PPSPS et plans de balisage.docx"
-              },
-              "children": []
-            },
-            {
-              "title": "Commande et approvisionnement",
-              "pageBreakBefore": false,
-              "orientation": "portrait",
-              "content": {
-                "file": "Commande et approvisionnement.docx",
-                "originalName": "Commande et approvisionnement.docx"
-              },
-              "children": []
-            },
-            {
-              "title": "Implantation",
-              "pageBreakBefore": false,
-              "orientation": "portrait",
-              "content": {
-                "file": "Implantation.docx",
-                "originalName": "Implantation.docx"
-              },
-              "children": []
-            },
-            {
-              "title": "Exécution des travaux",
-              "pageBreakBefore": false,
-              "orientation": "portrait",
-              "content": null,
-              "children": [
-                {
-                  "title": "Massif",
-                  "pageBreakBefore": false,
-                  "orientation": "portrait",
-                  "content": {
-                    "file": "Massif.docx",
-                    "originalName": "Massif.docx"
-                  },
-                  "children": []
-                },
-                {
-                  "title": "Déroulage du câble",
-                  "pageBreakBefore": false,
-                  "orientation": "portrait",
-                  "content": {
-                    "file": "Déroulage du câble.docx",
-                    "originalName": "Déroulage du câble.docx"
-                  },
-                  "children": []
-                },
-                {
-                  "title": "Levage des mâts",
-                  "pageBreakBefore": false,
-                  "orientation": "portrait",
-                  "content": {
-                    "file": "Levage des mâts.docx",
-                    "originalName": "Levage des mâts.docx"
-                  },
-                  "children": []
-                },
-                {
-                  "title": "Réalisation des liaisons électriques entre les TGBT et les équipements",
-                  "pageBreakBefore": false,
-                  "orientation": "portrait",
-                  "content": {
-                    "file": "Réalisation des liaisons électriques entre les TGBT et les é.docx",
-                    "originalName": "Réalisation des liaisons électriques entre les TGBT et les é.docx"
-                  },
-                  "children": []
-                },
-                {
-                  "title": "Tableau de commande et TGBT",
-                  "pageBreakBefore": false,
-                  "orientation": "portrait",
-                  "content": {
-                    "file": "Tableau de commande et TGBT.docx",
-                    "originalName": "Tableau de commande et TGBT.docx"
-                  },
-                  "children": []
-                },
-                {
-                  "title": "Essais et mesures",
-                  "pageBreakBefore": false,
-                  "orientation": "portrait",
-                  "content": {
-                    "file": "Essais et mesures.docx",
-                    "originalName": "Essais et mesures.docx"
-                  },
-                  "children": []
-                },
-                {
-                  "title": "Contrôle des installations réalisées",
-                  "pageBreakBefore": false,
-                  "orientation": "portrait",
-                  "content": {
-                    "file": "Contrôle des installations réalisées.docx",
-                    "originalName": "Contrôle des installations réalisées.docx"
-                  },
-                  "children": []
-                },
-                {
-                  "title": "OPR, levées de réserves et réception définitive",
-                  "pageBreakBefore": false,
-                  "orientation": "portrait",
-                  "content": {
-                    "file": "OPR, levées de réserves et réception définitive.docx",
-                    "originalName": "OPR, levées de réserves et réception définitive.docx"
-                  },
-                  "children": []
-                },
-                {
-                  "title": "DOE et plans de recollement",
-                  "pageBreakBefore": false,
-                  "orientation": "portrait",
-                  "content": {
-                    "file": "DOE et plans de recollement.docx",
-                    "originalName": "DOE et plans de recollement.docx"
-                  },
-                  "children": []
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "title": "Gestion environnementale des déchets",
-          "pageBreakBefore": false,
-          "orientation": "portrait",
-          "content": {
-            "file": "Gestion environnementale des déchets.docx",
-            "originalName": "Gestion environnementale des déchets.docx"
-          },
-          "children": []
-        },
-        {
-          "title": "Sécurité",
-          "pageBreakBefore": false,
-          "orientation": "portrait",
-          "content": null,
-          "children": [
-            {
-              "title": "Préparation de l’intervention",
-              "pageBreakBefore": false,
-              "orientation": "portrait",
-              "content": {
-                "file": "Préparation de l’intervention.docx",
-                "originalName": "Préparation de l’intervention.docx"
-              },
-              "children": []
-            },
-            {
-              "title": "Organisation des secours en cas d’accident",
-              "pageBreakBefore": false,
-              "orientation": "portrait",
-              "content": {
-                "file": "Organisation des secours en cas d’accident.docx",
-                "originalName": "Organisation des secours en cas d’accident.docx"
-              },
-              "children": []
-            }
-          ]
         }
       ]
     },
     {
-      "title": "Fiches techniques des matériels",
+      "title": "Méthodologie et organisation",
       "pageBreakBefore": true,
       "orientation": "portrait",
       "content": {
-        "file": "Fiches techniques des matériels.docx",
-        "originalName": "Fiches techniques des matériels.docx"
+        "file": "Méthodologie et organisation.docx",
+        "originalName": "Méthodologie et organisation.docx"
       },
       "children": [
         {
-          "title": "Mât 4.00ml JIMA avec RAL BDM",
+          "title": "Planning et délais",
           "pageBreakBefore": false,
           "orientation": "portrait",
           "content": {
-            "file": "Mât 4.00ml JIMA avec RAL BDM.docx",
-            "originalName": "Mât 4.00ml JIMA avec RAL BDM.docx"
-          },
-          "children": []
-        },
-        {
-          "title": "Câble U1000RO2V 4x6mm²",
-          "pageBreakBefore": false,
-          "orientation": "portrait",
-          "content": {
-            "file": "Câble U1000RO2V 4x6mm².docx",
-            "originalName": "Câble U1000RO2V 4x6mm².docx"
-          },
-          "children": []
-        },
-        {
-          "title": "Distributeur d’arrivée 200A avec accessoires",
-          "pageBreakBefore": false,
-          "orientation": "portrait",
-          "content": {
-            "file": "Distributeur d’arrivée 200A avec accessoires.docx",
-            "originalName": "Distributeur d’arrivée 200A avec accessoires.docx"
+            "file": "Planning et délais.docx",
+            "originalName": "Planning et délais.docx"
           },
           "children": []
         }
       ]
+    },
+    {
+      "title": "Sécurité et prévention",
+      "pageBreakBefore": true,
+      "orientation": "portrait",
+      "content": {
+        "file": "Sécurité et prévention.docx",
+        "originalName": "Sécurité et prévention.docx"
+      },
+      "children": []
+    },
+    {
+      "title": "Gestion environnementale des déchets",
+      "pageBreakBefore": false,
+      "orientation": "portrait",
+      "content": {
+        "file": "Gestion environnementale des déchets.docx",
+        "originalName": "Gestion environnementale des déchets.docx"
+      },
+      "children": []
+    },
+    {
+      "title": "Contrôles et conformité",
+      "pageBreakBefore": false,
+      "orientation": "portrait",
+      "content": {
+        "file": "Contrôles et conformité.docx",
+        "originalName": "Contrôles et conformité.docx"
+      },
+      "children": []
     }
   ]
 }

@@ -56,9 +56,10 @@ const api = {
     export: (id: string, destPath: string): Promise<void> =>
       ipcRenderer.invoke('memoires:export', { id, destPath }),
     import: (zipPath: string): Promise<Memoire> => ipcRenderer.invoke('memoires:import', zipPath),
-    importContent: (sourceAbsPath: string): Promise<ContentRef> =>
-      ipcRenderer.invoke('memoires:importContent', sourceAbsPath),
-    createBlankContent: (): Promise<ContentRef> => ipcRenderer.invoke('memoires:createBlankContent'),
+    importContent: (id: string, sourceAbsPath: string): Promise<ContentRef> =>
+      ipcRenderer.invoke('memoires:importContent', { id, sourceAbsPath }),
+    createBlankContent: (id: string): Promise<ContentRef> =>
+      ipcRenderer.invoke('memoires:createBlankContent', id),
     openContent: (relativePath: string): Promise<void> =>
       ipcRenderer.invoke('memoires:openContent', relativePath),
     setLogo: (id: string, field: LogoField, imageAbsPath: string): Promise<Memoire> =>

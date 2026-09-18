@@ -2,23 +2,42 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import JSZip from 'jszip'
-import { logosDir, resolveContentFile, storeContentBytes } from './paths'
+import { logosDir, memoireContentsDir, resolveContentFile } from './paths'
 import { getMemoire, saveMemoire } from './memoireStore'
+import { collectContentFiles, remapChapters, remapCoverPages } from './contentRefs'
 import { prefixFor } from './logoStore'
-import type { ChapterNode, ContentRef, LogoField, Memoire } from '../../shared/types'
+import type { ContentRef, LogoField, Memoire } from '../../shared/types'
 
-/** Every content file a mémoire's plan actually points to — cover pages included. */
-function collectContentFiles(memoire: Memoire): Set<string> {
-  const files = new Set<string>()
-  function walk(nodes: ChapterNode[]): void {
-    for (const node of nodes) {
-      if (node.content) files.add(node.content.file)
-      walk(node.children)
-    }
+/**
+ * Names the shape of the archive, so the importer never has to guess. Format 1 (no marker
+ * file) came from the versions that kept every content in one flat pool: a plan's
+ * references were bare file names, identical to the zip entry names.
+ */
+const TRANSFER_FORMAT = 2
+const MARKER_ENTRY = 'xspromemo.json'
+
+interface TransferMarker {
+  format: number
+  /** Plan reference → the entry holding it, so the importer matches exactly. */
+  entries: Record<string, string>
+}
+
+/** Zip entries keep the readable file name, not the `<id>/` path: an archive carries one
+ *  mémoire and lands under a different id anyway, so the folder would be noise. Two
+ *  references can still share a base name (one migrated, one left from the flat pool) —
+ *  hence the suffix, and hence the marker that records which entry belongs to which. */
+function entryNameFor(ref: string, taken: Set<string>): string {
+  const base = path.basename(ref.replace(/\\/g, '/'))
+  const ext = path.extname(base)
+  const stem = path.basename(base, ext)
+  let candidate = base
+  let suffix = 1
+  while (taken.has(candidate)) {
+    suffix += 1
+    candidate = `${stem} (${suffix})${ext}`
   }
-  walk(memoire.chapters)
-  for (const cover of memoire.coverPages) files.add(cover.file)
-  return files
+  taken.add(candidate)
+  return candidate
 }
 
 /**
@@ -39,14 +58,20 @@ export async function exportMemoire(root: string, id: string, destZipPath: strin
   }
   zip.file('memoire.json', JSON.stringify(sanitized, null, 2))
 
+  const marker: TransferMarker = { format: TRANSFER_FORMAT, entries: {} }
+  const taken = new Set<string>()
   for (const file of collectContentFiles(memoire)) {
+    const entryName = entryNameFor(file, taken)
     try {
-      zip.file(`contenus/${file}`, await fs.readFile(resolveContentFile(root, file)))
+      zip.file(`contenus/${entryName}`, await fs.readFile(resolveContentFile(root, file)))
+      marker.entries[file] = entryName
     } catch {
       // Missing content is already tolerated elsewhere (generation just warns) — an
       // export shouldn't fail over it either.
+      taken.delete(entryName)
     }
   }
+  zip.file(MARKER_ENTRY, JSON.stringify(marker, null, 2))
 
   for (const logo of [memoire.logo, memoire.secondLogo]) {
     if (!logo) continue
@@ -62,18 +87,22 @@ export async function exportMemoire(root: string, id: string, destZipPath: strin
   await fs.writeFile(destZipPath, buffer)
 }
 
-/** Deep-copies a chapter tree, remapping each content file to its final imported name. */
-function remapChapters(nodes: ChapterNode[], renamed: Map<string, string>): ChapterNode[] {
-  return nodes.map((node) => ({
-    ...node,
-    content: remapContent(node.content, renamed),
-    children: remapChapters(node.children, renamed)
-  }))
-}
-
-function remapContent(ref: ContentRef | null, renamed: Map<string, string>): ContentRef | null {
-  if (!ref) return null
-  return { ...ref, file: renamed.get(ref.file) ?? ref.file }
+/**
+ * Which zip entry holds which of the plan's references. Read from the marker when the
+ * archive has one; otherwise the archive predates it, and its plan's references *are* the
+ * entry names — so matching them to themselves is exactly right.
+ */
+async function readTransferMap(zip: JSZip, source: Memoire): Promise<Map<string, string>> {
+  const marker = zip.file(MARKER_ENTRY)
+  if (marker) {
+    try {
+      const parsed: TransferMarker = JSON.parse(await marker.async('string'))
+      return new Map(Object.entries(parsed.entries ?? {}))
+    } catch {
+      // Unreadable marker — fall through to the same guess as an archive without one.
+    }
+  }
+  return new Map([...collectContentFiles(source)].map((file) => [file, file]))
 }
 
 /**
@@ -98,15 +127,23 @@ export async function importMemoire(root: string, zipPath: string): Promise<Memo
     throw new Error('Le fichier mémoire.json de cette archive est illisible.')
   }
 
-  const renamed = new Map<string, string>()
-  for (const entry of Object.values(zip.files)) {
-    if (entry.dir || !entry.name.startsWith('contenus/')) continue
-    const originalName = entry.name.slice('contenus/'.length)
-    const bytes = await entry.async('nodebuffer')
-    renamed.set(originalName, await storeContentBytes(root, originalName, bytes))
-  }
-
   const newId = randomUUID()
+
+  // Straight into the new mémoire's own folder: an imported mémoire owns its content like
+  // any other, and the folder is brand new, so no name can collide.
+  const targetDir = memoireContentsDir(root, newId)
+  const renamed = new Map<string, string>()
+  const written = new Set<string>()
+  for (const [ref, entryName] of await readTransferMap(zip, source)) {
+    const entry = zip.file(`contenus/${entryName}`)
+    if (!entry) continue
+    if (!written.has(entryName)) {
+      await fs.mkdir(targetDir, { recursive: true })
+      await fs.writeFile(path.join(targetDir, entryName), await entry.async('nodebuffer'))
+      written.add(entryName)
+    }
+    renamed.set(ref, `${newId}/${entryName}`)
+  }
 
   async function importLogo(field: LogoField): Promise<ContentRef | null> {
     const ref = source[field]
@@ -130,9 +167,7 @@ export async function importMemoire(root: string, zipPath: string): Promise<Memo
     lastGeneratedAt: null,
     outputDocx: null,
     outputPdf: null,
-    coverPages: source.coverPages
-      .map((cover) => remapContent(cover, renamed))
-      .filter((cover): cover is ContentRef => cover !== null),
+    coverPages: remapCoverPages(source.coverPages, renamed),
     chapters: remapChapters(source.chapters, renamed),
     logo: await importLogo('logo'),
     secondLogo: await importLogo('secondLogo')

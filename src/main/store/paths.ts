@@ -9,11 +9,17 @@ import { promises as fs } from 'node:fs'
  *
  *   Documents/XSProMemo/
  *     Gabarit.docx      la présentation : styles, logo par défaut, pied de page
- *     contenus/         les fichiers Word, nommés lisiblement
+ *     contenus/<id>/    les fichiers Word d'un mémoire, nommés lisiblement
  *     logos/            le logo propre à chaque mémoire (un par identifiant)
  *     memoires/         les plans (plomberie)
- *     documents/        les mémoires générés
+ *     documents/<id>/   les mémoires générés
  *     config.json
+ *
+ * Une seule règle : tout ce qui appartient à un mémoire vit sous son identifiant. `contenus/`
+ * était le seul à y échapper — un pot commun où deux mémoires ayant un chapitre de même titre
+ * se partageaient le même fichier Word, si bien qu'éditer le contenu de l'un réécrivait celui
+ * de l'autre. Les fichiers posés à plat par les versions antérieures continuent de se résoudre
+ * (voir `resolveContentFile`) : rien n'est migré ni supprimé d'office.
  *
  * Not AppData, despite it being the usual home for application data: Office refuses to
  * open documents sitting under %APPDATA% or %LOCALAPPDATA% on hardened machines, and
@@ -49,64 +55,66 @@ export function configJsonPath(root: string): string {
   return path.join(root, 'config.json')
 }
 
-/** Content files are referenced by name, so the folder stays readable. */
+/** Where one mémoire's own content files live — `documents/<id>/` and `logos/<id>.png`
+ *  already followed this rule. */
+export function memoireContentsDir(root: string, memoireId: string): string {
+  return path.join(contentsDir(root), memoireId)
+}
+
+/** A content reference is a POSIX-style path relative to `contenus/`, so the same JSON
+ *  reads the same on any machine. Built here rather than with `path.join`, which would
+ *  yield a backslash on Windows and then travel into a .zip entry name. */
+export function contentRefPath(memoireId: string, fileName: string): string {
+  return `${memoireId}/${fileName}`
+}
+
+/**
+ * Resolves a content reference against the library. The reference is either
+ * `<id>/Nom.docx` (a mémoire's own file) or a bare `Nom.docx` left by a version that kept
+ * every content in one shared pool — both still work, so upgrading breaks nothing.
+ *
+ * Now that the reference legitimately carries a separator, it has to be treated as
+ * untrusted input: a mémoire's JSON can be hand-edited (the folder is meant to be browsed)
+ * or written by an LLM through the "consigne pour IA" feature, and `path.join` would
+ * happily walk out of the library on `../`.
+ */
 export function resolveContentFile(root: string, fileName: string): string {
-  return path.join(contentsDir(root), fileName)
-}
-
-/**
- * Copies bytes into the contents pool under a name that never collides with something
- * unrelated: an existing file with the same name is reused as-is if its bytes match
- * (no pointless duplicate), otherwise a numbered suffix is used instead of overwriting it.
- * Shared by every path that adds a content file to the pool (manual import, zip import),
- * so two mémoires with a same-titled chapter can never silently clobber each other's file.
- */
-export async function storeContentBytes(
-  root: string,
-  fileName: string,
-  bytes: Buffer
-): Promise<string> {
-  const dir = contentsDir(root)
-  await fs.mkdir(dir, { recursive: true })
-
-  const ext = path.extname(fileName)
-  const base = path.basename(fileName, ext)
-  let candidate = fileName
-  let suffix = 1
-  for (;;) {
-    const candidatePath = path.join(dir, candidate)
-    try {
-      const existing = await fs.readFile(candidatePath)
-      if (existing.equals(bytes)) return candidate
-    } catch {
-      break // nothing at that name — free to use
-    }
-    suffix += 1
-    candidate = `${base} (${suffix})${ext}`
+  const normalized = fileName.replace(/\\/g, '/')
+  const segments = normalized.split('/').filter((segment) => segment !== '' && segment !== '.')
+  if (
+    segments.length === 0 ||
+    segments.some((segment) => segment === '..') ||
+    path.isAbsolute(normalized) ||
+    /^[a-zA-Z]:/.test(normalized)
+  ) {
+    throw new Error(`Référence de contenu invalide : « ${fileName} ».`)
   }
-
-  await fs.writeFile(path.join(dir, candidate), bytes)
-  return candidate
+  return path.join(contentsDir(root), ...segments)
 }
 
 /**
- * Copies bytes into the contents pool under a name that is always fresh — unlike
- * `storeContentBytes`, an existing file with the same name is never reused even if its
- * bytes currently match. Every new blank content must be its own file from the start: it
- * is a starting point the user is about to fill in, not something meant to stay linked to
- * whatever else happened to start out blank too.
+ * Writes a content file into the mémoire that owns it, under a name free *in that folder*,
+ * and returns the reference to store in its plan.
+ *
+ * Deliberately never reuses an existing file, not even one whose bytes match: two chapters
+ * of the same mémoire sharing one physical document is the very bug this layout exists to
+ * remove, only smaller — editing one chapter's Word file would silently rewrite the other's.
+ * The cost is a duplicate file when the same document is attached twice; it stays inside
+ * that mémoire's own folder and goes away with it.
  */
-export async function storeNewContentFile(
+export async function storeContentFor(
   root: string,
+  memoireId: string,
   fileName: string,
   bytes: Buffer
 ): Promise<string> {
-  const dir = contentsDir(root)
+  if (!memoireId) throw new Error('Contenu sans mémoire de rattachement.')
+  const dir = memoireContentsDir(root, memoireId)
   await fs.mkdir(dir, { recursive: true })
 
+  const base = path.basename(fileName, path.extname(fileName))
   const ext = path.extname(fileName)
-  const base = path.basename(fileName, ext)
-  let candidate = fileName
+  let candidate = `${base}${ext}`
   let suffix = 1
   while (await fs.access(path.join(dir, candidate)).then(() => true, () => false)) {
     suffix += 1
@@ -114,7 +122,7 @@ export async function storeNewContentFile(
   }
 
   await fs.writeFile(path.join(dir, candidate), bytes)
-  return candidate
+  return contentRefPath(memoireId, candidate)
 }
 
 /** Writes JSON through a temp file so a crash mid-write cannot corrupt the original. */
