@@ -34,12 +34,23 @@ export default function GenerationDialog({
             </button>
             {result && (
               <>
-                <button className="secondary" onClick={() => window.api.shell.openPath(result.docxPath)}>
+                {/* Sans PDF, c'est le Word qui devient l'action principale : il n'y a pas
+                    d'autre document à ouvrir, et celui de la fois précédente ne correspond
+                    plus à ce qui vient d'être assemblé. */}
+                <button
+                  className={result.pdfPath ? 'secondary' : 'primary'}
+                  onClick={() => window.api.shell.openPath(result.docxPath)}
+                >
                   Ouvrir le Word
                 </button>
-                <button className="primary" onClick={() => window.api.shell.openPath(result.pdfPath)}>
-                  Ouvrir le PDF
-                </button>
+                {result.pdfPath && (
+                  <button
+                    className="primary"
+                    onClick={() => window.api.shell.openPath(result.pdfPath as string)}
+                  >
+                    Ouvrir le PDF
+                  </button>
+                )}
               </>
             )}
           </>

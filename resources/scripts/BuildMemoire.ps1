@@ -332,16 +332,33 @@ try {
 
     $doc.Save()
 
+    <#
+      Le document Word est enregistre : a partir d'ici, le travail est fait et ne doit plus
+      etre perdu. L'export PDF echoue des que le fichier de destination est tenu par un
+      lecteur, et c'est la toute derniere ligne de plusieurs minutes d'assemblage — le
+      laisser remonter dans le catch global reviendrait a declarer en echec un memoire
+      entierement genere. Il devient donc un avertissement, et le resultat porte pdfPath
+      a $null pour que l'application n'aille pas proposer le PDF de la fois precedente,
+      qui ne correspond plus a ce Word.
+    #>
     Write-ProgressJson "Export PDF..."
-    $doc.ExportAsFixedFormat(
-        $manifest.outputPdfPath, 17, $false, 0, 0, 1, 1, 0, $true, $false, 1, $false, $true, $false
-    )
+    $pdfPath = $null
+    try {
+        $doc.ExportAsFixedFormat(
+            $manifest.outputPdfPath, 17, $false, 0, 0, 1, 1, 0, $true, $false, 1, $false, $true, $false
+        )
+        $pdfPath = $manifest.outputPdfPath
+    } catch {
+        # Pas de message francais ici : ce fichier est lu en ANSI par PowerShell 5.1 (pas de
+        # BOM), les accents y seraient mutiles. L'application compose la phrase, elle sait
+        # aussi verifier si le fichier est bien verrouille avant de l'affirmer.
+    }
 
     Write-Json (@{
         type      = "result"
         status    = "ok"
         docxPath  = $manifest.outputDocxPath
-        pdfPath   = $manifest.outputPdfPath
+        pdfPath   = $pdfPath
         pageCount = $doc.ComputeStatistics(2)   # wdStatisticPages
         warnings  = @($warnings | Select-Object -Unique)
     })

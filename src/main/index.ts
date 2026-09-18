@@ -88,7 +88,7 @@ async function runHeadlessGeneration(memoireId: string): Promise<void> {
     const root = await requireLibraryPath()
     await seedIfNeeded(root)
     const result = await generateMemoire(root, memoireId, (message) => log(`… ${message}`))
-    log(`OK ${result.pageCount} pages -> ${result.pdfPath}`)
+    log(`OK ${result.pageCount} pages -> ${result.pdfPath ?? result.docxPath + ' (pas de PDF)'}`)
     result.warnings.forEach((warning) => log(`AVERTISSEMENT ${warning}`))
     app.exit(0)
   } catch (err) {

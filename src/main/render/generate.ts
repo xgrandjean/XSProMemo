@@ -1,11 +1,42 @@
 import path from 'node:path'
 import { promises as fs } from 'node:fs'
+import type { FileHandle } from 'node:fs/promises'
 import { documentsDir, logosDir, resolveContentFile, templatePath } from '../store/paths'
 import { readModelConfig } from '../store/modelStore'
 import { getMemoire, saveMemoire } from '../store/memoireStore'
 import { flattenChapters } from './plan'
 import { getScriptPath, runWordScript, GenerationError } from './wordRunner'
 import type { ContentRef, GenerationResult } from '../../shared/types'
+
+/**
+ * Whether another program is holding this file open for reading. Asking to open it for
+ * writing is the same question Word will ask when it saves: a reader keeping the PDF open
+ * denies write sharing, and `fs.open(..., 'r+')` reports EBUSY for it.
+ */
+async function isLocked(absPath: string): Promise<boolean> {
+  let handle: FileHandle
+  try {
+    handle = await fs.open(absPath, 'r+')
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code
+    // Anything else — no such file, a path that is not a file — is not a lock, and the
+    // generation is left to run and report for itself.
+    return code === 'EBUSY' || code === 'EPERM' || code === 'EACCES'
+  }
+  await handle.close()
+  return false
+}
+
+async function assertWritable(absPath: string, label: string): Promise<void> {
+  if (!(await isLocked(absPath))) return
+  throw new GenerationError(
+    `${label} de ce mémoire est ouvert dans un autre programme :
+${absPath}
+
+` +
+      'Fermez-le, puis relancez la génération.'
+  )
+}
 
 export async function generateMemoire(
   libraryPath: string,
@@ -106,6 +137,13 @@ export async function generateMemoire(
   const outputDocxPath = path.join(memoireOutputDir, `${safeName}.docx`)
   const outputPdfPath = path.join(memoireOutputDir, `${safeName}.pdf`)
 
+  // Asked before Word is even started, because the answer is already knowable and the
+  // alternative is two minutes of assembly thrown away on the very last line. Reading a
+  // PDF, fixing a chapter and regenerating without closing the reader is an ordinary
+  // morning, not a mistake.
+  await assertWritable(outputDocxPath, 'Le document Word')
+  await assertWritable(outputPdfPath, 'Le PDF')
+
   const manifest = {
     shellPath,
     outputDocxPath,
@@ -123,17 +161,34 @@ export async function generateMemoire(
   const scriptWarnings = Array.isArray(result.warnings) ? (result.warnings as string[]) : []
   warnings.push(...scriptWarnings)
 
+  // What the script actually produced, not what was asked of it: the PDF export is allowed
+  // to fail on its own without taking the whole assembly down with it. Recording no PDF is
+  // the honest answer rather than a fallback — a PDF from an earlier run may well still sit
+  // at that path, and offering it would hand back a document that no longer matches the
+  // Word just built.
+  const pdfPath = typeof result.pdfPath === 'string' ? result.pdfPath : null
+  if (pdfPath === null) {
+    // Said plainly when the file really is held open, and without guessing when it is not:
+    // the export can fail for other reasons, and blaming a reader that is not there would
+    // send the user looking for a window to close that does not exist.
+    warnings.push(
+      (await isLocked(outputPdfPath))
+        ? "Le PDF n'a pas pu être créé : il est ouvert dans un autre programme. Fermez-le puis relancez la génération. Le document Word, lui, est à jour."
+        : "Le PDF n'a pas pu être créé. Le document Word, lui, est à jour."
+    )
+  }
+
   await saveMemoire(libraryPath, {
     ...memoire,
     lastGeneratedAt: new Date().toISOString(),
     outputDocx: outputDocxPath,
-    outputPdf: outputPdfPath
+    outputPdf: pdfPath
   })
 
   onProgress('Terminé.')
   return {
     docxPath: outputDocxPath,
-    pdfPath: outputPdfPath,
+    pdfPath,
     pageCount: (result.pageCount as number) ?? 0,
     warnings
   }

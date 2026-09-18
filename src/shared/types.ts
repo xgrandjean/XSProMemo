@@ -105,7 +105,10 @@ export interface GenerationProgressEvent {
 
 export interface GenerationResult {
   docxPath: string
-  pdfPath: string
+  /** Null when the PDF could not be written — most often because a reader was holding it
+   *  open. The Word document is produced either way; a stale PDF from an earlier run may
+   *  still sit at that path, which is precisely why nothing points at it. */
+  pdfPath: string | null
   pageCount: number
   warnings: string[]
 }
