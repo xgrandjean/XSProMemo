@@ -449,7 +449,7 @@ export default function ConfigPage({
                     onClick={() => void confirmChooseFolder('templates')}
                     disabled={libraryBusy}
                   >
-                    {libraryBusy ? 'En cours...' : 'Emporter le gabarit et mes modèles'}
+                    {libraryBusy ? 'En cours...' : 'Emporter mes modèles'}
                   </button>
                 </>
               ) : (
@@ -472,8 +472,8 @@ export default function ConfigPage({
               <p>Il y a deux façons de démarrer ici :</p>
               <ul>
                 <li>
-                  <b>Emporter le gabarit et mes modèles</b> — vous retrouvez votre
-                  présentation, vos réglages et vos modèles, prêts à l&apos;emploi.
+                  <b>Emporter mes modèles</b> — vous retrouvez votre présentation (le
+                  gabarit), vos réglages et vos modèles, prêts à l&apos;emploi.
                 </li>
                 <li>
                   <b>Démarrer à neuf</b> — comme une installation toute neuve : le gabarit

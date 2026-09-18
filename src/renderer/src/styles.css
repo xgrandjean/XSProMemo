@@ -619,12 +619,27 @@ button.danger-link,
   max-width: 460px;
 }
 
+/* Les libelles sont des phrases, pas des mots : a trois boutons on depasse la largeur du
+   dialogue, et sans retour a la ligne le surplus sort par la gauche (justify-content:
+   flex-end pousse le debordement vers le bord oppose) — le bouton Annuler se retrouvait a
+   moitie hors de la fenetre. Le retour a la ligne vaut pour tous les dialogues, presents
+   et a venir. */
 .modal-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
   padding: 14px 20px 18px;
   border-top: 1px solid var(--border-soft);
+}
+
+/* Un peu plus discrets qu'ailleurs : ici ils sont plusieurs cote a cote dans une fenetre
+   etroite, alors qu'une barre d'ecran leur laisse toute la largeur. */
+.modal-actions button.primary,
+.modal-actions button.secondary,
+.modal-actions button.danger {
+  padding: 6px 12px;
+  font-size: 13px;
 }
 
 /* In the top bar the help is a real button, not the small chip used beside headings. */
