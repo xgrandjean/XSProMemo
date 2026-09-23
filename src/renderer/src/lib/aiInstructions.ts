@@ -73,6 +73,11 @@ mémoire final, sans numéro, entre deux vrais chapitres. Si une section mérite
 titre, c'est un sous-chapitre à créer dans le plan, avec son propre fichier ;
 - pas de sommaire ;
 - pas de numérotation manuelle des chapitres ;
+- aucune mise en page calée sur les marges du fichier lui-même : le document final \
+reprend les marges du gabarit, jamais celles du fichier de contenu. Une image ou une \
+forme flottante posée à un décalage horizontal fixe garde ce décalage et se retrouve \
+décentrée une fois assemblée. Centre-la dynamiquement (position « Centré » par rapport à \
+la marge, ou image placée dans un paragraphe centré), jamais à une position absolue ;
 - pas besoin de ligne vide en tête ou en fin de fichier : l'application les retire \
 automatiquement si tu en laisses, inutile de t'en soucier.
 Si un paragraphe contient une image accompagnée de texte (légende, phrase \

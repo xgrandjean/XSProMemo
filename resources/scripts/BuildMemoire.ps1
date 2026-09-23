@@ -108,9 +108,36 @@ try {
       paste format the user's own Word is configured to default to, and would touch their
       real clipboard during a background export.
     #>
+    <#
+      Une forme flottante calee a une position horizontale fixe garde ce decalage une fois
+      transplantee : il avait ete calcule sur les marges de SON fichier, alors que la page
+      finale prend celles du gabarit. Tant que les deux largeurs utiles coincident rien ne
+      bouge ; des qu'elles different, l'image se retrouve decentree, et personne ne le voit
+      avant l'impression. Ce n'est donc signale que lorsque les deux conditions se cumulent.
+    #>
+    function Test-PositionFixe($srcDoc) {
+        try {
+            $largeurSource = $srcDoc.PageSetup.PageWidth - $srcDoc.PageSetup.LeftMargin - $srcDoc.PageSetup.RightMargin
+            $largeurCible = $doc.PageSetup.PageWidth - $doc.PageSetup.LeftMargin - $doc.PageSetup.RightMargin
+            if ([Math]::Abs($largeurSource - $largeurCible) -lt 2) { return $false }
+            foreach ($forme in $srcDoc.Shapes) {
+                # wdShapeCenter/Left/Right/Inside/Outside valent -999 a -995 : Word recalcule
+                # ces positions a chaque rendu, elles suivent donc les marges reellement
+                # appliquees. Toute autre valeur est un decalage fige a l'ecriture.
+                if ($forme.Left -le -995) { continue }
+                return $true
+            }
+            return $false
+        } catch {
+            # Un avertissement ne doit jamais faire echouer une generation.
+            return $false
+        }
+    }
+
     function Insert-DocumentContent($path) {
         $srcDoc = $word.Documents.Open([string]$path, $false, $true, $false)
         try {
+            $script:PositionFixeRisquee = Test-PositionFixe $srcDoc
             $selection.Range.FormattedText = $srcDoc.Content.FormattedText
         } finally {
             $srcDoc.Close($false)   # wdDoNotSaveChanges
@@ -138,7 +165,7 @@ try {
     # taille de son titre ; sans decalage, son contenu se retrouve au meme alignement
     # que celui d'un chapitre de premier niveau, et la hierarchie du plan disparait a la
     # lecture. Chaque niveau sous le premier ajoute donc un retrait supplementaire au
-    # contenu inséré (jamais au titre lui-meme, qui reste sous son style de titre).
+    # contenu insere (jamais au titre lui-meme, qui reste sous son style de titre).
     function Set-ContentIndent($range, $level) {
         $additionalPerLevel = 17   # points (~0.6 cm) par niveau ; LeftIndent s'exprime en
                                     # points, contrairement au w:ind du .docx brut (en twips)
@@ -182,6 +209,9 @@ try {
         if ($i -gt 0) { $selection.InsertBreak(7) }   # wdPageBreak
         $insertStart = $selection.Range.Start
         Insert-DocumentContent $coverPages[$i]
+        if ($script:PositionFixeRisquee) {
+            $warnings += "Page de garde $($i + 1) : une image y est placee a une position fixe, calee sur des marges differentes de celles du gabarit. Verifiez son centrage dans le document genere."
+        }
         Go-ToEnd
         Trim-BlankEdges ($doc.Range($insertStart, $selection.Range.End))
     }
@@ -261,6 +291,9 @@ try {
             Go-ToEnd
             $insertStart = $selection.Range.Start
             Insert-DocumentContent $chapter.contentPath
+            if ($script:PositionFixeRisquee) {
+                $warnings += "Chapitre $($chapter.title) : une image y est placee a une position fixe, calee sur des marges differentes de celles du gabarit. Verifiez son centrage dans le document genere."
+            }
             Go-ToEnd
             Trim-BlankEdges ($doc.Range($insertStart, $selection.Range.End))
             # Le retrait se calcule sur ce qu'il reste APRES le rognage : un contenu
@@ -305,8 +338,10 @@ try {
                 $section.Headers.Item(1).LinkToPrevious = $false
                 $section.Footers.Item(1).LinkToPrevious = $false
             }
-            $section.Headers.Item(1).Range.Delete()
-            $section.Footers.Item(1).Range.Delete()
+            # Out-Null comme partout ailleurs : Range.Delete renvoie le nombre de
+            # caracteres supprimes, qui sortirait au milieu des evenements JSON.
+            $section.Headers.Item(1).Range.Delete() | Out-Null
+            $section.Footers.Item(1).Range.Delete() | Out-Null
         }
     }
 
