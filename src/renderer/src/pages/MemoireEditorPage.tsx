@@ -4,7 +4,12 @@ import GenerationDialog from '../components/GenerationDialog'
 import Modal from '../components/Modal'
 import { buildAiInstructions } from '../lib/aiInstructions'
 import { describeError } from '../lib/describeError'
-import type { GenerationProgressEvent, GenerationResult, Memoire } from '../../../shared/types'
+import type {
+  ConformiteResult,
+  GenerationProgressEvent,
+  GenerationResult,
+  Memoire
+} from '../../../shared/types'
 
 /**
  * Owns the mémoire's draft: nothing here is persisted until "Enregistrer" is clicked
@@ -35,6 +40,9 @@ export default function MemoireEditorPage({
   const [steps, setSteps] = useState<string[]>([])
   const [result, setResult] = useState<GenerationResult | null>(null)
   const [aiPromptCopied, setAiPromptCopied] = useState(false)
+  const [conforming, setConforming] = useState(false)
+  const [conformite, setConformite] = useState<ConformiteResult | null>(null)
+  const [conformiteError, setConformiteError] = useState<string | null>(null)
   const [libraryPath, setLibraryPath] = useState('')
   const [generalNotes, setGeneralNotes] = useState('')
   const latest = useRef<Memoire | null>(null)
@@ -119,6 +127,22 @@ export default function MemoireEditorPage({
     setAiPromptCopied(true)
   }
 
+  /** Réparation ponctuelle : remet les fichiers de contenu au format de la page finale,
+   *  pour ceux écrits avant cette règle. Ce qui est créé ou attaché depuis naît conforme. */
+  async function conformer(): Promise<void> {
+    if (!draft) return
+    setConformiteError(null)
+    setConforming(true)
+    try {
+      if (status !== 'saved') await save()
+      setConformite(await window.api.generation.conformer(memoireId))
+    } catch (err) {
+      setConformiteError(describeError(err))
+    } finally {
+      setConforming(false)
+    }
+  }
+
   if (!draft) return <p className="muted">Chargement...</p>
 
   return (
@@ -169,6 +193,14 @@ export default function MemoireEditorPage({
         <button className="secondary" onClick={() => void copyAiPrompt()}>
           Copier consigne pour IA
         </button>
+        <button
+          className="secondary"
+          onClick={() => void conformer()}
+          disabled={conforming}
+          title="Remet les fichiers de contenu au format de la page finale : marges du gabarit, et retrait de leur niveau. Word doit être fermé."
+        >
+          {conforming ? 'Mise en conformité...' : 'Conformer les contenus'}
+        </button>
       </div>
 
       <MemoirePlanEditor draft={draft} edit={edit} generalNotes={generalNotes} />
@@ -209,6 +241,70 @@ export default function MemoireEditorPage({
             a produit, et vérifiez que les copies de sauvegarde attendues ont bien été
             créées avant de faire confiance à ses modifications.
           </p>
+        </Modal>
+      )}
+
+      {(conformite || conformiteError) && (
+        <Modal
+          title="Mise en conformité des contenus"
+          onClose={() => {
+            setConformite(null)
+            setConformiteError(null)
+          }}
+          actions={
+            <button
+              className="primary"
+              onClick={() => {
+                setConformite(null)
+                setConformiteError(null)
+              }}
+            >
+              Fermer
+            </button>
+          }
+        >
+          {conformiteError && <p className="error-text">{conformiteError}</p>}
+          {conformite && (
+            <>
+              {conformite.ajustes.length === 0 && conformite.echecs.length === 0 && (
+                <p>
+                  Rien à changer : les {conformite.conformes} fichiers de ce mémoire sont
+                  déjà au format de la page finale.
+                </p>
+              )}
+              {conformite.ajustes.length > 0 && (
+                <>
+                  <p>
+                    {conformite.ajustes.length === 1
+                      ? 'Un fichier a été ajusté'
+                      : `${conformite.ajustes.length} fichiers ont été ajustés`}
+                    {conformite.conformes > 0 && `, ${conformite.conformes} l'étaient déjà`}. Ils
+                    s&apos;ouvrent désormais dans Word tels qu&apos;ils apparaîtront dans le
+                    mémoire.
+                  </p>
+                  <ul>
+                    {conformite.ajustes.map((nom) => (
+                      <li key={nom}>{nom}</li>
+                    ))}
+                  </ul>
+                  <p className="muted">
+                    Une copie de chaque fichier modifié a été gardée à côté, sous le nom
+                    « .avant-conformite.bak.docx », pour revenir en arrière au besoin.
+                  </p>
+                </>
+              )}
+              {conformite.echecs.length > 0 && (
+                <>
+                  <p className="error-text">Fichiers laissés tels quels :</p>
+                  <ul>
+                    {conformite.echecs.map((echec) => (
+                      <li key={echec}>{echec}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </>
+          )}
         </Modal>
       )}
     </div>

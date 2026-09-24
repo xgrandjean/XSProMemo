@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type {
+  ConformiteResult,
   ContentRef,
   FolderProbeResult,
   GenerationProgressEvent,
@@ -75,6 +76,8 @@ const api = {
   generation: {
     run: (memoireId: string): Promise<GenerationResult> =>
       ipcRenderer.invoke('generation:run', memoireId),
+    conformer: (memoireId: string): Promise<ConformiteResult> =>
+      ipcRenderer.invoke('generation:conformer', memoireId),
     onProgress: (callback: (event: GenerationProgressEvent) => void): (() => void) => {
       const listener = (_e: Electron.IpcRendererEvent, payload: GenerationProgressEvent): void =>
         callback(payload)

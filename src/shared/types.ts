@@ -103,6 +103,16 @@ export interface GenerationProgressEvent {
   message: string
 }
 
+/** Ce qu'a donné une mise en conformité des contenus d'un mémoire. */
+export interface ConformiteResult {
+  /** Les fichiers effectivement modifiés, par leur libellé dans le plan. */
+  ajustes: string[]
+  /** Ceux qui étaient déjà au format de la page finale. */
+  conformes: number
+  /** Introuvables ou refusés par Word : signalés, jamais silencieux. */
+  echecs: string[]
+}
+
 export interface GenerationResult {
   docxPath: string
   /** Null when the PDF could not be written — most often because a reader was holding it
