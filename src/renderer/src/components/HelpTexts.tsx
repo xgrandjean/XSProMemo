@@ -426,13 +426,14 @@ export function PlanHelp(): JSX.Element {
         un fichier à part entière : si un document couvre plusieurs parties, découpez-le.
       </p>
       <p>
-        <b>Le retrait : un demi-centimètre par niveau.</b> 0,5 cm pour un chapitre de
-        premier niveau, 1 cm pour un sous-chapitre, 1,5 cm au troisième — c&apos;est ce qui
-        donne à lire la hiérarchie du plan dans la page. L&apos;application l&apos;applique
-        de toute façon à la génération ; en le posant vous-même dans Word (Paragraphe →
-        Retrait à gauche), votre fichier a le même aspect ouvert seul et une fois assemblé.
-        Plus simple encore : un <b>contenu vide</b> créé depuis le menu de la ligne naît
-        déjà au bon retrait et aux marges du gabarit.
+        <b>Le retrait : 1 cm, partout.</b> Le corps du texte est décalé d&apos;un
+        centimètre, quel que soit le niveau du chapitre — le même retrait dans tout le
+        mémoire, ce qui le distingue des titres sans faire vaciller le bord gauche d&apos;un
+        chapitre à l&apos;autre. L&apos;application l&apos;applique de toute façon à la
+        génération ; en le posant vous-même dans Word (Paragraphe → Retrait à gauche),
+        votre fichier a le même aspect ouvert seul et une fois assemblé. Plus simple
+        encore : un <b>contenu vide</b> créé depuis le menu de la ligne naît déjà au bon
+        retrait et aux marges du gabarit.
       </p>
       <p className="muted">
         Quand vous attachez un fichier Word existant, l&apos;application en range une copie

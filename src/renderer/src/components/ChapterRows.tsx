@@ -82,8 +82,7 @@ function ChapterRow({
     setContentError(null)
     onActivate(node.id)
     try {
-      // depth part de 0 a la racine, le niveau de chapitre de 1.
-      actions.onContentChange(node.id, await createBlankContent(actions.memoireId, depth + 1))
+      actions.onContentChange(node.id, await createBlankContent(actions.memoireId, true))
     } catch (err) {
       setContentError(describeError(err))
     }

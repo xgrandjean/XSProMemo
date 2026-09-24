@@ -78,10 +78,9 @@ reprend les marges du gabarit, jamais celles du fichier de contenu. Une image ou
 forme flottante posée à un décalage horizontal fixe garde ce décalage et se retrouve \
 décentrée une fois assemblée. Centre-la dynamiquement (position « Centré » par rapport à \
 la marge, ou image placée dans un paragraphe centré), jamais à une position absolue ;
-- le retrait de gauche du texte vaut **un demi-centimètre par niveau de chapitre** : \
-0,5 cm pour un chapitre de premier niveau, 1 cm pour un sous-chapitre, 1,5 cm au \
-troisième niveau, et ainsi de suite. Applique-le toi-même au corps du texte (Paragraphe → \
-Retrait à gauche) : le fichier aura alors le même aspect ouvert seul et une fois assemblé. \
+- le retrait de gauche du corps du texte vaut **1 cm, quel que soit le niveau du \
+chapitre** — le même pour tout le mémoire. Applique-le toi-même (Paragraphe → Retrait à \
+gauche) : le fichier aura alors le même aspect ouvert seul et une fois assemblé. \
 L'application l'impose de toute façon, en déplaçant le bloc entier — les écarts entre \
 paragraphes sont préservés, donc une citation ou une sous-liste plus à droite garde son \
 décalage relatif ;

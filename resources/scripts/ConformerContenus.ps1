@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
   Met les fichiers de contenu d'un memoire au format de la page finale : celle du gabarit,
-  et le retrait du niveau auquel chaque fichier est attache.
+  et le retrait commun a tout contenu de chapitre.
 
   Pourquoi passer par Word plutot que de retoucher le .docx : le retrait effectif d'un
   paragraphe peut venir du paragraphe, de son style ou d'une liste, et seul Word resout
@@ -36,8 +36,8 @@ function Release-Com($obj) {
     }
 }
 
-# Meme regle que l'assemblage : 0,5 cm par niveau, en points.
-$RETRAIT_PAR_NIVEAU = 14.17
+# Meme regle que l'assemblage : 1 cm pour tout contenu de chapitre, en points.
+$RETRAIT_CHAPITRE = 28.35
 
 function Resolve-WordConflict {
     $processes = @(Get-Process -Name WINWORD -ErrorAction SilentlyContinue)
@@ -182,10 +182,11 @@ try {
                 if ([Math]::Abs($avant[$k] - $apres[$k]) -ge 1) { $margesBougees = $true }
             }
 
-            $niveau = [int]$fichier.level
+            # Le retrait ne depend pas du niveau : seule une page de garde (0) n'en recoit
+            # aucun, comme a l'assemblage.
             $retraitBouge = $false
-            if ($niveau -gt 0) {
-                $retraitBouge = Set-ContentIndent $doc ($niveau * $RETRAIT_PAR_NIVEAU)
+            if ([int]$fichier.level -gt 0) {
+                $retraitBouge = Set-ContentIndent $doc $RETRAIT_CHAPITRE
             }
 
             if ($margesBougees -or $retraitBouge) {

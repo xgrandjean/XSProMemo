@@ -190,8 +190,8 @@ try {
     }
 
     <#
-      Pose le contenu d'un chapitre au retrait de son niveau, pour que la hierarchie du
-      plan se lise dans la page.
+      Pose le contenu d'un chapitre au retrait commun a tout le document, pour qu'il se
+      distingue des titres, eux au ras de la marge.
 
       On DEPLACE le bloc, on ne lui ajoute pas un retrait : beaucoup de fichiers de
       contenu portent deja le leur (celui de "1.1 Une ambition collective" vaut 1 cm), et
@@ -328,12 +328,12 @@ try {
 
         $selection.TypeText([string]$chapter.title)
         $selection.TypeParagraph()
-        # Un demi-centimetre par niveau, la valeur exacte que la consigne demande aux
-        # redacteurs d'appliquer : un fichier conforme traverse l'assemblage sans bouger.
-        # Fixe, et non mesure sous le texte du titre, car la largeur d'un numero varie
-        # ("1" contre "10", "1.9" contre "1.10") : le bord gauche du texte se serait
-        # deplace d'un chapitre a l'autre, a niveau pourtant egal.
-        $cibleRetrait = $level * 14.17            # points (0,5 cm)
+        # Un centimetre, le meme pour tous les chapitres quel que soit leur niveau : c'est
+        # la valeur exacte que la consigne demande aux redacteurs d'appliquer, donc un
+        # fichier conforme traverse l'assemblage sans bouger. Une seule valeur pour tout le
+        # document plutot qu'un pas par niveau : le bord gauche du texte ne se deplace
+        # jamais d'un chapitre a l'autre, et la regle tient en une phrase.
+        $cibleRetrait = 28.35                     # points (1 cm)
         $selection.Style = -1                     # wdStyleNormal
         # Le paragraphe suivant herite du reglage : il faut le lever, sinon le contenu
         # partirait lui aussi sur une nouvelle page.

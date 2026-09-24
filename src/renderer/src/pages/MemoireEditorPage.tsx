@@ -43,6 +43,7 @@ export default function MemoireEditorPage({
   const [conforming, setConforming] = useState(false)
   const [conformite, setConformite] = useState<ConformiteResult | null>(null)
   const [conformiteError, setConformiteError] = useState<string | null>(null)
+  const [conformiteOpen, setConformiteOpen] = useState(false)
   const [confirmRefresh, setConfirmRefresh] = useState(false)
   const [libraryPath, setLibraryPath] = useState('')
   const [generalNotes, setGeneralNotes] = useState('')
@@ -151,7 +152,11 @@ export default function MemoireEditorPage({
    *  pour ceux écrits avant cette règle. Ce qui est créé ou attaché depuis naît conforme. */
   async function conformer(): Promise<void> {
     if (!draft) return
+    // Word ouvre les fichiers un par un : sans fenêtre, l'attente paraissait sans fin.
+    setSteps([])
+    setConformite(null)
     setConformiteError(null)
+    setConformiteOpen(true)
     setConforming(true)
     try {
       if (status !== 'saved') await save()
@@ -296,25 +301,49 @@ export default function MemoireEditorPage({
         </Modal>
       )}
 
-      {(conformite || conformiteError) && (
+      {conformiteOpen && (
         <Modal
-          title="Mise en conformité des contenus"
-          onClose={() => {
-            setConformite(null)
-            setConformiteError(null)
-          }}
+          title={
+            conforming
+              ? 'Mise en conformité en cours'
+              : conformiteError
+                ? 'La mise en conformité a échoué'
+                : 'Mise en conformité des contenus'
+          }
+          onClose={() => setConformiteOpen(false)}
+          dismissable={!conforming}
           actions={
-            <button
-              className="primary"
-              onClick={() => {
-                setConformite(null)
-                setConformiteError(null)
-              }}
-            >
-              Fermer
-            </button>
+            conforming ? undefined : (
+              <button className="primary" onClick={() => setConformiteOpen(false)}>
+                Fermer
+              </button>
+            )
           }
         >
+          {conforming && (
+            <div className="generation-live">
+              <span className="generation-spinner" aria-hidden="true" />
+              <div>
+                <div className="generation-step">
+                  {steps[steps.length - 1] ?? 'Démarrage...'}
+                </div>
+                <div className="muted">
+                  Word ouvre les fichiers un par un, cela peut prendre un moment.
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Seulement pendant le travail : une fois fini, le compte rendu nomme déjà les
+              fichiers, et répéter les étapes brutes au-dessus n'ajoutait que du bruit. */}
+          {conforming && steps.length > 1 && (
+            <ul className="generation-history">
+              {steps.slice(0, -1).slice(-6).map((step, index) => (
+                <li key={index}>{step}</li>
+              ))}
+            </ul>
+          )}
+
           {conformiteError && <p className="error-text">{conformiteError}</p>}
           {conformite && (
             <>

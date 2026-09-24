@@ -89,7 +89,7 @@ async function gabaritPageSetup(root: string): Promise<{ size?: string; margins?
 async function auFormatDuGabarit(
   root: string,
   source: Buffer,
-  retraitDuNiveau: number | null
+  retraitDuContenu: number | null
 ): Promise<Buffer> {
   try {
     const zip = await JSZip.loadAsync(source)
@@ -101,11 +101,11 @@ async function auFormatDuGabarit(
     const { size, margins } = await gabaritPageSetup(root)
     if (size) xml = xml.replace(/<w:pgSz[^/]*\/>/g, size)
     if (margins) xml = xml.replace(/<w:pgMar[^/]*\/>/g, margins)
-    if (retraitDuNiveau && retraitDuNiveau > 0) {
+    if (retraitDuContenu && retraitDuContenu > 0) {
       // Le paragraphe vide du fichier livré n'a pas de mise en forme : on lui en donne une.
       xml = xml.replace(
         /(<w:body>\s*<w:p\b[^>]*>)/,
-        `$1<w:pPr><w:ind w:left="${retraitDuNiveau}"/></w:pPr>`
+        `$1<w:pPr><w:ind w:left="${retraitDuContenu}"/></w:pPr>`
       )
     }
 
@@ -119,23 +119,27 @@ async function auFormatDuGabarit(
   }
 }
 
-/** 0,5 cm, le pas de retrait par niveau que l'assemblage applique et que la consigne
- *  demande aux rédacteurs — voir `Set-ContentIndent` dans BuildMemoire.ps1. */
-const INDENT_TWIPS_PAR_NIVEAU = 283
+/** 1 cm, le retrait que l'assemblage applique au contenu de tout chapitre — quel que soit
+ *  son niveau — et que la consigne demande aux rédacteurs. Voir `Set-ContentIndent` dans
+ *  BuildMemoire.ps1. */
+const RETRAIT_CHAPITRE_TWIPS = 567
 
 /**
  * Starts a new content from a blank page rather than an existing file — for a chapter or
  * cover page the user wants to write directly in Word instead of attaching something
- * already prepared. `level` est la profondeur du chapitre (1 pour un chapitre de premier
- * niveau) ; absent pour une page de garde, qui ne reçoit aucun retrait.
+ * already prepared. Une page de garde ne reçoit pas de retrait, l'assemblage ne lui en
+ * pose pas non plus.
  */
 export async function createBlankContent(
   root: string,
   memoireId: string,
-  level: number | null = null
+  pourChapitre = false
 ): Promise<ContentRef> {
-  const retrait = level && level > 0 ? level * INDENT_TWIPS_PAR_NIVEAU : null
-  const bytes = await auFormatDuGabarit(root, await fs.readFile(blankContentSource()), retrait)
+  const bytes = await auFormatDuGabarit(
+    root,
+    await fs.readFile(blankContentSource()),
+    pourChapitre ? RETRAIT_CHAPITRE_TWIPS : null
+  )
   const originalName = 'Nouveau contenu.docx'
   const file = await storeContentFor(root, memoireId, originalName, bytes)
   return { file, originalName }
