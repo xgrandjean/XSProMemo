@@ -43,6 +43,7 @@ export default function MemoireEditorPage({
   const [conforming, setConforming] = useState(false)
   const [conformite, setConformite] = useState<ConformiteResult | null>(null)
   const [conformiteError, setConformiteError] = useState<string | null>(null)
+  const [confirmRefresh, setConfirmRefresh] = useState(false)
   const [libraryPath, setLibraryPath] = useState('')
   const [generalNotes, setGeneralNotes] = useState('')
   const latest = useRef<Memoire | null>(null)
@@ -127,6 +128,25 @@ export default function MemoireEditorPage({
     setAiPromptCopied(true)
   }
 
+  /**
+   * Relit le mémoire sur le disque. Utile quand une IA vient d'y toucher : sans cela
+   * l'écran garde l'ancien plan, et le prochain « Enregistrer » écrase son travail.
+   * Des modifications non enregistrées seraient perdues, d'où la confirmation.
+   */
+  async function reload(): Promise<void> {
+    setConfirmRefresh(false)
+    const refreshed = await window.api.memoires.get(memoireId)
+    latest.current = refreshed
+    setDraft(refreshed)
+    setStatus('saved')
+    setSaveError(null)
+  }
+
+  function refresh(): void {
+    if (status === 'saved') void reload()
+    else setConfirmRefresh(true)
+  }
+
   /** Réparation ponctuelle : remet les fichiers de contenu au format de la page finale,
    *  pour ceux écrits avant cette règle. Ce qui est créé ou attaché depuis naît conforme. */
   async function conformer(): Promise<void> {
@@ -203,7 +223,12 @@ export default function MemoireEditorPage({
         </button>
       </div>
 
-      <MemoirePlanEditor draft={draft} edit={edit} generalNotes={generalNotes} />
+      <MemoirePlanEditor
+        draft={draft}
+        edit={edit}
+        generalNotes={generalNotes}
+        onRefresh={refresh}
+      />
 
       {dialogOpen && (
         <GenerationDialog
@@ -240,6 +265,33 @@ export default function MemoireEditorPage({
             consignes à la lettre, d&apos;autres moins bien. Relisez toujours ce qu&apos;il
             a produit, et vérifiez que les copies de sauvegarde attendues ont bien été
             créées avant de faire confiance à ses modifications.
+          </p>
+        </Modal>
+      )}
+
+      {confirmRefresh && (
+        <Modal
+          title="Recharger depuis le disque ?"
+          onClose={() => setConfirmRefresh(false)}
+          actions={
+            <>
+              <button className="secondary" onClick={() => setConfirmRefresh(false)}>
+                Annuler
+              </button>
+              <button className="primary" onClick={() => void reload()}>
+                Recharger
+              </button>
+            </>
+          }
+        >
+          <p>
+            Ce {draft.isTemplate ? 'modèle' : 'mémoire'} a des modifications non
+            enregistrées. Les recharger depuis le disque les remplacera par ce qui s&apos;y
+            trouve — ce qu&apos;une IA vient d&apos;y écrire, par exemple.
+          </p>
+          <p className="muted">
+            Pour garder les deux, annulez, cliquez sur Enregistrer, puis rechargez : votre
+            version aura alors écrasé celle du disque.
           </p>
         </Modal>
       )}

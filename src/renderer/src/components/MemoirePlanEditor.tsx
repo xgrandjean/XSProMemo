@@ -43,12 +43,15 @@ function findContentFile(memoire: Memoire, chapterId: string): string | null {
 export default function MemoirePlanEditor({
   draft,
   edit,
-  generalNotes = ''
+  generalNotes = '',
+  onRefresh
 }: {
   draft: Memoire
   edit: (mutate: (current: Memoire) => Memoire) => void
   /** Les consignes generales de redaction, ajoutees a la fin de la consigne pour Claude. */
   generalNotes?: string
+  /** Relit le mémoire sur le disque — après qu'une IA y a touché, par exemple. */
+  onRefresh?: () => void
 }): JSX.Element {
   const aiMode = useAiMode()
   const [toast, setToast] = useState<string | null>(null)
@@ -215,6 +218,15 @@ export default function MemoirePlanEditor({
           <span className="muted">
             Le sommaire et la pagination sont ajoutés automatiquement à la génération.
           </span>
+          {onRefresh && (
+            <button
+              className="icon-btn"
+              title="Relire ce mémoire sur le disque — après qu'une IA y a modifié le plan, par exemple"
+              onClick={onRefresh}
+            >
+              ⟳
+            </button>
+          )}
         </div>
 
         {draft.chapters.length === 0 && <p className="muted">Aucun chapitre.</p>}
