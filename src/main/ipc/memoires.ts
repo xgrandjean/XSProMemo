@@ -101,10 +101,13 @@ export function registerMemoiresIpc(): void {
   )
 
   /** Starts a new content from a blank page instead of an existing file. */
-  ipcMain.handle('memoires:createBlankContent', async (_event, id: string) => {
-    const libraryPath = await requireLibraryPath()
-    return createBlankContent(libraryPath, requireMemoireId(id))
-  })
+  ipcMain.handle(
+    'memoires:createBlankContent',
+    async (_event, input: { id: string; level?: number }) => {
+      const libraryPath = await requireLibraryPath()
+      return createBlankContent(libraryPath, requireMemoireId(input?.id), input?.level ?? null)
+    }
+  )
 
   /** Opens a content file in whatever application handles it (Word, a PDF reader...). */
   ipcMain.handle('memoires:openContent', async (_event, relativePath: string) => {

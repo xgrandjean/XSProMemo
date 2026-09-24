@@ -61,8 +61,8 @@ const api = {
     import: (zipPath: string): Promise<Memoire> => ipcRenderer.invoke('memoires:import', zipPath),
     importContent: (id: string, sourceAbsPath: string): Promise<ContentRef> =>
       ipcRenderer.invoke('memoires:importContent', { id, sourceAbsPath }),
-    createBlankContent: (id: string): Promise<ContentRef> =>
-      ipcRenderer.invoke('memoires:createBlankContent', id),
+    createBlankContent: (id: string, level?: number): Promise<ContentRef> =>
+      ipcRenderer.invoke('memoires:createBlankContent', { id, level }),
     openContent: (relativePath: string): Promise<void> =>
       ipcRenderer.invoke('memoires:openContent', relativePath),
     setLogo: (id: string, field: LogoField, imageAbsPath: string): Promise<Memoire> =>

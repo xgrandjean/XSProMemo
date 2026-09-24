@@ -419,29 +419,37 @@ export function PlanHelp(): JSX.Element {
 
       <h3>Ce que doivent contenir vos fichiers</h3>
       <p>
-        <b>Du contenu, et rien d&apos;autre.</b> Pas de titre de chapitre :
-        l&apos;application l&apos;ajoute déjà, et il ferait doublon. Pas de sommaire non
-        plus. Et surtout <b>aucun style « Titre »</b>, même pour découper un long chapitre :
-        chacun entrerait dans le sommaire du mémoire, sans numéro, entre deux vrais
-        chapitres.
+        <b>Du contenu, et rien d&apos;autre.</b> Pas de titre de chapitre —
+        l&apos;application l&apos;ajoute — pas de sommaire, et surtout <b>aucun style
+        « Titre »</b>, même pour découper un long chapitre : chacun entrerait dans le
+        sommaire du mémoire, sans numéro, entre deux vrais chapitres. Un sous-chapitre est
+        un fichier à part entière : si un document couvre plusieurs parties, découpez-le.
       </p>
       <p>
-        Un sous-chapitre est un fichier à part entière. Si un de vos documents contient
-        plusieurs parties, découpez-le en autant de fichiers et créez les sous-chapitres
-        correspondants.
+        <b>Le retrait : un demi-centimètre par niveau.</b> 0,5 cm pour un chapitre de
+        premier niveau, 1 cm pour un sous-chapitre, 1,5 cm au troisième — c&apos;est ce qui
+        donne à lire la hiérarchie du plan dans la page. L&apos;application l&apos;applique
+        de toute façon à la génération ; en le posant vous-même dans Word (Paragraphe →
+        Retrait à gauche), votre fichier a le même aspect ouvert seul et une fois assemblé.
+        Plus simple encore : un <b>contenu vide</b> créé depuis le menu de la ligne naît
+        déjà au bon retrait et aux marges du gabarit.
+      </p>
+      <p>
+        <b>La mise en page de la page appartient au gabarit</b> — marges, format,
+        orientation. Un contenu ne la refait donc pas de son côté : pas de saut de section
+        (il imposerait ses propres marges au reste du mémoire ; l&apos;application le retire
+        et vous le signale), pas de saut de page en fin de fichier (il laisserait une page
+        blanche — pour démarrer un chapitre sur une nouvelle page, c&apos;est le marqueur de
+        la ligne). Une image se centre dynamiquement plutôt qu&apos;à une position fixe, qui
+        se décalerait. Tableaux et images ne sont jamais déplacés à l&apos;assemblage :
+        dimensionnez-les pour la largeur de la page finale.
       </p>
       <p className="muted">
-        Inutile de vous demander s&apos;il faut laisser une ligne vide en tête ou en fin de
-        fichier avant que le titre du chapitre ne soit ajouté : l&apos;application la
-        retire automatiquement si vous en laissez une, et ne change rien si vous n&apos;en
-        mettez pas. Le titre reste toujours collé à ce qui suit, il ne se retrouve jamais
-        seul en bas d&apos;une page.
-      </p>
-      <p className="muted">
-        Pour qu&apos;une image reste toujours avec le texte qui l&apos;accompagne (légende,
-        phrase d&apos;introduction), sélectionnez les paragraphes concernés dans Word et
-        cochez Paragraphe → Enchaînements → « Avec le suivant » et/ou « Lignes solidaires »
-        — l&apos;application respecte ce réglage lors de l&apos;assemblage.
+        Deux choses dont vous n&apos;avez pas à vous soucier : une ligne vide en tête ou en
+        fin de fichier, que l&apos;application retire ; et un titre isolé en bas de page,
+        qui reste toujours collé à ce qui suit. Pour qu&apos;une image reste avec sa légende,
+        cochez dans Word Paragraphe → Enchaînements → « Avec le suivant » — l&apos;assemblage
+        respecte ce réglage.
       </p>
 
       <p className="muted">
