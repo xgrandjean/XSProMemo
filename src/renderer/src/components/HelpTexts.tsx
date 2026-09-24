@@ -434,6 +434,13 @@ export function PlanHelp(): JSX.Element {
         Plus simple encore : un <b>contenu vide</b> créé depuis le menu de la ligne naît
         déjà au bon retrait et aux marges du gabarit.
       </p>
+      <p className="muted">
+        Quand vous attachez un fichier Word existant, l&apos;application en range une copie
+        dans le dossier du mémoire — votre fichier d&apos;origine n&apos;est jamais modifié
+        — et donne à cette copie les marges du gabarit, pour que vous la rédigiez à la
+        largeur du mémoire. Son retrait, lui, reste le vôtre : c&apos;est à la génération
+        qu&apos;il est replacé.
+      </p>
       <p>
         <b>La mise en page de la page appartient au gabarit</b> — marges, format,
         orientation. Un contenu ne la refait donc pas de son côté : pas de saut de section

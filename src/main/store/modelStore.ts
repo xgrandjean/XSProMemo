@@ -46,7 +46,9 @@ export async function importContent(
 
   const base = path.basename(srcAbsPath, '.docx').replace(/[\/:*?"<>|]/g, '-').trim() || 'contenu'
   const originalName = `${base}.docx`
-  const bytes = await fs.readFile(srcAbsPath)
+  // La copie rangee dans le memoire prend la page du gabarit ; le fichier choisi par
+  // l'utilisateur, lui, n'est jamais touche.
+  const bytes = await auFormatDuGabarit(root, await fs.readFile(srcAbsPath), null)
   const file = await storeContentFor(root, memoireId, originalName, bytes)
   return { file, originalName }
 }
@@ -67,41 +69,53 @@ async function gabaritPageSetup(root: string): Promise<{ size?: string; margins?
       margins: xml?.match(/<w:pgMar[^/]*\/>/)?.[0]
     }
   } catch {
-    // Gabarit absent ou illisible : le document vierge part tel qu'il est livré.
+    // Gabarit absent ou illisible : le fichier de contenu garde sa propre page.
     return {}
   }
 }
 
 /**
- * Le document vierge livré, mis au format de la page finale : marges du gabarit, et
- * retrait du niveau auquel il va être attaché. Sans cela l'utilisateur écrirait dans une
- * page qui ne ressemble pas au mémoire assemblé, et son texte se déplacerait à la
- * génération — exactement la surprise que la règle des 0,5 cm par niveau supprime.
+ * Met un fichier de contenu au format de la page finale, avant de le ranger dans le
+ * mémoire : la page du gabarit, et — pour un document vierge seulement — le retrait du
+ * niveau auquel il va être attaché. Sans cela on rédige dans une page qui ne ressemble
+ * pas au mémoire assemblé.
+ *
+ * Le retrait n'est pose que sur un document vierge, dont le seul paragraphe est vide. Sur
+ * un fichier deja redige il faudrait connaitre le retrait EFFECTIF de chaque paragraphe,
+ * qui peut venir du paragraphe, de son style ou d'une liste : c'est Word qui le resout, a
+ * la generation, ou le bloc est replace correctement de toute facon. Le reimplementer ici
+ * pour reecrire le contenu de l'utilisateur serait beaucoup de code fragile.
  */
-async function blankContentBytes(root: string, level: number | null): Promise<Buffer> {
-  const livre = await fs.readFile(blankContentSource())
+async function auFormatDuGabarit(
+  root: string,
+  source: Buffer,
+  retraitDuNiveau: number | null
+): Promise<Buffer> {
   try {
-    const zip = await JSZip.loadAsync(livre)
+    const zip = await JSZip.loadAsync(source)
     const document = zip.file('word/document.xml')
-    if (!document) return livre
+    if (!document) return source
     let xml = await document.async('string')
 
+    // Toutes les sections du fichier, pas seulement la premiere.
     const { size, margins } = await gabaritPageSetup(root)
-    if (size) xml = xml.replace(/<w:pgSz[^/]*\/>/, size)
-    if (margins) xml = xml.replace(/<w:pgMar[^/]*\/>/, margins)
-    if (level && level > 0) {
+    if (size) xml = xml.replace(/<w:pgSz[^/]*\/>/g, size)
+    if (margins) xml = xml.replace(/<w:pgMar[^/]*\/>/g, margins)
+    if (retraitDuNiveau && retraitDuNiveau > 0) {
       // Le paragraphe vide du fichier livré n'a pas de mise en forme : on lui en donne une.
       xml = xml.replace(
         /(<w:body>\s*<w:p\b[^>]*>)/,
-        `$1<w:pPr><w:ind w:left="${level * INDENT_TWIPS_PAR_NIVEAU}"/></w:pPr>`
+        `$1<w:pPr><w:ind w:left="${retraitDuNiveau}"/></w:pPr>`
       )
     }
 
     zip.file('word/document.xml', xml)
     return zip.generateAsync({ type: 'nodebuffer' })
   } catch {
-    // Un document vierge imparfait vaut mieux qu'un bouton qui échoue.
-    return livre
+    // Un fichier au mauvais format de page vaut mieux qu'un bouton qui echoue : le
+    // memoire assemble sera correct dans tous les cas, c'est la page de travail qui
+    // ressemblera moins au resultat.
+    return source
   }
 }
 
@@ -120,7 +134,8 @@ export async function createBlankContent(
   memoireId: string,
   level: number | null = null
 ): Promise<ContentRef> {
-  const bytes = await blankContentBytes(root, level)
+  const retrait = level && level > 0 ? level * INDENT_TWIPS_PAR_NIVEAU : null
+  const bytes = await auFormatDuGabarit(root, await fs.readFile(blankContentSource()), retrait)
   const originalName = 'Nouveau contenu.docx'
   const file = await storeContentFor(root, memoireId, originalName, bytes)
   return { file, originalName }
