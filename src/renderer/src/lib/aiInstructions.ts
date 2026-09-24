@@ -173,7 +173,11 @@ l'assemblage. Modifie la *définition* des styles, jamais du texte.
 2. **Le pied de page.** Numéro de page, coordonnées de l'entreprise, mention fixe : c'est le \
 seul endroit où poser quelque chose qui doit apparaître sur chaque page. Il est repris tel \
 quel dans le document final.
-3. **La mise en page.** Marges, format, orientation par défaut.
+3. **La mise en page.** Marges, format, orientation par défaut. C'est ici, et nulle part \
+ailleurs, que se règle la géométrie de la page : les marges des fichiers de contenu sont \
+ignorées à l'assemblage. Inutile en revanche de poser un retrait à gauche dans le style \
+« Normal » pour décaler le corps du texte : l'application pose elle-même celui du contenu \
+(1 cm), et le tien serait sans effet sur lui.
 
 ## L'en-tête ne sert à rien ici
 Vérifié sur le logiciel : l'en-tête du gabarit est intégralement effacé à la génération. \
@@ -287,11 +291,31 @@ En revanche, toute mise en forme posée à la main sur du texte — changer la p
 la couleur — est conservée telle quelle dans le document final. N'en pose donc que si tu la \
 veux vraiment à l'impression.
 
-## Images et légendes
+## La page n'est pas la tienne
+Les marges, le format et l'orientation du document final viennent du gabarit du mémoire, \
+jamais de ce fichier. Trois conséquences :
+- **Le retrait à gauche du corps du texte vaut 1 cm**, quel que soit le niveau du chapitre — \
+le même dans tout le mémoire. Ce document l'a déjà s'il a été créé par l'application ; sinon, \
+pose-le (Paragraphe → Retrait à gauche). L'assemblage l'impose de toute façon, en déplaçant \
+le bloc entier : les écarts entre paragraphes sont préservés, donc une citation ou une \
+sous-liste plus à droite garde son décalage.
+- **Ne touche pas aux marges et n'insère aucun saut de section.** Un saut de section emporte \
+sa propre mise en page et l'imposerait à tout ce qui le précède dans le mémoire, sommaire \
+compris. L'application le retire et le signale, mais mieux vaut ne pas en mettre.
+- **Pas de saut de page à la fin du document** : il laisserait une page blanche dans le \
+mémoire. Pour qu'un chapitre commence sur une nouvelle page, c'est un réglage de son plan, \
+dans l'application.
+
+## Images, tableaux et légendes
 Si tu insères une image accompagnée d'une légende ou d'une phrase d'introduction, sélectionne \
 les paragraphes concernés et coche, dans Paragraphe → Enchaînements, « Avec le suivant » \
 et/ou « Lignes solidaires ». Sans cela, un saut de page peut séparer l'image de son texte. Ce \
 réglage est conservé à l'assemblage.
+Contrairement au texte, l'assemblage ne déplace jamais un tableau ni une image : dimensionne-les \
+pour la largeur de la page finale, sans quoi un tableau trop large débordera tel quel. Et centre \
+une image dynamiquement (Position → « Centré » par rapport à la marge, ou une image dans un \
+paragraphe centré) plutôt qu'à une position fixe : calée sur les marges de ce fichier, elle se \
+retrouverait décentrée une fois le mémoire assemblé.
 
 ## Lignes vides
 Ne te demande pas s'il en faut une au début ou à la fin du document : l'application retire \
