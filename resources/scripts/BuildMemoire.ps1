@@ -161,30 +161,72 @@ try {
         }
     }
 
-    # Un sous-chapitre imbrique n'est visuellement distinct de son parent que par la
-    # taille de son titre ; sans decalage, son contenu se retrouve au meme alignement
-    # que celui d'un chapitre de premier niveau, et la hierarchie du plan disparait a la
-    # lecture. Chaque niveau sous le premier ajoute donc un retrait supplementaire au
-    # contenu insere (jamais au titre lui-meme, qui reste sous son style de titre).
-    function Set-ContentIndent($range, $level) {
-        $additionalPerLevel = 17   # points (~0.6 cm) par niveau ; LeftIndent s'exprime en
-                                    # points, contrairement au w:ind du .docx brut (en twips)
-        $additional = ($level - 1) * $additionalPerLevel
-        if ($additional -le 0 -or $range.Paragraphs.Count -eq 0) { return }
+    <#
+      Un saut de section apporte avec lui SA mise en page. Transplante depuis un fichier
+      de contenu, il impose donc les marges de ce fichier a tout ce qui le precede dans le
+      memoire - sommaire compris - alors que la geometrie de la page appartient au seul
+      gabarit. Word rattache le texte precedent a la section suivante quand le saut
+      disparait : le supprimer rend bien la main au gabarit.
+      Renvoie $true si le contenu en portait, pour le signaler a l'utilisateur.
+    #>
+    function Remove-SautsDeSection($range) {
+        try {
+            $find = $range.Find
+            $find.ClearFormatting()
+            $find.Replacement.ClearFormatting()
+            $find.Text = "^b"
+            # Par une marque de paragraphe, jamais par rien : le saut porte aussi la fin du
+            # paragraphe qui le precede, et le remplacer par du vide souderait la derniere
+            # phrase d'avant a la premiere phrase d'apres.
+            $find.Replacement.Text = "^p"
+            $find.Forward = $true
+            $find.Wrap = 0            # wdFindStop : ne deborde pas de la plage inseree
+            $find.Format = $false
+            return [bool]$find.Execute([ref]"^b", [ref]$false, [ref]$false, [ref]$false, [ref]$false,
+                [ref]$false, [ref]$true, [ref]0, [ref]$false, [ref]"^p", [ref]2)   # wdReplaceAll
+        } catch {
+            return $false
+        }
+    }
+
+    <#
+      Pose le contenu d'un chapitre au retrait de son niveau, pour que la hierarchie du
+      plan se lise dans la page.
+
+      On DEPLACE le bloc, on ne lui ajoute pas un retrait : beaucoup de fichiers de
+      contenu portent deja le leur (celui de "1.1 Une ambition collective" vaut 1 cm), et
+      s'ajouter au leur produisait un bloc perdu au milieu de la page. Le decalage se
+      calcule sur le paragraphe le moins retrait du bloc, ce qui preserve les retraits
+      relatifs a l'interieur - listes imbriquees et citations gardent leur structure - et
+      ne touche a rien quand le fichier respecte deja la regle annoncee aux redacteurs.
+    #>
+    function Set-ContentIndent($range, $cible) {
+        if ($cible -le 0 -or $range.Paragraphs.Count -eq 0) { return }
+
+        # Seul le texte courant se deplace. Un tableau garde sa geometrie : retoucher ses
+        # paragraphes ne deplacerait pas le tableau mais retrecirait le texte DANS chaque
+        # cellule. Une image en ligne garde la sienne aussi : large, elle deborderait de
+        # la marge de droite et serait rognee a l'impression.
+        $eligibles = @()
         foreach ($paragraph in $range.Paragraphs) {
-            # Seul le texte courant se decale. Un tableau garde sa geometrie : retoucher
-            # ses paragraphes ne deplacerait pas le tableau mais retrecirait le texte DANS
-            # chaque cellule. Une image en ligne garde la sienne aussi : large, elle
-            # deborderait de la marge de droite et serait rognee a l'impression.
             if ($paragraph.Range.Information(12)) { continue }   # wdWithInTable
             if ($paragraph.Range.InlineShapes.Count -gt 0) { continue }
+            # Word rend 9999999 (wdUndefined) quand le retrait n'est pas determinable.
+            if ($paragraph.Range.ParagraphFormat.LeftIndent -ge 9999999) { continue }
+            $eligibles += $paragraph
+        }
+        if ($eligibles.Count -eq 0) { return }
 
-            $current = $paragraph.Range.ParagraphFormat.LeftIndent
-            # Word rend 9999999 (wdUndefined) quand le retrait n'est pas determinable, et
-            # refuse toute valeur hors de +/-1584 pt : additionner a l'aveugle fait alors
-            # echouer la generation entiere sur un simple paragraphe particulier.
-            if ($current -ge 9999999 -or ($current + $additional) -gt 1584) { continue }
-            $paragraph.Range.ParagraphFormat.LeftIndent = $current + $additional
+        $base = ($eligibles | ForEach-Object { $_.Range.ParagraphFormat.LeftIndent } | Measure-Object -Minimum).Minimum
+        $decalage = $cible - $base
+        if ([Math]::Abs($decalage) -lt 1) { return }
+
+        foreach ($paragraph in $eligibles) {
+            $nouveau = $paragraph.Range.ParagraphFormat.LeftIndent + $decalage
+            # Word refuse toute valeur hors de +/-1584 pt, et un retrait negatif ferait
+            # deborder le texte dans la marge.
+            if ($nouveau -lt 0 -or $nouveau -gt 1584) { continue }
+            $paragraph.Range.ParagraphFormat.LeftIndent = $nouveau
         }
     }
 
@@ -211,6 +253,10 @@ try {
         Insert-DocumentContent $coverPages[$i]
         if ($script:PositionFixeRisquee) {
             $warnings += "Page de garde $($i + 1) : une image y est placee a une position fixe, calee sur des marges differentes de celles du gabarit. Verifiez son centrage dans le document genere."
+        }
+        Go-ToEnd
+        if (Remove-SautsDeSection ($doc.Range($insertStart, $selection.Range.End))) {
+            $warnings += "Page de garde $($i + 1) : un saut de section present dans le fichier a ete retire, il imposait ses propres marges au document."
         }
         Go-ToEnd
         Trim-BlankEdges ($doc.Range($insertStart, $selection.Range.End))
@@ -282,6 +328,12 @@ try {
 
         $selection.TypeText([string]$chapter.title)
         $selection.TypeParagraph()
+        # Un demi-centimetre par niveau, la valeur exacte que la consigne demande aux
+        # redacteurs d'appliquer : un fichier conforme traverse l'assemblage sans bouger.
+        # Fixe, et non mesure sous le texte du titre, car la largeur d'un numero varie
+        # ("1" contre "10", "1.9" contre "1.10") : le bord gauche du texte se serait
+        # deplace d'un chapitre a l'autre, a niveau pourtant egal.
+        $cibleRetrait = $level * 14.17            # points (0,5 cm)
         $selection.Style = -1                     # wdStyleNormal
         # Le paragraphe suivant herite du reglage : il faut le lever, sinon le contenu
         # partirait lui aussi sur une nouvelle page.
@@ -295,6 +347,10 @@ try {
                 $warnings += "Chapitre $($chapter.title) : une image y est placee a une position fixe, calee sur des marges differentes de celles du gabarit. Verifiez son centrage dans le document genere."
             }
             Go-ToEnd
+            if (Remove-SautsDeSection ($doc.Range($insertStart, $selection.Range.End))) {
+                $warnings += "Chapitre $($chapter.title) : un saut de section present dans le fichier a ete retire, il imposait ses propres marges au document."
+            }
+            Go-ToEnd
             Trim-BlankEdges ($doc.Range($insertStart, $selection.Range.End))
             # Le retrait se calcule sur ce qu'il reste APRES le rognage : un contenu
             # entierement vide n'en laisse rien, et la plage ne delimiterait alors plus
@@ -302,7 +358,7 @@ try {
             Go-ToEnd
             $contentEnd = $selection.Range.End
             if ($contentEnd -gt $insertStart) {
-                Set-ContentIndent ($doc.Range($insertStart, $contentEnd)) $level
+                Set-ContentIndent ($doc.Range($insertStart, $contentEnd)) $cibleRetrait
             }
         }
     }

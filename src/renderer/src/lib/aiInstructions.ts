@@ -78,6 +78,23 @@ reprend les marges du gabarit, jamais celles du fichier de contenu. Une image ou
 forme flottante posée à un décalage horizontal fixe garde ce décalage et se retrouve \
 décentrée une fois assemblée. Centre-la dynamiquement (position « Centré » par rapport à \
 la marge, ou image placée dans un paragraphe centré), jamais à une position absolue ;
+- le retrait de gauche du texte vaut **un demi-centimètre par niveau de chapitre** : \
+0,5 cm pour un chapitre de premier niveau, 1 cm pour un sous-chapitre, 1,5 cm au \
+troisième niveau, et ainsi de suite. Applique-le toi-même au corps du texte (Paragraphe → \
+Retrait à gauche) : le fichier aura alors le même aspect ouvert seul et une fois assemblé. \
+L'application l'impose de toute façon, en déplaçant le bloc entier — les écarts entre \
+paragraphes sont préservés, donc une citation ou une sous-liste plus à droite garde son \
+décalage relatif ;
+- aucun saut de section, ni réglage de marges, de colonnes ou d'orientation : un saut de \
+section emporte sa propre mise en page et l'imposerait à tout ce qui le précède dans le \
+mémoire, sommaire compris. L'application le retire et le signale, mais mieux vaut ne pas \
+en mettre ;
+- pas de saut de page à la fin du fichier : il laisse une page blanche dans le mémoire. \
+Pour qu'un chapitre commence sur une nouvelle page, c'est une case à cocher dans le plan, \
+pas quelque chose à écrire dans le contenu ;
+- un tableau ou une image ne sont jamais déplacés par l'application, contrairement au \
+texte : dimensionne-les pour la colonne de texte du gabarit, sans quoi un tableau trop \
+large débordera tel quel ;
 - pas besoin de ligne vide en tête ou en fin de fichier : l'application les retire \
 automatiquement si tu en laisses, inutile de t'en soucier.
 Si un paragraphe contient une image accompagnée de texte (légende, phrase \
