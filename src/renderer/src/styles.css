@@ -548,6 +548,10 @@ button.danger-link,
   display: flex;
   flex-direction: column;
   min-width: 190px;
+  /* Un menu plus haut que la fenetre defile au lieu de sortir par le bas : ses dernieres
+     entrees restent atteignables meme sur un petit ecran. */
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
   padding: 4px;
   background: var(--panel);
   border: 1px solid var(--border);

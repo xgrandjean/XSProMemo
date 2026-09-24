@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, type RefObject } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 
 export interface DropdownMenuItem {
@@ -26,6 +26,37 @@ export default function DropdownMenu({
   onClose: () => void
 }): JSX.Element {
   const menuRef = useRef<HTMLDivElement>(null)
+  // Position calculee une fois le menu mesure : tant qu'elle manque, il reste invisible,
+  // sans quoi il apparaitrait une image au mauvais endroit avant de sauter en place.
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null)
+
+  /**
+   * Un menu ouvert depuis une ligne en bas de liste depassait sous la fenetre, et ses
+   * dernieres entrees devenaient inatteignables. Il s'ouvre donc vers le bas quand la
+   * place y est, vers le haut sinon, et se rabat dans la fenetre dans tous les cas.
+   */
+  useLayoutEffect(() => {
+    const menu = menuRef.current
+    if (!menu) return
+    const marge = 8
+    const { height, width } = menu.getBoundingClientRect()
+    const declencheur = anchor === 'trigger' ? triggerRef?.current?.getBoundingClientRect() : null
+    const curseur = anchor === 'trigger' ? null : anchor
+
+    const sousAncre = declencheur ? declencheur.bottom + 4 : (curseur?.y ?? 0)
+    const surAncre = declencheur ? declencheur.top - 4 : (curseur?.y ?? 0)
+    const gauche = declencheur ? declencheur.left : (curseur?.x ?? 0)
+
+    const deborde = sousAncre + height > window.innerHeight - marge
+    const placeAuDessus = surAncre - height > marge
+    const haut = deborde && placeAuDessus ? surAncre - height : sousAncre
+
+    setPosition({
+      // Un menu plus haut que la fenetre defile (max-height en CSS) plutot que de sortir.
+      top: Math.max(marge, Math.min(haut, window.innerHeight - marge - height)),
+      left: Math.max(marge, Math.min(gauche, window.innerWidth - marge - width))
+    })
+  }, [anchor, triggerRef])
 
   useEffect(() => {
     function onDocMouseDown(e: MouseEvent): void {
@@ -42,11 +73,11 @@ export default function DropdownMenu({
     }
   }, [onClose])
 
-  const rect = anchor === 'trigger' ? triggerRef?.current?.getBoundingClientRect() : null
-  const style: React.CSSProperties =
-    anchor === 'trigger'
-      ? { top: (rect?.bottom ?? 0) + 4, left: rect?.left ?? 0 }
-      : { top: anchor.y, left: anchor.x }
+  const style: React.CSSProperties = {
+    top: position?.top ?? 0,
+    left: position?.left ?? 0,
+    visibility: position ? 'visible' : 'hidden'
+  }
 
   return createPortal(
     <div className="dropdown-menu" style={style} ref={menuRef}>
