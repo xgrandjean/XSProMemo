@@ -61,11 +61,13 @@ try {
     $word.ScreenUpdating = $false
 
     . (Join-Path $PSScriptRoot "HeadingStyles.ps1")
+    . (Join-Path $PSScriptRoot "FooterPageNumber.ps1")
 
     Copy-Item -Force -LiteralPath $manifest.shellPath -Destination $manifest.outputDocxPath
     $doc = $word.Documents.Open($manifest.outputDocxPath, $false, $false)
     $doc.Activate()
     Set-HeadingKeepTogether $doc
+    Set-PageNumberCellWidth $doc
 
     $selection = $word.Selection
     $selection.EndKey(6) | Out-Null   # wdStory

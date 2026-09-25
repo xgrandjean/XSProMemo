@@ -1,6 +1,6 @@
 {
   "name": "xspromemo",
-  "version": "2.0.0",
+  "version": "2.1.1",
   "description": "Générateur de mémoires techniques pour appels d'offres",
   "main": "./out/main/index.js",
   "author": "scse972",

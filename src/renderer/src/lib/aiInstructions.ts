@@ -172,7 +172,10 @@ courant : le « Normal » de chaque fichier de contenu est remplacé par celui-c
 l'assemblage. Modifie la *définition* des styles, jamais du texte.
 2. **Le pied de page.** Numéro de page, coordonnées de l'entreprise, mention fixe : c'est le \
 seul endroit où poser quelque chose qui doit apparaître sur chaque page. Il est repris tel \
-quel dans le document final.
+quel dans le document final. S'il est bâti sur un tableau, ne donne pas une largeur en \
+pourcentage à une cellule qui porte un texte de taille fixe : élargir les marges la \
+rétrécit, et « Page 100 » finit sur deux lignes. Donne-lui une largeur \
+absolue, ou une part suffisamment large.
 3. **La mise en page.** Marges, format, orientation par défaut. C'est ici, et nulle part \
 ailleurs, que se règle la géométrie de la page : les marges des fichiers de contenu sont \
 ignorées à l'assemblage. Inutile en revanche de poser un retrait à gauche dans le style \
@@ -189,8 +192,10 @@ de page.
 ## Ce dont tu n'as pas à t'occuper
 À chaque génération, l'application impose déjà « Avec le suivant » et « Lignes solidaires » \
 sur les 9 styles de titre, le contrôle des veuves et orphelines, et retire toute \
-numérotation automatique associée à un style de titre. Inutile d'ajouter ou de vérifier ces \
-réglages : ils sont garantis quel que soit l'état du fichier. N'ajoute surtout pas de \
+numérotation automatique associée à un style de titre. Elle garantit aussi que la cellule \
+portant le numéro de page fait au moins 2,5 cm de large, en reprenant la largeur sur ses \
+voisines. Inutile d'ajouter ou de vérifier ces réglages : ils sont garantis \
+quel que soit l'état du fichier. N'ajoute surtout pas de \
 numérotation automatique aux styles de titre — l'application numérote elle-même, tu \
 obtiendrais un double numéro.
 
