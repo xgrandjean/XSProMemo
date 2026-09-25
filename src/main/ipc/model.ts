@@ -77,20 +77,30 @@ export function registerModelIpc(): void {
 
   ipcMain.handle('model:probeLibraryFolder', async (_event, target: string) => probeFolder(target))
 
+  /**
+   * Le verrou d'instance unique est rendu avant de relancer : sans cela la nouvelle
+   * instance peut démarrer avant que celle-ci ait fini de s'éteindre, se voir refuser le
+   * verrou, et se tuer — l'application ne reviendrait jamais, juste après un geste qui
+   * vient de réécrire les réglages du poste. Sans effet si le verrou n'est pas détenu.
+   */
+  function relaunch(): void {
+    app.releaseSingleInstanceLock()
+    app.relaunch()
+    app.exit(0)
+  }
+
   // Switching library ends the session: too many screens (the mémoires list, an open
   // editor) hold state tied to the old folder to carry on safely without a fresh start.
   ipcMain.handle(
     'model:chooseLibraryFolder',
     async (_event, input: { target: string; mode: LibrarySetupMode }) => {
       await chooseLibraryFolder(input.target, input.mode)
-      app.relaunch()
-      app.exit(0)
+      relaunch()
     }
   )
 
   ipcMain.handle('model:useDefaultLibrary', async () => {
     await useDefaultLibrary()
-    app.relaunch()
-    app.exit(0)
+    relaunch()
   })
 }

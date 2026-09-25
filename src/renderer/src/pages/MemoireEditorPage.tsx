@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import MemoirePlanEditor from '../components/MemoirePlanEditor'
 import GenerationDialog from '../components/GenerationDialog'
 import Modal from '../components/Modal'
+import Toast from '../components/Toast'
+import DropdownMenu, { type DropdownMenuItem } from '../components/DropdownMenu'
 import { buildAiInstructions } from '../lib/aiInstructions'
 import { describeError } from '../lib/describeError'
 import type {
@@ -45,6 +47,9 @@ export default function MemoireEditorPage({
   const [conformiteError, setConformiteError] = useState<string | null>(null)
   const [conformiteOpen, setConformiteOpen] = useState(false)
   const [confirmRefresh, setConfirmRefresh] = useState(false)
+  const [docsMenuOpen, setDocsMenuOpen] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
+  const docsTriggerRef = useRef<HTMLButtonElement>(null)
   const [libraryPath, setLibraryPath] = useState('')
   const [generalNotes, setGeneralNotes] = useState('')
   const latest = useRef<Memoire | null>(null)
@@ -143,6 +148,16 @@ export default function MemoireEditorPage({
     setSaveError(null)
   }
 
+  /** Le fichier a pu etre deplace, renomme ou supprime depuis la generation : sans ce
+   *  rattrapage, le clic ne produisait rien du tout et la promesse partait en erreur. */
+  async function openGenerated(absPath: string, label: string): Promise<void> {
+    try {
+      await window.api.shell.openPath(absPath)
+    } catch (err) {
+      setToast(`${label} n'a pas pu être ouvert. ${describeError(err)}`)
+    }
+  }
+
   function refresh(): void {
     if (status === 'saved') void reload()
     else setConfirmRefresh(true)
@@ -170,6 +185,17 @@ export default function MemoireEditorPage({
 
   if (!draft) return <p className="muted">Chargement...</p>
 
+  // Ce que la derniere generation a reellement produit. Le PDF peut manquer — il n'est pas
+  // ecrit quand un lecteur le tenait ouvert — sans que le Word manque pour autant.
+  const derniersDocuments = draft.lastGeneratedAt
+    ? [
+        { chemin: draft.outputDocx, court: 'Word', label: 'Le document Word' },
+        { chemin: draft.outputPdf, court: 'PDF', label: 'Le PDF' }
+      ]
+        .filter((doc): doc is typeof doc & { chemin: string } => !!doc.chemin)
+        .map((doc) => ({ ...doc, ouvrir: () => openGenerated(doc.chemin, doc.label) }))
+    : []
+
   return (
     <div>
       <div className="editor-head">
@@ -183,13 +209,31 @@ export default function MemoireEditorPage({
           onChange={(e) => edit((m) => ({ ...m, name: e.target.value }))}
           onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
         />
-        {draft.lastGeneratedAt && draft.outputPdf && !dialogOpen && (
+        {derniersDocuments.length > 0 && !dialogOpen && (
           <button
+            ref={docsTriggerRef}
             className="secondary"
-            onClick={() => window.api.shell.openPath(draft.outputPdf as string)}
+            onClick={() => {
+              // Un menu a une seule entree serait un clic pour rien : quand le PDF a
+              // manque, le bouton ouvre directement le Word et le dit dans son libelle.
+              if (derniersDocuments.length === 1) void derniersDocuments[0].ouvrir()
+              else setDocsMenuOpen(true)
+            }}
           >
-            Ouvrir le dernier PDF
+            {derniersDocuments.length === 1
+              ? `Ouvrir le dernier ${derniersDocuments[0].court}`
+              : 'Ouvrir le dernier document'}
           </button>
+        )}
+        {docsMenuOpen && (
+          <DropdownMenu
+            anchor="trigger"
+            triggerRef={docsTriggerRef}
+            items={derniersDocuments.map(
+              (doc): DropdownMenuItem => ({ label: doc.label, onSelect: () => void doc.ouvrir() })
+            )}
+            onClose={() => setDocsMenuOpen(false)}
+          />
         )}
         <button className="primary" onClick={() => void save()} disabled={status !== 'dirty'}>
           Enregistrer
@@ -388,6 +432,8 @@ export default function MemoireEditorPage({
           )}
         </Modal>
       )}
+
+      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
     </div>
   )
 }

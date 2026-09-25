@@ -100,31 +100,65 @@ async function runHeadlessGeneration(memoireId: string): Promise<void> {
 // Fixes the data folder to %APPDATA%\XSProMemo rather than the package name.
 app.setName('XSProMemo')
 
-app.whenReady().then(async () => {
-  electronApp.setAppUserModelId('com.xspromemo.app')
-  await seedIfNeeded(await requireLibraryPath())
-  app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
+/**
+ * Une seule fenêtre à la fois sur ce poste. Deux instances sur le même dossier de travail
+ * se disputent Word au moment de générer, et s'écrasent l'une l'autre à l'enregistrement,
+ * où le dernier gagne.
+ *
+ * Demandé ici, au chargement du module, et non dans `whenReady` : la seconde instance doit
+ * repartir sans avoir semé la bibliothèque ni ouvert quoi que ce soit.
+ *
+ * Jamais en mode diagnostic : `--generate` tourne dans un second processus, souvent pendant
+ * que l'application est ouverte, et le verrou le tuerait en silence.
+ *
+ * Le verrou ne vaut que pour ce poste : deux postes sur un même dossier de travail réseau
+ * restent possibles, c'est même l'usage prévu.
+ */
+const hasInstanceLock = isHeadless || app.requestSingleInstanceLock()
 
-  const headlessTarget = headlessGenerationTarget()
-  if (headlessTarget) {
-    void runHeadlessGeneration(headlessTarget)
-    return
-  }
-
-  registerDialogIpc()
-  registerModelIpc()
-  registerMemoiresIpc()
-  registerGenerationIpc()
-  registerWindowIpc()
-
-  createWindow()
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+if (!hasInstanceLock) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    // Relancer le raccourci et voir l'application revenir est le comportement attendu ;
+    // une boîte « déjà ouvert » n'apprendrait rien à personne.
+    const [existing] = BrowserWindow.getAllWindows()
+    if (!existing) return
+    if (existing.isMinimized()) existing.restore()
+    existing.show()
+    existing.focus()
   })
-})
 
-app.on('window-all-closed', () => {
-  if (isHeadless) return
-  if (process.platform !== 'darwin') app.quit()
-})
+  start()
+}
+
+function start(): void {
+  app.whenReady().then(async () => {
+    electronApp.setAppUserModelId('com.xspromemo.app')
+    await seedIfNeeded(await requireLibraryPath())
+    app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
+
+    const headlessTarget = headlessGenerationTarget()
+    if (headlessTarget) {
+      void runHeadlessGeneration(headlessTarget)
+      return
+    }
+
+    registerDialogIpc()
+    registerModelIpc()
+    registerMemoiresIpc()
+    registerGenerationIpc()
+    registerWindowIpc()
+
+    createWindow()
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    })
+  })
+
+  app.on('window-all-closed', () => {
+    if (isHeadless) return
+    if (process.platform !== 'darwin') app.quit()
+  })
+}

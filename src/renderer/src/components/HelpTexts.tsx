@@ -338,9 +338,16 @@ export function DossierTravailHelp(): JSX.Element {
         l&apos;ancien dossier pour continuer proprement sans repartir de zéro.
       </p>
       <p className="muted">
-        Si deux personnes modifient le même mémoire au même moment depuis deux postes
-        différents, le dernier enregistré l&apos;emporte — pas de fusion, pas de blocage.
-        Chaque poste doit avoir Word installé pour générer un document.
+        Sur un même poste, XSProMemo ne s&apos;ouvre qu&apos;une fois : relancer le raccourci
+        ramène la fenêtre déjà ouverte au premier plan plutôt que d&apos;en ouvrir une
+        seconde. Deux fenêtres se disputeraient Word au moment de générer, et
+        s&apos;écraseraient l&apos;une l&apos;autre à l&apos;enregistrement.
+      </p>
+      <p className="muted">
+        Entre <b>postes différents</b>, en revanche, rien n&apos;est bloqué — c&apos;est
+        l&apos;usage prévu d&apos;un dossier partagé. Si deux personnes modifient le même
+        mémoire au même moment, le dernier enregistré l&apos;emporte : pas de fusion, pas de
+        verrou. Chaque poste doit avoir Word installé pour générer un document.
       </p>
     </>
   )
