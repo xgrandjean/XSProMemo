@@ -824,3 +824,19 @@ button.danger-link,
   background: var(--accent-hover);
   color: #fff;
 }
+
+/* L'emplacement ou l'ecran ouvert depose ses commandes liees a l'IA. Vide sur les ecrans
+   qui n'en ont pas : `display: contents` evite qu'il compte pour un element et n'ajoute un
+   espacement fantome entre le titre et le Mode IA. */
+.topbar-ia {
+  display: contents;
+}
+
+/* Les boutons deposes la prennent la taille des autres de la barre, pas celle, plus
+   genereuse, des boutons d'un ecran. */
+.topbar-actions button.secondary {
+  height: 28px;
+  padding: 0 12px;
+  font-size: 13px;
+  border-radius: 6px;
+}

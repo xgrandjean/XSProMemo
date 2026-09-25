@@ -74,6 +74,12 @@ export default function App(): JSX.Element {
           XSProMemo
         </span>
         <span className="topbar-actions">
+          {/* L'ecran ouvert depose ici ses commandes liees a l'IA — la consigne d'un
+              memoire, par exemple — pour qu'elles soient groupees avec le Mode IA plutot
+              que perdues au milieu des boutons de l'editeur. Un portail plutot qu'un etat
+              remonte : le texte de la consigne se construit a partir du memoire en cours
+              d'edition, qui n'a rien a faire ici. */}
+          <span id="topbar-ia" className="topbar-ia" />
           {/* Une posture de travail, valable sur tous les ecrans : dans le plan d'un
               memoire comme sur le gabarit, elle ajoute la consigne pour Claude aux gestes
               qui ouvrent un document dans Word. D'ou sa place ici, et non dans un ecran. */}

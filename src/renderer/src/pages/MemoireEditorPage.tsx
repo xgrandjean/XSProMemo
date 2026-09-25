@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import MemoirePlanEditor from '../components/MemoirePlanEditor'
 import GenerationDialog from '../components/GenerationDialog'
 import Modal from '../components/Modal'
@@ -50,6 +51,11 @@ export default function MemoireEditorPage({
   const [docsMenuOpen, setDocsMenuOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const docsTriggerRef = useRef<HTMLButtonElement>(null)
+  // Groupee avec le Mode IA en haut de l'application plutot que noyee dans la barre de
+  // l'editeur : les deux commandes relevent du meme geste. Relevee apres le montage, et non
+  // pendant le rendu : au tout premier passage le noeud de la barre n'est pas encore dans
+  // le document, et le bouton n'apparaitrait qu'au rendu suivant.
+  const [emplacementIa, setEmplacementIa] = useState<HTMLElement | null>(null)
   const [libraryPath, setLibraryPath] = useState('')
   const [generalNotes, setGeneralNotes] = useState('')
   const latest = useRef<Memoire | null>(null)
@@ -61,6 +67,8 @@ export default function MemoireEditorPage({
       setStatus('saved')
     })
   }, [memoireId])
+
+  useEffect(() => setEmplacementIa(document.getElementById('topbar-ia')), [])
 
   useEffect(() => {
     window.api.model.get().then((s) => {
@@ -198,14 +206,30 @@ export default function MemoireEditorPage({
 
   return (
     <div>
+      {emplacementIa &&
+        createPortal(
+          <button
+            className="secondary"
+            onClick={() => void copyAiPrompt()}
+            title="Copie une consigne décrivant ce mémoire, à coller dans une IA ayant accès au dossier de travail"
+          >
+            Copier consigne pour IA
+          </button>,
+          emplacementIa
+        )}
       <div className="editor-head">
-        <button className="secondary" onClick={onBack}>
+        <button
+          className="secondary"
+          onClick={onBack}
+          title="Revenir à la liste des mémoires"
+        >
           ← Mes mémoires
         </button>
         <input
           className="memoire-name"
           type="text"
           value={draft.name}
+          title="Nom du mémoire : il sert aussi de nom aux fichiers produits"
           onChange={(e) => edit((m) => ({ ...m, name: e.target.value }))}
           onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
         />
@@ -213,6 +237,7 @@ export default function MemoireEditorPage({
           <button
             ref={docsTriggerRef}
             className="secondary"
+            title="Rouvrir ce qui a été produit à la dernière génération"
             onClick={() => {
               // Un menu a une seule entree serait un clic pour rien : quand le PDF a
               // manque, le bouton ouvre directement le Word et le dit dans son libelle.
@@ -235,32 +260,45 @@ export default function MemoireEditorPage({
             onClose={() => setDocsMenuOpen(false)}
           />
         )}
-        <button className="primary" onClick={() => void save()} disabled={status !== 'dirty'}>
+        <button
+          className="primary"
+          onClick={() => void save()}
+          disabled={status !== 'dirty'}
+          title={
+            status === 'dirty'
+              ? 'Enregistrer les modifications du plan et du nom'
+              : 'Rien à enregistrer : tout est déjà à jour'
+          }
+        >
           Enregistrer
         </button>
-        <span className="save-status save-status--inline">
-          {saveError ? (
-            // Elle dit deja que rien n'est enregistre : repeter le statut a cote n'ajoute
-            // rien et les deux textes se retrouvaient colles l'un a l'autre.
-            <span className="error-text">{saveError}</span>
-          ) : (
-            <>
-              {status === 'saving' && <span className="muted">Enregistrement...</span>}
-              {status === 'saved' && <span className="muted">Enregistré</span>}
-              {status === 'dirty' && <span className="muted">Modifications non enregistrées</span>}
-            </>
-          )}
-        </span>
+        {/* Rien a afficher quand tout est enregistre : le bouton grise le dit deja, et un
+            mot de plus au milieu des boutons prenait de la place sans rien apprendre. Ne
+            reste que ce que le bouton ne sait pas dire — l'attente, et l'echec. */}
+        {(saveError || status !== 'saved') && (
+          <span className="save-status save-status--inline">
+            {saveError ? (
+              // Elle dit deja que rien n'est enregistre : repeter le statut a cote n'ajoute
+              // rien et les deux textes se retrouvaient colles l'un a l'autre.
+              <span className="error-text">{saveError}</span>
+            ) : status === 'saving' ? (
+              <span className="muted">Enregistrement...</span>
+            ) : (
+              <span className="muted">Modifications non enregistrées</span>
+            )}
+          </span>
+        )}
         <button
           className="primary"
           onClick={generate}
           disabled={generating || draft.chapters.length === 0}
-          title={draft.chapters.length === 0 ? 'Ajoutez au moins un chapitre avant de générer' : undefined}
+          title={
+            draft.chapters.length === 0
+              ? 'Ajoutez au moins un chapitre avant de générer'
+              : 'Assembler le document Word complet et son PDF. Word doit être fermé.'
+          }
         >
           {generating ? 'Génération...' : 'Générer'}
-        </button>
-        <button className="secondary" onClick={() => void copyAiPrompt()}>
-          Copier consigne pour IA
         </button>
         <button
           className="secondary"
